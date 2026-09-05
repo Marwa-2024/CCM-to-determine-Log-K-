@@ -1,0 +1,49 @@
+INTRINSIC STABILITY CONSTANTS FOR Li AND Co ON DOLOMITE
+Constant capacitance three-site model (Pokrovsky et al., 1999)
+Single-ion data, 25 C, I ~ 0.7 M NaCl, open system (pCO2 = 10^-3.5 atm)
+==========================================================================
+
+Surface complexation reactions and fitted constants:
+  >CaOH0 + Li+  = >CaOLi(0) + H+      log K_int = +7.71 +/- 0.92
+  >MgOH0 + Li+  = >MgOLi(0) + H+      log K_int = +6.81 +/- 0.92
+  >CaOH0 + Co2+ = >CaOCo+  + H+       log K_int = +2.42 +/- 0.08
+  >MgOH0 + Co2+ = >MgOCo+  + H+       log K_int = +1.52 +/- 0.08
+
+Background constants held fixed (Pokrovsky 1999, dolomite):
+  CO3_deprot   log K = -4.80
+  CO3Ca        log K = -1.80
+  CO3Mg        log K = -2.00
+  CaOH2_prot   log K = +11.50
+  CaO_deprot   log K = -12.00
+  CaHCO3       log K = -4.00
+  CaCO3        log K = +16.60
+  MgOH2_prot   log K = +10.60
+  MgO_deprot   log K = -12.00
+  MgHCO3       log K = -3.50
+  MgCO3        log K = +15.40
+
+EDL parameter alpha = 0.3162  ->  C = sqrt(I)/alpha
+Site densities (mol/m2): Ca 7.0e-06, Mg 7.0e-06, CO3 1.4e-05
+
+Fit quality: R^2 (adsorption) = 1.000
+   Co pH6: measured 74.393 ppm, predicted 74.393 ppm
+   Co pH2: measured 80.398 ppm, predicted 80.513 ppm
+   Li pH6: measured 135.262 ppm, predicted 133.999 ppm
+   Li pH2: measured 135.592 ppm, predicted 135.592 ppm
+
+Sensitivity (mean rise in SSR for +/- 0.5 log K):
+   Co-Ca: 33.96
+   Li-Ca: 0.2394
+
+Interpretation notes:
+  - One constant per metal is fitted (Ca site); the Mg constant is tied
+    with a fixed offset of -0.9 log units (Pokrovsky Ca vs Mg).
+  - This is a sorption-only model. Co recovery in the manuscript is partly
+    carbonate mineralisation (CoCO3), which is not represented, so the Co
+    constant is a lumped surface value, not a pure affinity.
+  - Li's larger constant reflects larger absolute molar uptake (Li dosed
+    ~15x more concentrated), not a stronger per-site affinity than Co.
+  - sigma0 anchors the capacitance and PZC only; its spreadsheet sign
+    convention differs from the CCM surface charge.
+  - Next stage: extend METAL_REACTIONS and METAL_CHARGE to the full
+    produced-water cation suite (Ba, Sr, Cd, Pb ...).
