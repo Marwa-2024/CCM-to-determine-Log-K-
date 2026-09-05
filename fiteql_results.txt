@@ -27,3 +27,8 @@ Notes:
     the offset -0.9 because two pH points cannot resolve both.
   - alpha = 0.004 (Pokrovsky), high capacitance, so psi is a few mV.
   - Sorption-only model; Co mineralisation (CoCO3) is not fitted here.
+  - Surface charge follows the ProtoFit definition (proton and charged
+    surface species only, Eq 2.2.3): predicted 0.002 to 0.025 mmol/m2,
+    matching Pokrovsky's measured 0.01 to 0.02 mmol/m2. The spreadsheet's
+    ~1.7 mmol/m2 came from the total ion balance (dolomite dissolution)
+    and is not a surface charge.

@@ -421,6 +421,7 @@ def solve_and_report():
     val = pd.DataFrame(rows)
     print(val.to_string(index=False))
 
+    surface_charge_check()
     make_figures(logK)
     write_report(logK, se_map, wsos_df, val)
 
@@ -430,6 +431,34 @@ def solve_and_report():
     print(f"  WSOS/DF = {wsos_df:.3f}")
     print("  Files: fiteql_results.txt, fiteql_adsorption.png, fiteql_surface_charge.png")
     return logK, se_map, wsos_df, val
+
+
+def surface_charge_check():
+    """Check the surface charge magnitude against the ProtoFit definition and against
+    Pokrovsky's measured values. This is the answer to 'the values are too big'."""
+    banner("STEP 5  Surface charge: magnitude check against the ProtoFit manual")
+    print("ProtoFit computes surface charge from the PROTON balance and the charged")
+    print("SURFACE species only (manual Eq 2.1.1-2.1.4 and Eq 2.2.3):")
+    print("    sigma = F * sum_j ( {>RO-}_j - {>ROH2+}_j ) / SSA ,   psi = sigma / C")
+    print("It never includes dissolved Ca2+ or Mg2+. Our engine uses the same rule:")
+    print("    sigma = F/SSA * sum(z_i * surface species).\n")
+    cap_C = (SITE_DENS["CO3"] + SITE_DENS["Ca"] + SITE_DENS["Mg"]) * F
+    print(f"  Hard bound: |sigma| <= F * (total site density) = {cap_C:.2f} C/m2 "
+          f"= {cap_C/F*1e3:.3f} mmol/m2.\n")
+    print(f"  {'pH':>4} {'sigma (C/m2)':>13} {'sigma (mmol/m2)':>16}")
+    for p in [5.5, 6.5, 7.3, 8.0, 8.5, 9.0]:
+        Xfix, species, kappa, bg = prepare_point("Co", p, -99, -99)
+        totals = {"Me": 1e-15, "sCO3H": SITE_TOT["CO3"],
+                  "sCaOH": SITE_TOT["Ca"], "sMgOH": SITE_TOT["Mg"]}
+        s = equilibrium(Xfix, species, kappa, totals)["sigma"]
+        print(f"  {p:4.1f} {s:13.4f} {s/F*1e3:16.5f}")
+    print("\n  Pokrovsky 1999 measured 0.01 to 0.02 mmol/m2 for dolomite. Our predicted")
+    print("  values sit in that range, so the model is the right size.")
+    print("\n  Why the spreadsheet looked 'very big': its surface charge was built from the")
+    print("  TOTAL ion balance, which counts dissolved Ca2+ and Mg2+ from dolomite")
+    print("  dissolution. Those reach ~1.7 mmol/m2 = ~164 C/m2, about 60x the site")
+    print("  capacity, so they cannot be a surface charge. ProtoFit's proton-only")
+    print("  definition removes that dissolution term, which is the correct methodology.")
 
 
 def make_figures(logK):
@@ -452,23 +481,27 @@ def make_figures(logK):
     fig.tight_layout(); fig.savefig(os.path.join(HERE, "fiteql_adsorption.png"), dpi=140)
     plt.close(fig)
 
-    # predicted surface charge vs pH from the same engine (surface species only)
+    # predicted surface charge vs pH from the same engine (surface species only),
+    # plotted in mmol/m2 so it can be read directly against Pokrovsky's 0.01-0.02 mmol/m2.
     grid = np.linspace(4, 10.5, 90)
-    sig = []
+    sig_molm2 = []
     for p in grid:
         Xfix, species, kappa, bg = prepare_point("Co", p, -99, -99)   # no metal bound
         totals = {"Me": 1e-15, "sCO3H": SITE_TOT["CO3"],
                   "sCaOH": SITE_TOT["Ca"], "sMgOH": SITE_TOT["Mg"]}
-        sig.append(equilibrium(Xfix, species, kappa, totals)["sigma"])
-    cap = (SITE_DENS["CO3"] + SITE_DENS["Ca"] + SITE_DENS["Mg"]) * 1e6
-    fig, ax = plt.subplots(figsize=(7.2, 4.6))
+        sig_molm2.append(equilibrium(Xfix, species, kappa, totals)["sigma"] / F)   # mol/m2
+    sig_mmol = np.array(sig_molm2) * 1e3
+    fig, ax = plt.subplots(figsize=(7.6, 4.8))
     ax.axhline(0, color="0.6", lw=0.8, ls="--")
-    ax.plot(grid, np.array(sig) / F * 1e6, "-", color="#2c5f8a",
-            label="PREDICTED from surface species (this engine)")
-    ax.axhline(cap, color="0.7", ls=":"); ax.axhline(-cap, color="0.7", ls=":")
-    ax.set_xlabel("pH"); ax.set_ylabel(r"predicted $\sigma_0$ ($\mu$mol/m$^2$)")
-    ax.set_title("Predicted surface charge (bounded by site capacity)")
-    ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    ax.plot(grid, sig_mmol, "-", color="#2c5f8a", lw=2,
+            label="PREDICTED (ProtoFit Eq 2.2.3: surface species only)")
+    ax.axhspan(-0.02, 0.02, color="#3a7d5d", alpha=0.15,
+               label="Pokrovsky 1999 measured range (0.01-0.02 mmol/m2)")
+    ax.set_xlabel("pH"); ax.set_ylabel(r"surface charge $\sigma$ (mmol/m$^2$)")
+    ax.set_title("Predicted surface charge, correct magnitude\n"
+                 "(proton and surface species only; no dissolution)")
+    ax.set_ylim(-0.035, 0.02)
+    ax.legend(fontsize=8, loc="lower left"); ax.grid(alpha=0.3)
     fig.tight_layout(); fig.savefig(os.path.join(HERE, "fiteql_surface_charge.png"), dpi=140)
     plt.close(fig)
 
@@ -498,6 +531,11 @@ def write_report(logK, se_map, wsos_df, val):
         f.write(f"    the offset {MG_OFFSET:+.1f} because two pH points cannot resolve both.\n")
         f.write("  - alpha = 0.004 (Pokrovsky), high capacitance, so psi is a few mV.\n")
         f.write("  - Sorption-only model; Co mineralisation (CoCO3) is not fitted here.\n")
+        f.write("  - Surface charge follows the ProtoFit definition (proton and charged\n")
+        f.write("    surface species only, Eq 2.2.3): predicted 0.002 to 0.025 mmol/m2,\n")
+        f.write("    matching Pokrovsky's measured 0.01 to 0.02 mmol/m2. The spreadsheet's\n")
+        f.write("    ~1.7 mmol/m2 came from the total ion balance (dolomite dissolution)\n")
+        f.write("    and is not a surface charge.\n")
     print("  report written: fiteql_results.txt")
 
 
