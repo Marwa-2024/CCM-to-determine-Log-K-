@@ -4,10 +4,10 @@ Single-ion data, 25 C, I ~ 0.7 M NaCl, open system (pCO2 = 10^-3.5 atm)
 ==========================================================================
 
 Surface complexation reactions and fitted constants:
-  >CaOH0 + Li+  = >CaOLi(0) + H+      log K_int = +7.71 +/- 0.92
-  >MgOH0 + Li+  = >MgOLi(0) + H+      log K_int = +6.81 +/- 0.92
-  >CaOH0 + Co2+ = >CaOCo+  + H+       log K_int = +2.42 +/- 0.08
-  >MgOH0 + Co2+ = >MgOCo+  + H+       log K_int = +1.52 +/- 0.08
+  >CaOH0 + Li+  = >CaOLi(0) + H+      log K_int = +1.90 +/- 1.02
+  >MgOH0 + Li+  = >MgOLi(0) + H+      log K_int = +1.00 +/- 1.02
+  >CaOH0 + Co2+ = >CaOCo+  + H+       log K_int = +2.42 +/- 0.18
+  >MgOH0 + Co2+ = >MgOCo+  + H+       log K_int = +1.52 +/- 0.18
 
 Background constants held fixed (Pokrovsky 1999, dolomite):
   CO3_deprot   log K = -4.80
@@ -22,28 +22,30 @@ Background constants held fixed (Pokrovsky 1999, dolomite):
   MgHCO3       log K = -3.50
   MgCO3        log K = +15.40
 
-EDL parameter alpha = 0.3162  ->  C = sqrt(I)/alpha
+EDL parameter alpha = 0.0040  ->  C = sqrt(I)/alpha
 Site densities (mol/m2): Ca 7.0e-06, Mg 7.0e-06, CO3 1.4e-05
 
-Fit quality: R^2 (adsorption) = 1.000
+Fit quality: R^2 (adsorption) = 0.998
    Co pH6: measured 74.393 ppm, predicted 74.393 ppm
    Co pH2: measured 80.398 ppm, predicted 80.513 ppm
-   Li pH6: measured 135.262 ppm, predicted 133.999 ppm
-   Li pH2: measured 135.592 ppm, predicted 135.592 ppm
+   Li pH6: measured 135.262 ppm, predicted 135.262 ppm
+   Li pH2: measured 135.592 ppm, predicted 138.430 ppm
 
 Sensitivity (mean rise in SSR for +/- 0.5 log K):
    Co-Ca: 33.96
-   Li-Ca: 0.2394
+   Li-Ca: 0.9168
 
 Interpretation notes:
+  - Co binds more strongly than Li on both sites, the expected order for a
+    divalent over a monovalent ion; matches the batch recovery trend.
   - One constant per metal is fitted (Ca site); the Mg constant is tied
     with a fixed offset of -0.9 log units (Pokrovsky Ca vs Mg).
-  - This is a sorption-only model. Co recovery in the manuscript is partly
-    carbonate mineralisation (CoCO3), which is not represented, so the Co
-    constant is a lumped surface value, not a pure affinity.
-  - Li's larger constant reflects larger absolute molar uptake (Li dosed
-    ~15x more concentrated), not a stronger per-site affinity than Co.
-  - sigma0 anchors the capacitance and PZC only; its spreadsheet sign
-    convention differs from the CCM surface charge.
+  - Sorption-only model. Co recovery in the manuscript is partly carbonate
+    mineralisation (CoCO3, Eqs 7-9), folded here into the surface term.
+  - The Li constant is loosely determined (small uptake, near noise).
+  - PREDICTED sigma0 (Section I) is built from surface species only and
+    reads nothing from the spreadsheet; MEASURED sigma0 (Eq 9, Section J)
+    is a separate quantity that also carries dissolution, so its sign near
+    the PZC differs. alpha = 0.004 (Pokrovsky); results shift with alpha.
   - Next stage: extend METAL_REACTIONS and METAL_CHARGE to the full
     produced-water cation suite (Ba, Sr, Cd, Pb ...).

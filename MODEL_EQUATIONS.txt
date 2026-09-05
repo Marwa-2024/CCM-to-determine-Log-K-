@@ -1,0 +1,122 @@
+
+--------------------------------------------------------------------------------------
+A. AQUEOUS PHASE DISSOCIATION REACTIONS
+--------------------------------------------------------------------------------------
+    H2O        = OH-  + H+
+    CO2(g)     = CO2(aq)
+    NaCl       = Na+  + Cl-
+    MgCl2      = Mg2+ + 2 Cl-
+    CaCl2      = Ca2+ + 2 Cl-
+    NaOH       = Na+  + OH-
+    HCl        = H+   + Cl-
+
+--------------------------------------------------------------------------------------
+B. AQUEOUS PHASE COMPLEXATION REACTIONS
+--------------------------------------------------------------------------------------
+    CO2(aq) + H2O = HCO3-  + H+
+    CO3-2   + H+  = HCO3-
+    CaCl+         = Ca2+ + Cl-
+    MgCl+         = Mg2+ + Cl-
+    CaHCO3+       = Ca2+ + HCO3-
+    MgHCO3+       = Mg2+ + HCO3-
+    (the code also carries CaCO3, MgCO3, CaOH+, MgOH+, NaCO3-, NaHCO3, NaOH for
+     numerical accuracy; the six above are the dominant ones in this brine)
+
+    For a metal ion Me of charge z the aqueous side keeps the free ion:
+        LiCl  = Li+  + Cl-
+        CoCl+ = Co2+ + Cl-      CoOH+ = Co2+ + OH- ... (hydrolysis)  CoCO3 = Co2+ + CO3-2
+
+--------------------------------------------------------------------------------------
+C. SURFACE COMPLEXATION REACTIONS  (three primary hydration sites)
+--------------------------------------------------------------------------------------
+  carbonate site  >CO3H0
+    >CO3H0            = >CO3-   + H+
+    >CO3H0 + Ca2+     = >CO3Ca+ + H+
+    >CO3H0 + Mg2+     = >CO3Mg+ + H+
+
+  calcium site    >CaOH0
+    >CaOH0            = >CaO-   + H+
+    >CaOH0 + H+       = >CaOH2+
+    >CaOH0 + CO3-2 + 2H+ = >CaHCO3(0) + H2O
+    >CaOH0 + CO3-2 +  H+ = >CaCO3-   + H2O
+    >CaOH0 + Li+      = >CaOLi(0) + H+          <-- unknown, log K fitted
+    >CaOH0 + Co2+     = >CaOCo+   + H+          <-- unknown, log K fitted
+
+  magnesium site  >MgOH0
+    >MgOH0            = >MgO-   + H+
+    >MgOH0 + H+       = >MgOH2+
+    >MgOH0 + CO3-2 + 2H+ = >MgHCO3(0) + H2O
+    >MgOH0 + CO3-2 +  H+ = >MgCO3-   + H2O
+    >MgOH0 + Li+      = >MgOLi(0) + H+          <-- tied to the Ca-site value
+    >MgOH0 + Co2+     = >MgOCo+   + H+          <-- tied to the Ca-site value
+
+--------------------------------------------------------------------------------------
+D. AQUEOUS MASS BALANCE EQUATIONS
+--------------------------------------------------------------------------------------
+    [Na+]  = C_NaCl + C_NaOH
+    [Cl-]  = C_NaCl + 2 C_MgCl2 + 2 C_CaCl2 + C_HCl - [CaCl+] - [MgCl+]
+    [Ca2+] = C_CaCl2 - [CaCl+] - [CaHCO3+] - [>CO3Ca+]*St
+    [Mg2+] = C_MgCl2 - [MgCl+] - [MgHCO3+] - [>CO3Mg+]*St
+    ( *St converts a surface concentration, mol/m2, into mol/L of reactor )
+
+--------------------------------------------------------------------------------------
+E. SURFACE SITE (MASS) BALANCE EQUATIONS
+--------------------------------------------------------------------------------------
+  total_>CO3H0 * St = ([>CO3H0] + [>CO3-] + [>CO3Ca+] + [>CO3Mg+]) * St
+  total_>CaOH0 * St = ([>CaOH0] + [>CaO-] + [>CaOH2+] + [>CaHCO3(0)] + [>CaCO3-]
+                        + [>CaOLi(0)] + [>CaOCo+]) * St
+  total_>MgOH0 * St = ([>MgOH0] + [>MgO-] + [>MgOH2+] + [>MgHCO3(0)] + [>MgCO3-]
+                        + [>MgOLi(0)] + [>MgOCo+]) * St
+  Solve each for the neutral reference form, e.g.
+        [>CaOH0] = total_>CaOH0 / (1 + sum of all ratios to >CaOH0)
+
+--------------------------------------------------------------------------------------
+F. INTRINSIC vs APPARENT CONSTANT (Boltzmann electrostatic correction)
+--------------------------------------------------------------------------------------
+  General relation (Pokrovsky 1999, Eqn 6; Stumm & Morgan):
+        K_app = K_int * exp( -DeltaZ * F * psi0 / (R T) )
+  where DeltaZ is the change in the CHARGE of the surface species in the reaction.
+  For  >SOH0 + Me(z+) = >SOMe(z-1) + H+   the surface charge changes by (z-1), so the
+  concentration of the surface complex is
+        [>SOMe(z-1)] = K_int * [>SOH0] * (a_Me / a_H) * exp( -(z-1) * F * psi0 / (R T) )
+  Li: z = 1 -> product is NEUTRAL -> exponent = 0 (no correction)
+  Co: z = 2 -> product is +1      -> exponent = -(1) * F * psi0 / (R T)
+  (F/RT = 38.92 V^-1 at 25 C). Each surface species of charge q carries a factor
+  exp(-q F psi0 / R T); this is applied to every charged species in Section C.
+
+--------------------------------------------------------------------------------------
+G, H. CONSTANT CAPACITANCE MODEL
+--------------------------------------------------------------------------------------
+        psi0 = sigma0 / C                     (Eqn 7)
+        C    = sqrt(I) / alpha                (Eqn 8)
+  psi0 : surface potential (V);  C : EDL capacitance (F/m2);  I : ionic strength;
+  alpha: empirical EDL parameter (0.004 here, Pokrovsky's value).
+
+--------------------------------------------------------------------------------------
+I. PREDICTED NET SURFACE CHARGE  (from the surface species ONLY)
+--------------------------------------------------------------------------------------
+        sigma0 = (F / St) * { [>CaOH2+] + [>MgOH2+] + [>CO3Ca+] + [>CO3Mg+]
+                              + [>CaOCo+] + [>MgOCo+]
+                              - [>CO3-] - [>CaO-] - [>MgO-] - [>CaCO3-] - [>MgCO3-] }
+  This is what the model PREDICTS. It uses no numbers from the spreadsheet; it is built
+  entirely from the surface speciation solved in Sections C to H. Neutral Li complexes
+  do not appear because they carry no charge.
+
+--------------------------------------------------------------------------------------
+J. MEASURED NET SURFACE CHARGE  (Charlet 1990 / Pokrovsky 1999, Eqn 9) - DATA, not model
+--------------------------------------------------------------------------------------
+        sigma = (1 / S) * SUM_k  z_k ( [k]_0 - [k]_f )
+  [k]_0 : concentration of aqueous species k for closed-system mixing of flasks A and B
+          (no reaction with the solid);  [k]_f : measured concentration in flask C.
+  This is the EXPERIMENTAL surface charge in the spreadsheet. It also carries the net
+  effect of dolomite dissolution (Ca and Mg release), so its sign near the PZC differs
+  from the clean surface-proton charge of Section I. It is used only for comparison.
+
+--------------------------------------------------------------------------------------
+K. ADSORPTION UPTAKE  (Eqn linking surface binding to what ICP measures)
+--------------------------------------------------------------------------------------
+        uptake(Li) = [>CaOLi(0)] + [>MgOLi(0)]            (mol/L)
+        uptake(Co) = [>CaOCo+]   + [>MgOCo+]              (mol/L)
+        [Me]_eq    = [Me]_initial - uptake
+  The log K that makes [Me]_eq(predicted) equal [Me]_eq(measured) is the answer.
+--------------------------------------------------------------------------------------

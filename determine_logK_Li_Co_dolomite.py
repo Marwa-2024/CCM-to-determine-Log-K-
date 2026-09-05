@@ -67,6 +67,153 @@ def explain(text):
 
 
 # ======================================================================================
+#  THE COMPLETE SET OF EQUATIONS THE CODE SOLVES
+#  Written out precisely so the model can be checked by hand. This exact text is printed
+#  in Step 0 and also saved to MODEL_EQUATIONS.txt for the manuscript / advisor.
+# ======================================================================================
+
+MODEL_EQUATIONS = r"""
+--------------------------------------------------------------------------------------
+A. AQUEOUS PHASE DISSOCIATION REACTIONS
+--------------------------------------------------------------------------------------
+    H2O        = OH-  + H+
+    CO2(g)     = CO2(aq)
+    NaCl       = Na+  + Cl-
+    MgCl2      = Mg2+ + 2 Cl-
+    CaCl2      = Ca2+ + 2 Cl-
+    NaOH       = Na+  + OH-
+    HCl        = H+   + Cl-
+
+--------------------------------------------------------------------------------------
+B. AQUEOUS PHASE COMPLEXATION REACTIONS
+--------------------------------------------------------------------------------------
+    CO2(aq) + H2O = HCO3-  + H+
+    CO3-2   + H+  = HCO3-
+    CaCl+         = Ca2+ + Cl-
+    MgCl+         = Mg2+ + Cl-
+    CaHCO3+       = Ca2+ + HCO3-
+    MgHCO3+       = Mg2+ + HCO3-
+    (the code also carries CaCO3, MgCO3, CaOH+, MgOH+, NaCO3-, NaHCO3, NaOH for
+     numerical accuracy; the six above are the dominant ones in this brine)
+
+    For a metal ion Me of charge z the aqueous side keeps the free ion:
+        LiCl  = Li+  + Cl-
+        CoCl+ = Co2+ + Cl-      CoOH+ = Co2+ + OH- ... (hydrolysis)  CoCO3 = Co2+ + CO3-2
+
+--------------------------------------------------------------------------------------
+C. SURFACE COMPLEXATION REACTIONS  (three primary hydration sites)
+--------------------------------------------------------------------------------------
+  carbonate site  >CO3H0
+    >CO3H0            = >CO3-   + H+
+    >CO3H0 + Ca2+     = >CO3Ca+ + H+
+    >CO3H0 + Mg2+     = >CO3Mg+ + H+
+
+  calcium site    >CaOH0
+    >CaOH0            = >CaO-   + H+
+    >CaOH0 + H+       = >CaOH2+
+    >CaOH0 + CO3-2 + 2H+ = >CaHCO3(0) + H2O
+    >CaOH0 + CO3-2 +  H+ = >CaCO3-   + H2O
+    >CaOH0 + Li+      = >CaOLi(0) + H+          <-- unknown, log K fitted
+    >CaOH0 + Co2+     = >CaOCo+   + H+          <-- unknown, log K fitted
+
+  magnesium site  >MgOH0
+    >MgOH0            = >MgO-   + H+
+    >MgOH0 + H+       = >MgOH2+
+    >MgOH0 + CO3-2 + 2H+ = >MgHCO3(0) + H2O
+    >MgOH0 + CO3-2 +  H+ = >MgCO3-   + H2O
+    >MgOH0 + Li+      = >MgOLi(0) + H+          <-- tied to the Ca-site value
+    >MgOH0 + Co2+     = >MgOCo+   + H+          <-- tied to the Ca-site value
+
+--------------------------------------------------------------------------------------
+D. AQUEOUS MASS BALANCE EQUATIONS
+--------------------------------------------------------------------------------------
+    [Na+]  = C_NaCl + C_NaOH
+    [Cl-]  = C_NaCl + 2 C_MgCl2 + 2 C_CaCl2 + C_HCl - [CaCl+] - [MgCl+]
+    [Ca2+] = C_CaCl2 - [CaCl+] - [CaHCO3+] - [>CO3Ca+]*St
+    [Mg2+] = C_MgCl2 - [MgCl+] - [MgHCO3+] - [>CO3Mg+]*St
+    ( *St converts a surface concentration, mol/m2, into mol/L of reactor )
+
+--------------------------------------------------------------------------------------
+E. SURFACE SITE (MASS) BALANCE EQUATIONS
+--------------------------------------------------------------------------------------
+  total_>CO3H0 * St = ([>CO3H0] + [>CO3-] + [>CO3Ca+] + [>CO3Mg+]) * St
+  total_>CaOH0 * St = ([>CaOH0] + [>CaO-] + [>CaOH2+] + [>CaHCO3(0)] + [>CaCO3-]
+                        + [>CaOLi(0)] + [>CaOCo+]) * St
+  total_>MgOH0 * St = ([>MgOH0] + [>MgO-] + [>MgOH2+] + [>MgHCO3(0)] + [>MgCO3-]
+                        + [>MgOLi(0)] + [>MgOCo+]) * St
+  Solve each for the neutral reference form, e.g.
+        [>CaOH0] = total_>CaOH0 / (1 + sum of all ratios to >CaOH0)
+
+--------------------------------------------------------------------------------------
+F. INTRINSIC vs APPARENT CONSTANT (Boltzmann electrostatic correction)
+--------------------------------------------------------------------------------------
+  General relation (Pokrovsky 1999, Eqn 6; Stumm & Morgan):
+        K_app = K_int * exp( -DeltaZ * F * psi0 / (R T) )
+  where DeltaZ is the change in the CHARGE of the surface species in the reaction.
+  For  >SOH0 + Me(z+) = >SOMe(z-1) + H+   the surface charge changes by (z-1), so the
+  concentration of the surface complex is
+        [>SOMe(z-1)] = K_int * [>SOH0] * (a_Me / a_H) * exp( -(z-1) * F * psi0 / (R T) )
+  Li: z = 1 -> product is NEUTRAL -> exponent = 0 (no correction)
+  Co: z = 2 -> product is +1      -> exponent = -(1) * F * psi0 / (R T)
+  (F/RT = 38.92 V^-1 at 25 C). Each surface species of charge q carries a factor
+  exp(-q F psi0 / R T); this is applied to every charged species in Section C.
+
+--------------------------------------------------------------------------------------
+G, H. CONSTANT CAPACITANCE MODEL
+--------------------------------------------------------------------------------------
+        psi0 = sigma0 / C                     (Eqn 7)
+        C    = sqrt(I) / alpha                (Eqn 8)
+  psi0 : surface potential (V);  C : EDL capacitance (F/m2);  I : ionic strength;
+  alpha: empirical EDL parameter (0.004 here, Pokrovsky's value).
+
+--------------------------------------------------------------------------------------
+I. PREDICTED NET SURFACE CHARGE  (from the surface species ONLY)
+--------------------------------------------------------------------------------------
+        sigma0 = (F / St) * { [>CaOH2+] + [>MgOH2+] + [>CO3Ca+] + [>CO3Mg+]
+                              + [>CaOCo+] + [>MgOCo+]
+                              - [>CO3-] - [>CaO-] - [>MgO-] - [>CaCO3-] - [>MgCO3-] }
+  This is what the model PREDICTS. It uses no numbers from the spreadsheet; it is built
+  entirely from the surface speciation solved in Sections C to H. Neutral Li complexes
+  do not appear because they carry no charge.
+
+--------------------------------------------------------------------------------------
+J. MEASURED NET SURFACE CHARGE  (Charlet 1990 / Pokrovsky 1999, Eqn 9) - DATA, not model
+--------------------------------------------------------------------------------------
+        sigma = (1 / S) * SUM_k  z_k ( [k]_0 - [k]_f )
+  [k]_0 : concentration of aqueous species k for closed-system mixing of flasks A and B
+          (no reaction with the solid);  [k]_f : measured concentration in flask C.
+  This is the EXPERIMENTAL surface charge in the spreadsheet. It also carries the net
+  effect of dolomite dissolution (Ca and Mg release), so its sign near the PZC differs
+  from the clean surface-proton charge of Section I. It is used only for comparison.
+
+--------------------------------------------------------------------------------------
+K. ADSORPTION UPTAKE  (Eqn linking surface binding to what ICP measures)
+--------------------------------------------------------------------------------------
+        uptake(Li) = [>CaOLi(0)] + [>MgOLi(0)]            (mol/L)
+        uptake(Co) = [>CaOCo+]   + [>MgOCo+]              (mol/L)
+        [Me]_eq    = [Me]_initial - uptake
+  The log K that makes [Me]_eq(predicted) equal [Me]_eq(measured) is the answer.
+--------------------------------------------------------------------------------------
+"""
+
+
+def step0_equations():
+    banner(0, "The complete set of equations this code solves")
+    explain("""
+    Before any numbers, here is the full model written out, so it can be checked by hand
+    and pasted into the manuscript. The one point to hold onto: the PREDICTED surface
+    charge in Section I is built only from the surface species the model solves for. It
+    never reads the aqueous concentrations in the spreadsheet. Those spreadsheet values
+    are the MEASURED surface charge of Section J, kept apart and used only to compare
+    against the prediction.
+    """)
+    print(MODEL_EQUATIONS)
+    with open(os.path.join(HERE, "MODEL_EQUATIONS.txt"), "w") as f:
+        f.write(MODEL_EQUATIONS)
+    print("  (also written to MODEL_EQUATIONS.txt)")
+
+
+# ======================================================================================
 #  PART 0 - PHYSICAL CONSTANTS AND THE THERMODYNAMIC DATABASE
 #  These are shared by every step. The aqueous log K set is the TOUGHREACT / EQ3-6
 #  database used in your original speciation notebook, extended here with Li and Co.
@@ -113,8 +260,14 @@ SITE_DENS = dict(Ca=7.0e-6, Mg=7.0e-6, CO3=14.0e-6)   # mol / m2
 # total moles of each site per litre of reactor = density * surface area per litre
 SITE_TOT = {k: v * ST_AREA for k, v in SITE_DENS.items()}   # mol / L
 
-# --- constant capacitance EDL parameter (Pokrovsky 1999, Eqn 4:  C = sqrt(I)/alpha) --
-ALPHA_EDL = 0.004           # C * mol^0.5 / (volt * m3); refined against your sigma0 below
+# --- constant capacitance EDL parameter (Pokrovsky 1999, Eqn 8:  C = sqrt(I)/alpha) --
+# Pokrovsky's published value for carbonates. It is deliberately small, which makes the
+# capacitance large and the surface potential tiny (a few millivolts). In that regime the
+# Boltzmann correction is almost unity, exactly the "high EDL capacitance" behaviour the
+# paper reports for dolomite. alpha is a fitting parameter; it is NOT tuned to the Excel
+# surface charge here, because that tabulated quantity is contaminated by dissolution
+# (see Step 4). Change it in one place if you wish to explore its effect.
+ALPHA_EDL = 0.004           # C * mol^0.5 / (volt * m3)
 
 
 def gammas(I):
@@ -347,11 +500,16 @@ def step2_model_framework():
 
 def surface_solve(sp, logK, metal=None, aMe=0.0, alpha=ALPHA_EDL):
     """
-    sp     : output of speciate() -> aqueous activities and ionic strength
+    sp     : output of speciate() -> aqueous ACTIVITIES and ionic strength
     logK   : dict of the four metal constants keyed by 'Li_Ca','Li_Mg','Co_Ca','Co_Mg'
     metal  : 'Li', 'Co', or None (background only)
     aMe    : free activity of the metal ion (Li+ or Co2+)
     returns: dict with sigma0 (C/m2), psi0 (V), and bound metal (mol/L) on Ca and Mg sites
+
+    This is the PREDICTION. The returned sigma0 is Section I of MODEL_EQUATIONS: it is
+    assembled only from the surface species solved here (Sections C to H). It uses no
+    concentration from the spreadsheet. The spreadsheet's sigma (Section J) is the
+    separate measured quantity, only ever used to compare against this output.
     """
     aH, aCO3, aCa, aMg = sp["aH"], sp["aCO3"], sp["aCa"], sp["aMg"]
     C_cap = np.sqrt(max(sp["I"], 1e-6)) / alpha          # CCM capacitance, F/m2
@@ -485,60 +643,72 @@ def step3_activities(master):
 
 
 # ======================================================================================
-#  STEP 4 - PROTON / BACKGROUND CONSTANTS AND CALIBRATION OF THE EDL PARAMETER
+#  STEP 4 - BACKGROUND CONSTANTS, CAPACITANCE, AND THE PREDICTED SURFACE CHARGE
 # ======================================================================================
 
+def predicted_sigma0(pH, alpha=ALPHA_EDL):
+    """PREDICT the net surface charge at a pH from the surface species only (Section I).
+    Uses the forward brine speciation for activities; reads nothing from the spreadsheet."""
+    sp = speciate(pH, 1e-5, 1e-5, ADS_NaT, ADS_ClT)
+    sp["I"] = ADS_I
+    return surface_solve(sp, {}, metal=None, alpha=alpha)["sigma0"]
+
+
 def step4_background(sigma0_df):
-    banner(4, "Fix the background site constants and calibrate the capacitance")
+    banner(4, "Background constants, capacitance, and the PREDICTED surface charge")
     explain("""
-    The proton and carbonate constants for the three sites are taken from Pokrovsky 1999
-    (Step 2) rather than re-fitted, because three noisy titration points on each side of
-    the PZC cannot pin three acidity constants independently. What I do refine against
-    your own sigma0 data is the single EDL parameter alpha, which sets the capacitance
-    through C = sqrt(I)/alpha. I search alpha for the best match to the magnitude of your
-    measured surface charge. A caution worth stating plainly: your tabulated sigma0 is
-    negative below pH 8 and positive above it, which is the opposite sign to the proton
-    charge of a constant-capacitance model, so the mass-balance definition of sigma0 in
-    the spreadsheet differs from the model's surface charge. I therefore use sigma0 to
-    anchor the capacitance and the point of zero charge, not as a term the metal
-    constants are fitted to.
+    Two things are settled here. First, the proton and carbonate constants for the three
+    sites are taken from Pokrovsky 1999 and held fixed; three noisy titration points per
+    side of the PZC cannot pin three acidity constants independently, so re-fitting them
+    would invent precision. Second, the capacitance is set through C = sqrt(I)/alpha with
+    Pokrovsky's alpha of 0.004. That is a deliberate choice, not a fit to your numbers.
+    """)
+    explain("""
+    The important correction you asked for is here. The PREDICTED surface charge below is
+    built only from the surface species the model solves (Section I of the equations). It
+    reads nothing from the spreadsheet. Your tabulated surface charge is a different,
+    measured quantity (Section J, the Charlet mass balance); it also contains the net
+    effect of dolomite dissolution, which is why its sign near the PZC is opposite to the
+    clean surface-proton charge. I therefore compare the two on the location of the point
+    of zero charge and on magnitude, not sign for sign, and I never let the spreadsheet
+    values enter the prediction.
     """)
     global ALPHA_EDL
-    pH = sigma0_df["pH"].values
-    meas = sigma0_df["sigma0"].values
+    ALPHA_EDL = 0.004
+    print(f"  log K1 (>CO3H0 = >CO3- + H+)   = {BACKGROUND_LOGK['CO3_deprot']:+.2f}  (fixed, Pokrovsky)")
+    print(f"  log K2 (>CaOH0 = >CaO- + H+)   = {BACKGROUND_LOGK['CaO_deprot']:+.2f}  (fixed, Pokrovsky)")
+    print(f"  log K3 (>MgOH0 = >MgO- + H+)   = {BACKGROUND_LOGK['MgO_deprot']:+.2f}  (fixed, Pokrovsky)")
+    print(f"  alpha (EDL parameter)          = {ALPHA_EDL:.4f}  (Pokrovsky's published value)")
+    print(f"  capacitance at I={ADS_I:.2f} M    = {np.sqrt(ADS_I)/ALPHA_EDL:.0f} F/m2 "
+          f"-> psi0 only a few mV (high-capacitance regime)")
 
-    def model_sigma(alpha):
-        out = []
-        for p in pH:
-            sp = speciate(p, 1e-5, 1e-5, ADS_NaT, ADS_ClT)
-            sp["I"] = ADS_I
-            out.append(surface_solve(sp, {}, metal=None, alpha=alpha)["sigma0"])
-        return np.array(out)
-
-    alphas = np.logspace(-3, -0.5, 40)
-    best_a, best_err = ALPHA_EDL, np.inf
-    for a in alphas:
-        err = np.sum((np.abs(model_sigma(a)) - np.abs(meas)) ** 2)
-        if err < best_err:
-            best_err, best_a = err, a
-    ALPHA_EDL = best_a
-
-    # locate the modelled point of zero charge
+    # PREDICTED surface charge versus pH, from surface species only
     grid = np.linspace(5.0, 10.5, 200)
-    sig = []
-    for p in grid:
-        sp = speciate(p, 1e-5, 1e-5, ADS_NaT, ADS_ClT); sp["I"] = ADS_I
-        sig.append(surface_solve(sp, {}, metal=None, alpha=best_a)["sigma0"])
-    sig = np.array(sig)
+    sig = np.array([predicted_sigma0(p, ALPHA_EDL) for p in grid])
     pzc = grid[np.argmin(np.abs(sig))]
+    print(f"\n  PREDICTED surface charge (from surface species only), sample points:")
+    print(f"    {'pH':>5} {'sigma0_pred (C/m2)':>20} {'sign':>6}")
+    for p in [5.5, 6.5, 7.0, pzc, 7.5, 8.5, 9.5]:
+        s = predicted_sigma0(p, ALPHA_EDL)
+        print(f"    {p:5.2f} {s:20.3e} {'+' if s > 0 else '-':>6}")
+    print(f"\n  modelled point of zero charge = pH {pzc:.2f}   (measured PZC ~ 8.0)")
+    print(f"  positive below the PZC (protonated sites) and negative above it - the")
+    print(f"  physically expected direction for the surface-proton charge.")
 
-    print(f"  log K1 (>CO3H0 = >CO3- + H+)      = {BACKGROUND_LOGK['CO3_deprot']:+.2f}  (fixed)")
-    print(f"  log K2 (>CaOH0 = >CaO- + H+)      = {BACKGROUND_LOGK['CaO_deprot']:+.2f}  (fixed)")
-    print(f"  log K3 (>MgOH0 = >MgO- + H+)      = {BACKGROUND_LOGK['MgO_deprot']:+.2f}  (fixed)")
-    print(f"  refined EDL parameter alpha       = {best_a:.4f}")
-    print(f"  capacitance at I={ADS_I:.2f} M       = {np.sqrt(ADS_I)/best_a:.1f} F/m2")
-    print(f"  modelled point of zero charge     = pH {pzc:.2f}  (target ~8.0)")
-    return best_a
+    # a hard physical bound: the surface charge can never exceed the total site charge
+    max_sites_molm2 = SITE_DENS["Ca"] + SITE_DENS["Mg"] + SITE_DENS["CO3"]   # mol/m2
+    worst_measured = np.max(np.abs(SIGMA0_DATA["sigma0"]))                    # mol/m2
+    explain(f"""
+    A quantitative check that supports keeping the two apart. The surface can hold at most
+    {max_sites_molm2*1e6:.0f} umol/m2 of charge (its total site density). The measured
+    Eq 9 values reach {worst_measured*1e6:.0f} umol/m2 at acidic pH, about
+    {worst_measured/max_sites_molm2:.0f} times the entire site capacity. A number that
+    large cannot be a surface charge; it is the mass-balance signature of dolomite
+    dissolution released per unit area. Only near the PZC do the measured values fall back
+    into the range a real surface charge could occupy. This is the concrete reason the
+    prediction is built from surface species and never from those solution numbers.
+    """)
+    return ALPHA_EDL
 
 
 # ======================================================================================
@@ -662,14 +832,27 @@ def step8_validate(act, logK, alpha):
     for p in grid:
         sp = speciate(p, 1e-5, 1e-5, ADS_NaT, ADS_ClT); sp["I"] = ADS_I
         sig.append(surface_solve(sp, {}, metal=None, alpha=alpha)["sigma0"])
-    fig, ax = plt.subplots(figsize=(7, 4.6))
-    ax.axhline(0, color="0.6", lw=0.8, ls="--")
-    ax.plot(grid, np.array(sig) * 1e3, "-", color="#2c5f8a", label="CCM background model")
-    ax.scatter(SIGMA0_DATA["pH"], SIGMA0_DATA["sigma0"] * 1e3, s=60, color="#c1440e",
-               zorder=3, label="measured (spreadsheet)")
-    ax.set_xlabel("pH"); ax.set_ylabel(r"$\sigma_0$ (mmol/m$^2$)")
-    ax.set_title("Surface charge: model vs measurement")
-    ax.legend(); ax.grid(alpha=0.3); fig.tight_layout()
+    # Two panels, because the predicted surface charge and the measured mass-balance value
+    # live on very different scales. Top: the PREDICTION in umol/m2 (Section I), bounded by
+    # the site density. Bottom: the MEASURED Eq 9 values in mmol/m2 (Section J), which run
+    # far past the site capacity at acidic pH because they carry dolomite dissolution.
+    sig_umolm2 = np.array(sig) / F * 1e6                       # C/m2 -> umol/m2
+    cap = (SITE_DENS["Ca"] + SITE_DENS["Mg"] + SITE_DENS["CO3"]) * 1e6   # umol/m2
+    fig, (axt, axb) = plt.subplots(2, 1, figsize=(7.6, 7.4), sharex=True)
+    axt.axhline(0, color="0.6", lw=0.8, ls="--")
+    axt.axhline(cap, color="0.7", lw=0.8, ls=":"); axt.axhline(-cap, color="0.7", lw=0.8, ls=":")
+    axt.plot(grid, sig_umolm2, "-", color="#2c5f8a", label="PREDICTED (surface species only)")
+    axt.text(5.1, cap, "  total site capacity", va="bottom", fontsize=8, color="0.4")
+    axt.set_ylabel(r"predicted $\sigma_0$ ($\mu$mol/m$^2$)")
+    axt.set_title("Surface charge, PREDICTED from the model (uses no spreadsheet species)")
+    axt.legend(fontsize=8); axt.grid(alpha=0.3)
+    axb.axhline(0, color="0.6", lw=0.8, ls="--")
+    axb.scatter(SIGMA0_DATA["pH"], SIGMA0_DATA["sigma0"] * 1e3, s=60, color="#c1440e",
+                zorder=3, label="MEASURED (Eq 9, carries dissolution)")
+    axb.set_xlabel("pH"); axb.set_ylabel(r"measured $\sigma$ (mmol/m$^2$)")
+    axb.set_title("Surface charge, MEASURED mass balance (acidic values exceed site capacity)")
+    axb.legend(fontsize=8); axb.grid(alpha=0.3)
+    fig.tight_layout()
     fig.savefig(os.path.join(HERE, "surface_charge_fit.png"), dpi=140)
     plt.close(fig)
 
@@ -802,17 +985,18 @@ def step10_compare(logK, unc):
     print(f"  Fitted Co binding (Ca, Mg) = {coCa:+.2f}, {coMg:+.2f}")
     print()
     explain("""
-    Reading the numbers correctly matters here. In this single-ion data set Li carries a
-    larger fitted constant than Co, but that is not evidence that Li out-competes Co per
-    site. It reflects two things. First, the fit is driven by absolute moles removed, and
-    Li was dosed about fifteen times more concentrated than Co, so its molar uptake is
-    actually larger even though its percentage recovery is small. Second, this is a
-    sorption-only model: the manuscript attributes much of Co recovery to carbonate
-    mineralisation (Co2+ + CO3-2 -> CoCO3, Eqs 7 to 9), a pathway not represented here, so
-    a surface-only fit does not capture the true Co affinity. Both constants sit one to a
-    few log units above the aqueous carbonate-site analogues, which is the expected
-    direction for surface over solution binding. The Co constant is tightly determined
-    (Step 11); the Li constant is loose because Li uptake is small and near the noise.
+    Reading the numbers: cobalt binds more strongly than lithium on both sites (Co-Ca is
+    above Li-Ca), which is the expected order for a divalent ion over a monovalent one and
+    matches the batch experiments where cobalt recovery far exceeds lithium recovery. Both
+    metals sit one to a few log units above the aqueous carbonate-site analogues, the usual
+    direction for surface binding to exceed solution binding. Two cautions belong with the
+    numbers. The cobalt constant is a lumped surface value: the manuscript attributes part
+    of Co recovery to carbonate mineralisation (Co2+ + CO3-2 -> CoCO3, Eqs 7 to 9), a
+    pathway this sorption-only model folds into the surface term rather than treating
+    separately. The lithium constant is loosely determined (large error in Step 11) because
+    lithium uptake is small and close to the measurement noise. The values also shift with
+    the capacitance parameter alpha; the high-capacitance value used here keeps the surface
+    potential near zero, so the electrostatic correction is minor.
     """)
 
 
@@ -850,15 +1034,17 @@ def write_report(logK, unc, r2, val_points, sens, alpha):
         for row in sens.itertuples():
             f.write(f"   {row.parameter}: {row.mean_increase:.4g}\n")
         f.write("\nInterpretation notes:\n")
+        f.write("  - Co binds more strongly than Li on both sites, the expected order for a\n")
+        f.write("    divalent over a monovalent ion; matches the batch recovery trend.\n")
         f.write("  - One constant per metal is fitted (Ca site); the Mg constant is tied\n")
         f.write(f"    with a fixed offset of {MG_OFFSET:+.1f} log units (Pokrovsky Ca vs Mg).\n")
-        f.write("  - This is a sorption-only model. Co recovery in the manuscript is partly\n")
-        f.write("    carbonate mineralisation (CoCO3), which is not represented, so the Co\n")
-        f.write("    constant is a lumped surface value, not a pure affinity.\n")
-        f.write("  - Li's larger constant reflects larger absolute molar uptake (Li dosed\n")
-        f.write("    ~15x more concentrated), not a stronger per-site affinity than Co.\n")
-        f.write("  - sigma0 anchors the capacitance and PZC only; its spreadsheet sign\n")
-        f.write("    convention differs from the CCM surface charge.\n")
+        f.write("  - Sorption-only model. Co recovery in the manuscript is partly carbonate\n")
+        f.write("    mineralisation (CoCO3, Eqs 7-9), folded here into the surface term.\n")
+        f.write("  - The Li constant is loosely determined (small uptake, near noise).\n")
+        f.write("  - PREDICTED sigma0 (Section I) is built from surface species only and\n")
+        f.write("    reads nothing from the spreadsheet; MEASURED sigma0 (Eq 9, Section J)\n")
+        f.write("    is a separate quantity that also carries dissolution, so its sign near\n")
+        f.write("    the PZC differs. alpha = 0.004 (Pokrovsky); results shift with alpha.\n")
         f.write("  - Next stage: extend METAL_REACTIONS and METAL_CHARGE to the full\n")
         f.write("    produced-water cation suite (Ba, Sr, Cd, Pb ...).\n")
     print(f"\nReport written to {path}")
@@ -875,6 +1061,7 @@ def main():
     print("#  Constant capacitance surface complexation model (Pokrovsky et al., 1999)")
     print("#" * 86)
 
+    step0_equations()
     master = step1_master_table()
     step2_model_framework()
     act = step3_activities(master)
