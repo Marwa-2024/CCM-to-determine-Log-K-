@@ -1,0 +1,246 @@
+Notebook[{
+Cell["Intrinsic log K for Li and Co on dolomite (FITEQL-style, Wolfram Mathematica)", "Title"],
+Cell["Self-contained notebook. Every reaction, equation and datum is embedded. Method: surface complexation with the constant capacitance model, solved for the surface potential, then log K fitted by minimising WSOS/DF. Model: Pokrovsky 1999. Evaluate the cells top to bottom (Evaluation, Evaluate Notebook).", "Text"],
+Cell["1. Reactions", "Section"],
+Cell["REACTIONS IN THE MODEL
+
+A. AQUEOUS DISSOCIATION
+   H2O            = H+   + OH-
+   CO2(g)         = CO2(aq)
+   NaCl           = Na+  + Cl-
+   HCl            = H+   + Cl-
+
+B. AQUEOUS COMPLEXATION
+   CO2(aq) + H2O  = HCO3- + H+          log K = -6.345
+   CO3-2  + H+    = HCO3-               log K = 10.329
+   LiCl           = Li+  + Cl-          (Li barely complexes)
+   CoCl+          = Co2+ + Cl-
+   CoOH+ + H+     = Co2+ + H2O          (Co hydrolysis)
+   CoCO3          = Co2+ + CO3-2
+
+C. SURFACE REACTIONS - carbonate site  >CO3H0     (log K, Pokrovsky 1999)
+   >CO3H0         = >CO3-   + H+        log K = -4.8
+   >CO3H0 + Ca2+  = >CO3Ca+ + H+        log K = -1.8
+   >CO3H0 + Mg2+  = >CO3Mg+ + H+        log K = -2.0
+
+D. SURFACE REACTIONS - calcium site   >CaOH0
+   >CaOH0 + H+          = >CaOH2+                  log K = 11.5
+   >CaOH0              = >CaO-   + H+              log K = -12.0
+   >CaOH0 + CO3-2 + 2H+ = >CaHCO3(0) + H2O         log K = -4.0
+   >CaOH0 + CO3-2 +  H+ = >CaCO3-   + H2O          log K = 16.6
+   >CaOH0 + Li+         = >CaOLi(0) + H+           log K = UNKNOWN (fitted)
+   >CaOH0 + Co2+        = >CaOCo+   + H+           log K = UNKNOWN (fitted)
+
+E. SURFACE REACTIONS - magnesium site >MgOH0
+   >MgOH0 + H+          = >MgOH2+                  log K = 10.6
+   >MgOH0              = >MgO-   + H+              log K = -12.0
+   >MgOH0 + CO3-2 + 2H+ = >MgHCO3(0) + H2O         log K = -3.5
+   >MgOH0 + CO3-2 +  H+ = >MgCO3-   + H2O          log K = 15.4
+   >MgOH0 + Li+         = >MgOLi(0) + H+           log K = tied (Ca value - 0.9)
+   >MgOH0 + Co2+        = >MgOCo+   + H+           log K = tied (Ca value - 0.9)
+", "Text"],
+Cell["2. Equations", "Section"],
+Cell["EQUATIONS
+
+(1) Davies activity coefficient (used up to I about 0.7 M)
+    log gamma_i = -A z^2 [ sqrt(I)/(1+sqrt(I)) - 0.3 I ] ,   A = 0.509
+
+(2) Open-system carbonate (fixed atmospheric pCO2 = 10^-3.5 atm)
+    a(H+)    = 10^-pH
+    a(HCO3-) = 10^-6.345 * a(CO2) / a(H+) ,   a(CO2) = 10^-1.469 * pCO2
+    a(CO3-2) = a(HCO3-) / (10^10.329 * a(H+))
+
+(3) Mass action for every species (component/species tableau, FITEQL)
+    C_i = K_i * PRODUCT_j ( X_j ^ a_ij ) * P^(z_i for surface species)
+    X_j  = free value of component j ;  a_ij = stoichiometry ;
+    P    = exp(-F psi / RT) is the electrostatic component (Boltzmann factor).
+
+(4) Boltzmann electrostatic correction (Pokrovsky Eq 6; Stumm)
+    a surface species of charge z carries the factor  exp(-z F psi / RT) = P^z
+    For  >SOH0 + Me(z+) = >SOMe(z-1) + H+ :
+    [>SOMe] = K * [>SOH0] * a(Me)/a(H) * exp(-(z-1) F psi / RT)
+
+(5) Site (mass) balances, solved for the neutral reference form
+    T(>CO3H) = [>CO3H0]+[>CO3-]+[>CO3Ca+]+[>CO3Mg+]
+    T(>CaOH) = [>CaOH0]+[>CaOH2+]+[>CaO-]+[>CaHCO3]+[>CaCO3-]+[>CaOMe]
+    T(>MgOH) = [>MgOH0]+[>MgOH2+]+[>MgO-]+[>MgHCO3]+[>MgCO3-]+[>MgOMe]
+    e.g.  [>CaOH0] = T(>CaOH) / (1 + sum of all ratios to >CaOH0)
+
+(6) PREDICTED surface charge, from the surface species only (ProtoFit Eq 2.2.3)
+    sigma = (F / SSA) * { [>CaOH2+]+[>MgOH2+]+[>CO3Ca+]+[>CO3Mg+]+[>CaOCo+]+[>MgOCo+]
+                          - [>CO3-]-[>CaO-]-[>MgO-]-[>CaCO3-]-[>MgCO3-] }
+    It never uses dissolved Ca2+/Mg2+; those belong to dolomite dissolution.
+
+(7) Constant capacitance model
+    psi = sigma / C ,     C = sqrt(I) / alpha ,   alpha = 0.004 (Pokrovsky)
+
+(8) Newton-Raphson equilibrium (FITEQL inner loop)
+    residuals Y_j = sum_i a_ij C_i - T_j = 0 for the chemical components,
+    Y_P = sum_(surface) z_i C_i + kappa * ln P = 0 for the electrostatic component,
+    Jacobian  Z_jk = sum_i a_ij a_ik C_i   (+ kappa on the P diagonal),
+    kappa = C * SSA * R T / F^2 .
+
+(9) Adsorption uptake and the fitted quantity
+    uptake = [>CaOMe] + [>MgOMe] ;   [Me]_eq = [Me]_total - uptake
+    predicted [Me]_eq is compared to the measured value.
+
+(10) FITEQL objective (goodness of fit)
+    WSOS/DF = sum_i ( Y_i / s_i )^2 / (N_obs - N_param) ,
+    s_i = sqrt( errAbs^2 + (errRel * value)^2 ) ;  a value near 1 is a good fit.
+", "Text"],
+Cell["3. Data", "Section"],
+Cell["EMBEDDED DATA (from the spreadsheet \"Set up\" and adsorption sheets)
+
+Reactor set-up
+   mean particle diameter        = 2.8 um
+   dolomite concentration        = 6 g / 100 mL = 60 g/L
+   solid density                 = 2850 g/m3
+   specific surface area (SSA)   = 0.76 m2/g
+   surface concentration St      = 60 * 0.76 = 45.6 m2/L
+   NaOH added each step          = 0.001 mol/L
+   HCl added each step           = 0.001 mol/L
+
+Model set-up
+   temperature                   = 25 C
+   ionic strength (batch)        = 0.70 M (mostly 40 g/L NaCl)
+   pCO2 (open system)            = 10^-3.5 atm
+   site density (Pokrovsky)      = 7, 7, 14 umol/m2 for Ca, Mg, carbonate
+   EDL parameter alpha           = 0.004
+
+Single-ion adsorption (equilibrium = day 6), concentrations in mg/L (ppm)
+   metal  pH    C0 (initial)   Ceq (equilibrium)
+   Co     6.0   80.513         74.393
+   Co     2.0   80.513         80.398
+   Li     6.0   138.43         135.262
+   Li     2.0   138.43         135.592
+", "Text"],
+Cell["4. Setup and embedded data", "Section"],
+Cell["(* ===== Physical constants and embedded data ===== *)
+Fc = 96485.0; Rg = 8.314; Tk = 298.15; FRT = Fc/(Rg*Tk);
+
+(* Reactor set-up (spreadsheet \"Set up\") *)
+meanDiamUm = 2.8; dolomiteGL = 60.0; densitySolid = 2850.0;
+SSA = 0.76; Sarea = dolomiteGL*SSA;   (* 45.6 m^2 / L *)
+NaOHstep = 0.001; HClstep = 0.001;
+
+(* CCM / EDL and brine *)
+alpha = 0.004; Ibatch = 0.7; Ccap = Sqrt[Ibatch]/alpha;
+MM = <|\"Li\" -> 6.941, \"Co\" -> 58.933, \"Cl\" -> 35.45|>;
+ClTot = 40.0/MM[\"Cl\"];
+
+(* site densities (Pokrovsky 1999), mol/m^2 and totals mol/L *)
+TCO3site = 14.0*10^-6*Sarea; TCasite = 7.0*10^-6*Sarea; TMgsite = 7.0*10^-6*Sarea;
+zMet = <|\"Li\" -> 1, \"Co\" -> 2|>;
+
+(* single-ion adsorption data: {metal, pH, C0ppm, Ceqppm} *)
+adsData = {{\"Co\", 6.0, 80.513, 74.393}, {\"Co\", 2.0, 80.513, 80.398},
+   {\"Li\", 6.0, 138.43, 135.262}, {\"Li\", 2.0, 138.43, 135.592}};
+errAbs = 0.5; errRel = 0.02;", "Input"],
+Cell["5. Activity coefficients and background activities", "Section"],
+Cell["(* ===== Davies activity coefficients and background activities ===== *)
+davies[Ii_] := Module[{f}, f = -0.509*(Sqrt[Ii]/(1 + Sqrt[Ii]) - 0.3*Ii); {10^f, 10^(4 f)}];
+{gam1, gam2} = davies[Ibatch];
+pCO2 = 10^-3.5; aCO2 = 10^(-1.469)*pCO2;
+activities[pH_] := Module[{aH, aHCO3, aCO3},
+   aH = 10^(-pH);
+   aHCO3 = 10^(-6.345)*aCO2/aH;
+   aCO3 = aHCO3/(10^(10.329)*aH);
+   <|\"aH\" -> aH, \"aCO3\" -> aCO3, \"aCa\" -> gam2*3.0*10^-6,
+     \"aMg\" -> gam2*3.0*10^-6, \"aCl\" -> gam1*ClTot|>];
+
+(* free metal-ion activity from the dissolved total *)
+metalActivity[metal_, Meq_, act_] := Module[{aCl, aH, aCO3, r},
+   aCl = act[\"aCl\"]; aH = act[\"aH\"]; aCO3 = act[\"aCO3\"];
+   If[metal == \"Li\",
+     gam1*Meq/(1 + aCl/10^(0.5)),
+     r = aCl*10^(-0.05) + 10^(-9.65)/aH + aCO3*10^(4.22);
+     gam2*Meq/(1 + r)]];", "Input"],
+Cell["6. Surface speciation and the constant capacitance solve", "Section"],
+Cell["(* ===== Surface speciation and net surface charge at a given potential psi ===== *)
+(* Each site is written relative to its neutral reference form; b = Exp[-FRT psi] is the
+   Boltzmann factor, and a surface species of charge z carries b^z. *)
+speciesAt[metal_, aMe_, act_, logKca_, logKmg_, psi_?NumericQ] := Module[
+   {aH, aCO3, aCa, aMg, zm, b, denCO3, CO3H, denCa, CaOH, denMg, MgOH,
+    sCaOH2, sMgOH2, sCO3Ca, sCO3Mg, sCO3m, sCaO, sMgO, sCaCO3, sMgCO3,
+    sCaOMe, sMgOMe, sig},
+   aH = act[\"aH\"]; aCO3 = act[\"aCO3\"]; aCa = act[\"aCa\"]; aMg = act[\"aMg\"];
+   zm = zMet[metal]; b = Exp[-FRT*psi];
+   denCO3 = 1 + 10^(-4.8)/aH/b + 10^(-1.8)*aCa/aH*b + 10^(-2.0)*aMg/aH*b;
+   CO3H = TCO3site/denCO3;
+   denCa = 1 + 10^(11.5)*aH*b + 10^(-12)/aH/b + 10^(-4.0)*aCO3*aH^2 +
+      10^(16.6)*aCO3*aH/b + 10^(logKca)*aMe/aH*b^(zm - 1);
+   CaOH = TCasite/denCa;
+   denMg = 1 + 10^(10.6)*aH*b + 10^(-12)/aH/b + 10^(-3.5)*aCO3*aH^2 +
+      10^(15.4)*aCO3*aH/b + 10^(logKmg)*aMe/aH*b^(zm - 1);
+   MgOH = TMgsite/denMg;
+   sCaOH2 = 10^(11.5)*aH*b*CaOH; sMgOH2 = 10^(10.6)*aH*b*MgOH;
+   sCO3Ca = 10^(-1.8)*aCa/aH*b*CO3H; sCO3Mg = 10^(-2.0)*aMg/aH*b*CO3H;
+   sCO3m = 10^(-4.8)/aH/b*CO3H; sCaO = 10^(-12)/aH/b*CaOH; sMgO = 10^(-12)/aH/b*MgOH;
+   sCaCO3 = 10^(16.6)*aCO3*aH/b*CaOH; sMgCO3 = 10^(15.4)*aCO3*aH/b*MgOH;
+   sCaOMe = 10^(logKca)*aMe/aH*b^(zm - 1)*CaOH;
+   sMgOMe = 10^(logKmg)*aMe/aH*b^(zm - 1)*MgOH;
+   sig = Fc/Sarea*(sCaOH2 + sMgOH2 + sCO3Ca + sCO3Mg + (zm - 1)*(sCaOMe + sMgOMe)
+        - sCO3m - sCaO - sMgO - sCaCO3 - sMgCO3);
+   <|\"sigma\" -> sig, \"adsorbed\" -> sCaOMe + sMgOMe|>];
+
+(* solve the constant-capacitance constraint psi = sigma/Ccap for psi *)
+surfaceSolve[metal_, aMe_, act_, logKca_, logKmg_] := Module[{ps, sol},
+   sol = FindRoot[speciesAt[metal, aMe, act, logKca, logKmg, ps][\"sigma\"] == Ccap*ps,
+      {ps, 0.0}];
+   speciesAt[metal, aMe, act, logKca, logKmg, ps /. sol]];", "Input"],
+Cell["7. Forward prediction of dissolved metal", "Section"],
+Cell["(* ===== Forward prediction of the equilibrium dissolved metal ===== *)
+predictCeq[metal_, pH_, C0ppm_, logKca_, logKmg_] := Module[
+   {act, Ttot, Meq, aMe, sol, k},
+   act = activities[pH];
+   Ttot = C0ppm/MM[metal]/1000.0;
+   Meq = Ttot;
+   Do[
+     aMe = metalActivity[metal, Meq, act];
+     sol = surfaceSolve[metal, aMe, act, logKca, logKmg];
+     Meq = Max[Ttot - sol[\"adsorbed\"], 1.0*10^-12];
+   , {k, 40}];
+   Meq*MM[metal]*1000.0];", "Input"],
+Cell["8. Fit log K by minimising WSOS/DF", "Section"],
+Cell["(* ===== Fit log K by minimising WSOS (Mg tied with the -0.9 offset) ===== *)
+wsos[liCa_?NumericQ, coCa_?NumericQ] := Module[{ss, kk, row, metal, pH, C0, Ceq, pred, s, kca, kmg},
+   ss = 0.0;
+   Do[
+     row = adsData[[kk]]; metal = row[[1]]; pH = row[[2]]; C0 = row[[3]]; Ceq = row[[4]];
+     kca = If[metal == \"Li\", liCa, coCa]; kmg = kca - 0.9;
+     pred = predictCeq[metal, pH, C0, kca, kmg];
+     s = Sqrt[errAbs^2 + (errRel*Ceq)^2];
+     ss = ss + ((pred - Ceq)/s)^2;
+   , {kk, Length[adsData]}];
+   ss];
+
+fit = FindMinimum[wsos[liCa, coCa], {{liCa, 2.0}, {coCa, 2.0}}];
+{liCaOpt, coCaOpt} = {liCa, coCa} /. fit[[2]];
+ndf = Length[adsData] - 2;
+Print[\"log K  Li-Ca = \", NumberForm[liCaOpt, {5, 2}]];
+Print[\"log K  Li-Mg = \", NumberForm[liCaOpt - 0.9, {5, 2}]];
+Print[\"log K  Co-Ca = \", NumberForm[coCaOpt, {5, 2}]];
+Print[\"log K  Co-Mg = \", NumberForm[coCaOpt - 0.9, {5, 2}]];
+Print[\"WSOS/DF = \", NumberForm[fit[[1]]/ndf, {5, 3}]];", "Input"],
+Cell["9. Validation", "Section"],
+Cell["(* ===== Validation table ===== *)
+Print[\"metal  pH   Ceq_meas   Ceq_pred\"];
+Do[
+  With[{row = adsData[[kk]]},
+   With[{metal = row[[1]], pH = row[[2]], C0 = row[[3]], Ceq = row[[4]]},
+    Print[metal, \"   \", pH, \"   \", NumberForm[Ceq, {6, 3}], \"   \",
+      NumberForm[predictCeq[metal, pH, C0,
+        If[metal == \"Li\", liCaOpt, coCaOpt], If[metal == \"Li\", liCaOpt, coCaOpt] - 0.9],
+       {6, 3}]]]],
+  {kk, Length[adsData]}];", "Input"],
+Cell["10. Surface charge (correct magnitude, surface species only)", "Section"],
+Cell["(* ===== Surface charge from surface species only (ProtoFit Eq 2.2.3) ===== *)
+sigmaAt[pH_?NumericQ] := surfaceSolve[\"Co\", 0.0, activities[pH], -99, -99][\"sigma\"];
+Print[\"pH   sigma(C/m2)   sigma(mmol/m2)   [Pokrovsky 0.01-0.02 mmol/m2]\"];
+Do[Print[pH, \"   \", NumberForm[sigmaAt[pH], {7, 4}], \"   \",
+    NumberForm[sigmaAt[pH]/Fc*1000, {8, 5}]], {pH, {5.5, 6.5, 7.3, 8.0, 8.5, 9.0}}];
+Plot[sigmaAt[pH]/Fc*1000, {pH, 4, 10.5},
+   AxesLabel -> {\"pH\", \"sigma (mmol/m2)\"},
+   PlotLabel -> \"Predicted surface charge (surface species only)\",
+   PlotRange -> {-0.035, 0.02}, GridLines -> Automatic]", "Input"]
+}]

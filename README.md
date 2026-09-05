@@ -4,7 +4,19 @@ Two self-contained Python scripts that determine the intrinsic surface complexat
 constants (log K) for lithium and cobalt binding on dolomite, using the constant
 capacitance three-site model of Pokrovsky, Schott & Thomas (1999).
 
-## Which file to run
+## Notebooks (all data embedded, no external files)
+
+* **`FITEQL_LiCo_dolomite_Colab.ipynb`** — Google Colab notebook. Open it at
+  colab.research.google.com (File, Upload notebook) and choose Runtime, Run all. Every
+  reaction, equation, and datum is written out in the first cells; the rest is the
+  FITEQL-style solver in Python.
+* **`FITEQL_LiCo_dolomite_Mathematica.nb`** — Wolfram Mathematica notebook with the same
+  content and data, implemented in the Wolfram Language. Open it in Mathematica and choose
+  Evaluation, Evaluate Notebook.
+
+Both reproduce log K(Co-Ca) = +2.31, log K(Li-Ca) = +1.88, WSOS/DF = 0.53.
+
+## Which script to run
 
 * **`fiteql_logK_Li_Co_dolomite.py`** — the rigorous method, recommended. It reproduces
   what the FITEQL program does, in pure Python: a component/species tableau, a
