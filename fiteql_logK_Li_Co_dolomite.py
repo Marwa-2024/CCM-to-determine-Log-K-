@@ -136,9 +136,14 @@ AQ_METAL = {
 METAL_Z = dict(Li=1, Co=2)
 
 
-def build_species(metal, logK_MeCa, logK_MeMg):
+def build_species(metal, logK_Me):
     """Assemble the full species list for one metal. Surface constants are Pokrovsky's
-    Table 3 for the background reactions; the two metal constants are the unknowns."""
+    Table 3 for the background reactions; the metal constant (logK_Me) is the unknown.
+
+    Per Pokrovsky (1999): metal CATIONS adsorb on the carbonate site,
+        >CO3H0 + Me(z+) = >CO3Me(z-1) + H+
+    (the deprotonated >CO3- binds the cation), while the >CaOH/>MgOH hydroxyl sites
+    take ANIONS/ligands. So the Li/Co complex sits on the carbonate site, not >CaOH."""
     zMe = METAL_Z[metal]
     sp = []
     # free metal ion
@@ -146,30 +151,29 @@ def build_species(metal, logK_MeCa, logK_MeMg):
     # aqueous metal complexes
     for name, lk, st, z in AQ_METAL[metal]:
         sp.append((name, lk, st, z, False))
-    # carbonate site (reference >CO3H0)
+    # carbonate site (reference >CO3H0) - this is where metal cations bind
     sp += [
         ("sCO3H",  0.0,  {"sCO3H": 1},                     0, True),
         ("sCO3-", -4.8,  {"sCO3H": 1, "H": -1},           -1, True),
         ("sCO3Ca",-1.8,  {"sCO3H": 1, "Ca": 1, "H": -1},  +1, True),
         ("sCO3Mg",-2.0,  {"sCO3H": 1, "Mg": 1, "H": -1},  +1, True),
+        ("sCO3Me", logK_Me, {"sCO3H": 1, "Me": 1, "H": -1}, zMe - 1, True),  # <-- UNKNOWN
     ]
-    # calcium hydroxyl site (reference >CaOH0)
+    # calcium hydroxyl site (reference >CaOH0) - anion/ligand site, no metal cation here
     sp += [
         ("sCaOH",   0.0,   {"sCaOH": 1},                          0, True),
         ("sCaOH2", 11.5,   {"sCaOH": 1, "H": 1},                 +1, True),
         ("sCaO",  -12.0,   {"sCaOH": 1, "H": -1},                -1, True),
         ("sCaHCO3",-4.0,   {"sCaOH": 1, "CO3": 1, "H": 2},        0, True),
         ("sCaCO3", 16.6,   {"sCaOH": 1, "CO3": 1, "H": 1},       -1, True),
-        ("sCaOMe", logK_MeCa, {"sCaOH": 1, "Me": 1, "H": -1}, zMe - 1, True),
     ]
-    # magnesium hydroxyl site (reference >MgOH0)
+    # magnesium hydroxyl site (reference >MgOH0) - anion/ligand site
     sp += [
         ("sMgOH",   0.0,   {"sMgOH": 1},                          0, True),
         ("sMgOH2", 10.6,   {"sMgOH": 1, "H": 1},                 +1, True),
         ("sMgO",  -12.0,   {"sMgOH": 1, "H": -1},                -1, True),
         ("sMgHCO3",-3.5,   {"sMgOH": 1, "CO3": 1, "H": 2},        0, True),
         ("sMgCO3", 15.4,   {"sMgOH": 1, "CO3": 1, "H": 1},       -1, True),
-        ("sMgOMe", logK_MeMg, {"sMgOH": 1, "Me": 1, "H": -1}, zMe - 1, True),
     ]
     return sp
 
@@ -192,7 +196,7 @@ def gamma_of(comp_or_charge, g1, g2, is_component):
     return 1.0 if z == 0 else (g1 if z == 1 else g2)
 
 
-def prepare_point(metal, pH, logK_MeCa, logK_MeMg):
+def prepare_point(metal, pH, logK_Me):
     """Return everything the equilibrium solver needs at one pH: fixed component
     concentrations, the species list with conditional constants, and kappa."""
     bg = background_activities(pH)
@@ -203,7 +207,7 @@ def prepare_point(metal, pH, logK_MeCa, logK_MeMg):
             "Mg": bg["Mg"] / g2, "Cl": bg["Cl"] / g1}
     gamma_comp = {"H": g1, "CO3": g2, "Ca": g2, "Mg": g2, "Cl": g1, "Me": gMe,
                   "sCO3H": 1.0, "sCaOH": 1.0, "sMgOH": 1.0}
-    sp_raw = build_species(metal, logK_MeCa, logK_MeMg)
+    sp_raw = build_species(metal, logK_Me)
     species = []
     for name, lk, st, z, surf in sp_raw:
         gprod = 1.0
@@ -290,14 +294,14 @@ def equilibrium(Xfix, species, kappa, totals, u0=None, verbose=False):
 #  FORWARD PREDICTION FOR ONE ADSORPTION POINT
 # ======================================================================================
 
-def predict_point(metal, pH, T_Me, logK_MeCa, logK_MeMg):
-    Xfix, species, kappa, bg = prepare_point(metal, pH, logK_MeCa, logK_MeMg)
+def predict_point(metal, pH, T_Me, logK_Me):
+    Xfix, species, kappa, bg = prepare_point(metal, pH, logK_Me)
     totals = {"Me": T_Me, "sCO3H": SITE_TOT["CO3"],
               "sCaOH": SITE_TOT["Ca"], "sMgOH": SITE_TOT["Mg"]}
     res = equilibrium(Xfix, species, kappa, totals)
     aq_names = ["Me"] + [c[0] for c in AQ_METAL[metal]]
     dissolved = sum(res["conc"][nm] for nm in aq_names)          # mol/L
-    adsorbed = res["conc"]["sCaOMe"] + res["conc"]["sMgOMe"]      # mol/L
+    adsorbed = res["conc"]["sCO3Me"]                             # mol/L, carbonate site
     return dict(dissolved=dissolved, adsorbed=adsorbed, psi=res["psi"],
                 sigma=res["sigma"], iters=res["iters"], maxY=res["maxY"], res=res)
 
@@ -329,18 +333,18 @@ SIGMA0_MEAS = pd.DataFrame({
 #  Ca-vs-Mg offset because two pH points per metal cannot resolve both sites.
 # ======================================================================================
 
-MG_OFFSET = 10.6 - 11.5      # -0.9, from Pokrovsky's >MeOH2+ Ca vs Mg difference
+# Metal cations bind ONE site (the carbonate site), so there is ONE constant per metal.
+NAMES = {"Li": ">CO3H0 + Li+  = >CO3Li(0) + H+",
+         "Co": ">CO3H0 + Co2+ = >CO3Co+  + H+"}
 
 
 def residual_vector(theta):
-    """theta = [logK_Li-Ca, logK_Co-Ca]. Returns weighted residuals (Ceq pred - meas)/s."""
-    liCa, coCa = theta
-    K = {"Li": (liCa, liCa + MG_OFFSET), "Co": (coCa, coCa + MG_OFFSET)}
+    """theta = [logK_Li, logK_Co] on the carbonate site. Weighted residuals (pred-meas)/s."""
+    K = {"Li": theta[0], "Co": theta[1]}
     r = []
     for row in ADS.itertuples():
         T_Me = row.C0_ppm / MM[row.metal] / 1e3
-        kCa, kMg = K[row.metal]
-        pr = predict_point(row.metal, row.pH, T_Me, kCa, kMg)
+        pr = predict_point(row.metal, row.pH, T_Me, K[row.metal])
         Ceq_pred = pr["dissolved"] * MM[row.metal] * 1e3
         s = np.hypot(ERR_ABS, ERR_REL * row.Ceq_ppm)
         r.append((Ceq_pred - row.Ceq_ppm) / s)
@@ -352,38 +356,37 @@ def residual_vector(theta):
 # ======================================================================================
 
 def show_tableau():
-    banner("STEP 1  The tableau: components and species (FITEQL formulation)")
+    banner("STEP 1  The tableau: components and species (FITEQL / MINTEQ formulation)")
     print("Components solved by Newton-Raphson : Me, >CO3H, >CaOH, >MgOH, P=exp(-F.psi/RT)")
     print("Components fixed as activities       : H, CO3, Ca, Mg, Cl")
     print("\nEach species = log K * product(component ^ stoichiometry) * P^charge (surface).")
-    print("Surface constants are Pokrovsky 1999 Table 3; the two >SOMe are the unknowns.\n")
-    sp = build_species("Co", -99, -99)
-    print(f"  {'species':8} {'logK':>6}  {'charge':>6}  stoichiometry")
+    print("Per Pokrovsky 1999, metal CATIONS bind the carbonate site (>CO3Me); the")
+    print("hydroxyl sites >CaOH/>MgOH take anions/ligands. The one >CO3Me is the unknown.\n")
+    sp = build_species("Co", -99)
+    print(f"  {'species':8} {'logK':>7}  {'charge':>6}  stoichiometry")
     for name, lk, st, z, surf in sp:
-        lab = "unknown" if name == "sCaOMe" or name == "sMgOMe" else f"{lk:6.2f}"
-        print(f"  {name:8} {lab:>6}  {z:>6}  {st}")
+        lab = "unknown" if name == "sCO3Me" else f"{lk:6.2f}"
+        print(f"  {name:8} {lab:>7}  {z:>6}  {st}")
 
 
 def solve_and_report():
     show_tableau()
 
     banner("STEP 2  Inner loop check: does the Newton-Raphson equilibrium converge?")
-    print("For each adsorption point we solve the full coupled equilibrium once, with a")
-    print("guess of the two unknown constants, and confirm the mole balances close.\n")
+    print("For each adsorption point we solve the full coupled equilibrium once and")
+    print("confirm the mole balances close.\n")
     for row in ADS.itertuples():
         T_Me = row.C0_ppm / MM[row.metal] / 1e3
-        pr = predict_point(row.metal, row.pH, T_Me, 2.0, 2.0)
+        pr = predict_point(row.metal, row.pH, T_Me, 0.0)
         print(f"  {row.metal} pH {row.pH:.0f}: converged in {pr['iters']:2d} iterations, "
               f"max scaled |Y| = {pr['maxY']:.1e}, psi = {pr['psi']*1e3:6.2f} mV")
 
     banner("STEP 3  Outer loop: fit log K by minimising WSOS/DF")
-    print("theta = [logK(Li-Ca), logK(Co-Ca)]; Mg tied with offset "
-          f"{MG_OFFSET:+.1f}. Weights use error = sqrt({ERR_ABS}^2 + ({ERR_REL}*Ceq)^2) ppm.\n")
-    sol = least_squares(residual_vector, [2.0, 2.0], method="trf",
+    print("theta = [logK(Li), logK(Co)] on the carbonate site. One constant per metal,")
+    print(f"no site tie needed. Weights use error = sqrt({ERR_ABS}^2 + ({ERR_REL}*Ceq)^2) ppm.\n")
+    sol = least_squares(residual_vector, [0.0, 0.0], method="trf",
                         bounds=([-12, -12], [12, 12]), diff_step=1e-3)
-    liCa, coCa = sol.x
-    logK = {"Li_Ca": liCa, "Li_Mg": liCa + MG_OFFSET,
-            "Co_Ca": coCa, "Co_Mg": coCa + MG_OFFSET}
+    logK = {"Li": sol.x[0], "Co": sol.x[1]}
 
     # WSOS/DF and covariance (FITEQL goodness of fit)
     r = sol.fun
@@ -394,24 +397,19 @@ def solve_and_report():
         se = np.sqrt(np.abs(np.diag(cov)))
     except np.linalg.LinAlgError:
         se = np.full(n_par, np.nan)
-    se_map = {"Li_Ca": se[0], "Li_Mg": se[0], "Co_Ca": se[1], "Co_Mg": se[1]}
+    se_map = {"Li": se[0], "Co": se[1]}
 
-    names = {"Li_Ca": ">CaOH0 + Li+  = >CaOLi(0) + H+",
-             "Li_Mg": ">MgOH0 + Li+  = >MgOLi(0) + H+",
-             "Co_Ca": ">CaOH0 + Co2+ = >CaOCo+  + H+",
-             "Co_Mg": ">MgOH0 + Co2+ = >MgOCo+  + H+"}
     print("Fitted intrinsic stability constants (25 C, I = 0.7 M):")
-    for k in ["Li_Ca", "Li_Mg", "Co_Ca", "Co_Mg"]:
-        tag = "fitted" if k in ("Li_Ca", "Co_Ca") else "tied  "
-        print(f"  {names[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}  [{tag}]")
-    print(f"\n  WSOS/DF = {wsos_df:.3f}   (FITEQL: about 0.1 to 20 is a good fit, ~1 ideal)")
+    for k in ["Li", "Co"]:
+        print(f"  {NAMES[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}")
+    print(f"\n  For scale, Pokrovsky's >CO3H0 + Ca2+ = >CO3Ca+ + H+ has log K = -1.8.")
+    print(f"  WSOS/DF = {wsos_df:.3f}   (FITEQL: about 0.1 to 20 is a good fit, ~1 ideal)")
 
     banner("STEP 4  Validation: measured vs predicted equilibrium concentrations")
     rows = []
     for row in ADS.itertuples():
         T_Me = row.C0_ppm / MM[row.metal] / 1e3
-        kCa, kMg = (logK[f"{row.metal}_Ca"], logK[f"{row.metal}_Mg"])
-        pr = predict_point(row.metal, row.pH, T_Me, kCa, kMg)
+        pr = predict_point(row.metal, row.pH, T_Me, logK[row.metal])
         Ceq_pred = pr["dissolved"] * MM[row.metal] * 1e3
         upt_meas = row.C0_ppm - row.Ceq_ppm
         upt_pred = pr["adsorbed"] * MM[row.metal] * 1e3
@@ -426,8 +424,8 @@ def solve_and_report():
     write_report(logK, se_map, wsos_df, val)
 
     banner("SUMMARY")
-    for k in ["Li_Ca", "Li_Mg", "Co_Ca", "Co_Mg"]:
-        print(f"  {names[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}")
+    for k in ["Li", "Co"]:
+        print(f"  {NAMES[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}")
     print(f"  WSOS/DF = {wsos_df:.3f}")
     print("  Files: fiteql_results.txt, fiteql_adsorption.png, fiteql_surface_charge.png")
     return logK, se_map, wsos_df, val
@@ -447,7 +445,7 @@ def surface_charge_check():
           f"= {cap_C/F*1e3:.3f} mmol/m2.\n")
     print(f"  {'pH':>4} {'sigma (C/m2)':>13} {'sigma (mmol/m2)':>16}")
     for p in [5.5, 6.5, 7.3, 8.0, 8.5, 9.0]:
-        Xfix, species, kappa, bg = prepare_point("Co", p, -99, -99)
+        Xfix, species, kappa, bg = prepare_point("Co", p, -99)
         totals = {"Me": 1e-15, "sCO3H": SITE_TOT["CO3"],
                   "sCaOH": SITE_TOT["Ca"], "sMgOH": SITE_TOT["Mg"]}
         s = equilibrium(Xfix, species, kappa, totals)["sigma"]
@@ -467,8 +465,7 @@ def make_figures(logK):
     mm, pp, labs = [], [], []
     for row in ADS.itertuples():
         T_Me = row.C0_ppm / MM[row.metal] / 1e3
-        pr = predict_point(row.metal, row.pH, T_Me,
-                           logK[f"{row.metal}_Ca"], logK[f"{row.metal}_Mg"])
+        pr = predict_point(row.metal, row.pH, T_Me, logK[row.metal])
         mm.append(row.Ceq_ppm); pp.append(pr["dissolved"] * MM[row.metal] * 1e3)
         labs.append(f"{row.metal} pH{row.pH:.0f}")
     lim = [min(mm + pp) * 0.98, max(mm + pp) * 1.02]
@@ -486,7 +483,7 @@ def make_figures(logK):
     grid = np.linspace(4, 10.5, 90)
     sig_molm2 = []
     for p in grid:
-        Xfix, species, kappa, bg = prepare_point("Co", p, -99, -99)   # no metal bound
+        Xfix, species, kappa, bg = prepare_point("Co", p, -99)   # no metal bound
         totals = {"Me": 1e-15, "sCO3H": SITE_TOT["CO3"],
                   "sCaOH": SITE_TOT["Ca"], "sMgOH": SITE_TOT["Mg"]}
         sig_molm2.append(equilibrium(Xfix, species, kappa, totals)["sigma"] / F)   # mol/m2
@@ -507,28 +504,26 @@ def make_figures(logK):
 
 
 def write_report(logK, se_map, wsos_df, val):
-    names = {"Li_Ca": ">CaOH0 + Li+  = >CaOLi(0) + H+",
-             "Li_Mg": ">MgOH0 + Li+  = >MgOLi(0) + H+",
-             "Co_Ca": ">CaOH0 + Co2+ = >CaOCo+  + H+",
-             "Co_Mg": ">MgOH0 + Co2+ = >MgOCo+  + H+"}
     with open(os.path.join(HERE, "fiteql_results.txt"), "w") as f:
-        f.write("FITEQL-STYLE DETERMINATION OF log K FOR Li AND Co ON DOLOMITE\n")
+        f.write("FITEQL/MINTEQ-STYLE DETERMINATION OF log K FOR Li AND Co ON DOLOMITE\n")
         f.write("Method: component/species tableau, Newton-Raphson multicomponent\n")
-        f.write("equilibrium with an electrostatic component, WSOS/DF objective\n")
-        f.write("(Westall 1982; Herbelin & Westall 1999). Model: Pokrovsky 1999.\n")
+        f.write("equilibrium with an electrostatic (Boltzmann) component, WSOS/DF objective\n")
+        f.write("(Westall 1982; Herbelin & Westall 1999; Visual MINTEQ Eqs 4.4, 4.6, 4.11).\n")
+        f.write("Chemical model: Pokrovsky 1999. Metal cations bind the CARBONATE site.\n")
         f.write("25 C, I = 0.7 M NaCl, open system pCO2 = 10^-3.5 atm.\n")
         f.write("=" * 70 + "\n\n")
-        for k in ["Li_Ca", "Li_Mg", "Co_Ca", "Co_Mg"]:
-            f.write(f"  {names[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}\n")
+        for k in ["Li", "Co"]:
+            f.write(f"  {NAMES[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}\n")
         f.write(f"\n  WSOS/DF = {wsos_df:.3f}\n\n")
         f.write(val.to_string(index=False) + "\n\n")
         f.write("Notes:\n")
-        f.write("  - The equilibrium at each pH is solved as one coupled system: free\n")
-        f.write("    metal, three surface sites, and the surface potential (Boltzmann\n")
-        f.write("    component P), by Newton-Raphson with the analytical Jacobian\n")
-        f.write("    Z_jk = sum_i a_ij a_ik C_i and kappa on the P diagonal.\n")
-        f.write("  - One constant per metal is fitted; the Mg-site constant is tied with\n")
-        f.write(f"    the offset {MG_OFFSET:+.1f} because two pH points cannot resolve both.\n")
+        f.write("  - Per Pokrovsky 1999, metal CATIONS adsorb on the carbonate site\n")
+        f.write("    (>CO3H0 + Me = >CO3Me + H+), replacing >CO3Ca+/>CO3Mg+/>CO3-; the\n")
+        f.write("    >CaOH/>MgOH hydroxyl sites take anions/ligands, not metal cations.\n")
+        f.write("  - One constant per metal (one site), so no Ca/Mg site tie is needed.\n")
+        f.write("  - The equilibrium at each pH is solved as one coupled system by\n")
+        f.write("    Newton-Raphson with the analytical Jacobian Z_jk = sum_i a_ij a_ik C_i\n")
+        f.write("    and kappa on the electrostatic (P) diagonal.\n")
         f.write("  - alpha = 0.004 (Pokrovsky), high capacitance, so psi is a few mV.\n")
         f.write("  - Sorption-only model; Co mineralisation (CoCO3) is not fitted here.\n")
         f.write("  - Surface charge follows the ProtoFit definition (proton and charged\n")

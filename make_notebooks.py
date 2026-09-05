@@ -25,25 +25,24 @@ B. AQUEOUS COMPLEXATION
    CoCO3          = Co2+ + CO3-2
 
 C. SURFACE REACTIONS - carbonate site  >CO3H0     (log K, Pokrovsky 1999)
+   Per Pokrovsky, metal CATIONS bind this site (>CO3- + Me -> >CO3Me).
    >CO3H0         = >CO3-   + H+        log K = -4.8
    >CO3H0 + Ca2+  = >CO3Ca+ + H+        log K = -1.8
    >CO3H0 + Mg2+  = >CO3Mg+ + H+        log K = -2.0
+   >CO3H0 + Li+   = >CO3Li0 + H+        log K = UNKNOWN (fitted)   <-- Li binds here
+   >CO3H0 + Co2+  = >CO3Co+ + H+        log K = UNKNOWN (fitted)   <-- Co binds here
 
-D. SURFACE REACTIONS - calcium site   >CaOH0
+D. SURFACE REACTIONS - calcium site   >CaOH0   (anion/ligand site, no metal cation)
    >CaOH0 + H+          = >CaOH2+                  log K = 11.5
    >CaOH0              = >CaO-   + H+              log K = -12.0
    >CaOH0 + CO3-2 + 2H+ = >CaHCO3(0) + H2O         log K = -4.0
    >CaOH0 + CO3-2 +  H+ = >CaCO3-   + H2O          log K = 16.6
-   >CaOH0 + Li+         = >CaOLi(0) + H+           log K = UNKNOWN (fitted)
-   >CaOH0 + Co2+        = >CaOCo+   + H+           log K = UNKNOWN (fitted)
 
-E. SURFACE REACTIONS - magnesium site >MgOH0
+E. SURFACE REACTIONS - magnesium site >MgOH0   (anion/ligand site, no metal cation)
    >MgOH0 + H+          = >MgOH2+                  log K = 10.6
    >MgOH0              = >MgO-   + H+              log K = -12.0
    >MgOH0 + CO3-2 + 2H+ = >MgHCO3(0) + H2O         log K = -3.5
    >MgOH0 + CO3-2 +  H+ = >MgCO3-   + H2O          log K = 15.4
-   >MgOH0 + Li+         = >MgOLi(0) + H+           log K = tied (Ca value - 0.9)
-   >MgOH0 + Co2+        = >MgOCo+   + H+           log K = tied (Ca value - 0.9)
 """
 
 EQUATIONS_TEXT = r"""EQUATIONS
@@ -67,13 +66,13 @@ EQUATIONS_TEXT = r"""EQUATIONS
     [>SOMe] = K * [>SOH0] * a(Me)/a(H) * exp(-(z-1) F psi / RT)
 
 (5) Site (mass) balances, solved for the neutral reference form
-    T(>CO3H) = [>CO3H0]+[>CO3-]+[>CO3Ca+]+[>CO3Mg+]
-    T(>CaOH) = [>CaOH0]+[>CaOH2+]+[>CaO-]+[>CaHCO3]+[>CaCO3-]+[>CaOMe]
-    T(>MgOH) = [>MgOH0]+[>MgOH2+]+[>MgO-]+[>MgHCO3]+[>MgCO3-]+[>MgOMe]
-    e.g.  [>CaOH0] = T(>CaOH) / (1 + sum of all ratios to >CaOH0)
+    T(>CO3H) = [>CO3H0]+[>CO3-]+[>CO3Ca+]+[>CO3Mg+]+[>CO3Me]   (metal binds here)
+    T(>CaOH) = [>CaOH0]+[>CaOH2+]+[>CaO-]+[>CaHCO3]+[>CaCO3-]
+    T(>MgOH) = [>MgOH0]+[>MgOH2+]+[>MgO-]+[>MgHCO3]+[>MgCO3-]
+    e.g.  [>CO3H0] = T(>CO3H) / (1 + sum of all ratios to >CO3H0)
 
 (6) PREDICTED surface charge, from the surface species only (ProtoFit Eq 2.2.3)
-    sigma = (F / SSA) * { [>CaOH2+]+[>MgOH2+]+[>CO3Ca+]+[>CO3Mg+]+[>CaOCo+]+[>MgOCo+]
+    sigma = (F / SSA) * { [>CaOH2+]+[>MgOH2+]+[>CO3Ca+]+[>CO3Mg+]+[>CO3Co+]
                           - [>CO3-]-[>CaO-]-[>MgO-]-[>CaCO3-]-[>MgCO3-] }
     It never uses dissolved Ca2+/Mg2+; those belong to dolomite dissolution.
 
@@ -87,7 +86,7 @@ EQUATIONS_TEXT = r"""EQUATIONS
     kappa = C * SSA * R T / F^2 .
 
 (9) Adsorption uptake and the fitted quantity
-    uptake = [>CaOMe] + [>MgOMe] ;   [Me]_eq = [Me]_total - uptake
+    uptake = [>CO3Me] ;   [Me]_eq = [Me]_total - uptake
     predicted [Me]_eq is compared to the measured value.
 
 (10) FITEQL objective (goodness of fit)
@@ -184,31 +183,31 @@ AQ_METAL = {"Li": [("LiCl", -0.50, {"Me":1,"Cl":1}, 0)],
                    ("CoOH", -9.65, {"Me":1,"H":-1}, 1),
                    ("CoCO3", 4.22, {"Me":1,"CO3":1}, 0)]}
 
-def build_species(metal, logK_MeCa, logK_MeMg):
+def build_species(metal, logK_Me):
+    # Per Pokrovsky 1999, the metal CATION binds the carbonate site (>CO3Me), not >CaOH.
     z = METAL_Z[metal]; sp = [("Me", 0.0, {"Me":1}, z, False)]
     for name, lk, st, zz in AQ_METAL[metal]: sp.append((name, lk, st, zz, False))
     sp += [("sCO3H",0.0,{"sCO3H":1},0,True),("sCO3-",-4.8,{"sCO3H":1,"H":-1},-1,True),
            ("sCO3Ca",-1.8,{"sCO3H":1,"Ca":1,"H":-1},1,True),
            ("sCO3Mg",-2.0,{"sCO3H":1,"Mg":1,"H":-1},1,True),
+           ("sCO3Me",logK_Me,{"sCO3H":1,"Me":1,"H":-1},z-1,True),          # <-- UNKNOWN
            ("sCaOH",0.0,{"sCaOH":1},0,True),("sCaOH2",11.5,{"sCaOH":1,"H":1},1,True),
            ("sCaO",-12.0,{"sCaOH":1,"H":-1},-1,True),
            ("sCaHCO3",-4.0,{"sCaOH":1,"CO3":1,"H":2},0,True),
            ("sCaCO3",16.6,{"sCaOH":1,"CO3":1,"H":1},-1,True),
-           ("sCaOMe",logK_MeCa,{"sCaOH":1,"Me":1,"H":-1},z-1,True),
            ("sMgOH",0.0,{"sMgOH":1},0,True),("sMgOH2",10.6,{"sMgOH":1,"H":1},1,True),
            ("sMgO",-12.0,{"sMgOH":1,"H":-1},-1,True),
            ("sMgHCO3",-3.5,{"sMgOH":1,"CO3":1,"H":2},0,True),
-           ("sMgCO3",15.4,{"sMgOH":1,"CO3":1,"H":1},-1,True),
-           ("sMgOMe",logK_MeMg,{"sMgOH":1,"Me":1,"H":-1},z-1,True)]
+           ("sMgCO3",15.4,{"sMgOH":1,"CO3":1,"H":1},-1,True)]
     return sp
 
-def prepare_point(metal, pH, logK_MeCa, logK_MeMg):
+def prepare_point(metal, pH, logK_Me):
     bg = background_activities(pH); g1, g2 = bg["g1"], bg["g2"]
     gMe = g1 if METAL_Z[metal]==1 else g2
     Xfix = {"H":bg["H"]/g1, "CO3":bg["CO3"]/g2, "Ca":bg["Ca"]/g2, "Mg":bg["Mg"]/g2, "Cl":bg["Cl"]/g1}
     gcomp = {"H":g1,"CO3":g2,"Ca":g2,"Mg":g2,"Cl":g1,"Me":gMe,"sCO3H":1.0,"sCaOH":1.0,"sMgOH":1.0}
     species = []
-    for name, lk, st, z, surf in build_species(metal, logK_MeCa, logK_MeMg):
+    for name, lk, st, z, surf in build_species(metal, logK_Me):
         gprod = 1.0
         for c, co in st.items(): gprod *= gcomp[c]**co
         gi = 1.0 if surf else (1.0 if z==0 else (g1 if abs(z)==1 else g2))
@@ -255,49 +254,47 @@ PY_EQUIL = r'''def equilibrium(Xfix, species, kappa, totals):
     sigma = F/S_AREA * sum(s["z"]*C[i] for i,s in enumerate(species) if s["surf"])
     return dict(conc=cc, psi=psi, sigma=sigma)
 
-def predict_point(metal, pH, T_Me, kCa, kMg):
+def predict_point(metal, pH, T_Me, logK_Me):
     # The metal is a component with known TOTAL, so the free ion, its aqueous complexes,
     # the surface sites and the potential are all solved together in one equilibrium call.
-    Xfix, species, kappa = prepare_point(metal, pH, kCa, kMg)
+    Xfix, species, kappa = prepare_point(metal, pH, logK_Me)
     totals = {"Me":T_Me, "sCO3H":SITE_TOT["CO3"], "sCaOH":SITE_TOT["Ca"], "sMgOH":SITE_TOT["Mg"]}
     res = equilibrium(Xfix, species, kappa, totals)
     aq = ["Me"] + [c[0] for c in AQ_METAL[metal]]        # free ion + aqueous complexes
     dissolved = sum(res["conc"][nm] for nm in aq)
-    adsorbed  = res["conc"]["sCaOMe"] + res["conc"]["sMgOMe"]
+    adsorbed  = res["conc"]["sCO3Me"]                    # metal on the carbonate site
     return dict(dissolved=dissolved, adsorbed=adsorbed, psi=res["psi"], sigma=res["sigma"])'''
 
-PY_FIT = r'''MG_OFFSET = 10.6 - 11.5      # -0.9, Pokrovsky Ca-vs-Mg protonation difference
+PY_FIT = r'''# Metal cations bind ONE site (the carbonate site), so ONE constant per metal.
+NAMES = {"Li":">CO3H0 + Li+  = >CO3Li(0) + H+", "Co":">CO3H0 + Co2+ = >CO3Co+  + H+"}
 
 def residuals(theta):
-    liCa, coCa = theta
-    K = {"Li": (liCa, liCa+MG_OFFSET), "Co": (coCa, coCa+MG_OFFSET)}
+    K = {"Li": theta[0], "Co": theta[1]}
     r = []
     for row in ADS.itertuples():
         T_Me = row.C0_ppm / MM[row.metal] / 1e3
-        pr = predict_point(row.metal, row.pH, T_Me, *K[row.metal])
+        pr = predict_point(row.metal, row.pH, T_Me, K[row.metal])
         Ceq_pred = pr["dissolved"] * MM[row.metal] * 1e3
         s = np.hypot(ERR_ABS, ERR_REL*row.Ceq_ppm)
         r.append((Ceq_pred - row.Ceq_ppm)/s)
     return np.array(r)
 
-sol = least_squares(residuals, [2.0, 2.0], bounds=([-12,-12],[12,12]), diff_step=1e-3)
-liCa, coCa = sol.x
-logK = {"Li_Ca":liCa, "Li_Mg":liCa+MG_OFFSET, "Co_Ca":coCa, "Co_Mg":coCa+MG_OFFSET}
+sol = least_squares(residuals, [0.0, 0.0], bounds=([-12,-12],[12,12]), diff_step=1e-3)
+logK = {"Li":sol.x[0], "Co":sol.x[1]}
 r = sol.fun; wsos_df = float(np.sum(r**2)/(len(r)-len(sol.x)))
 cov = np.linalg.inv(sol.jac.T @ sol.jac) * (np.sum(r**2)/(len(r)-len(sol.x)))
-se = np.sqrt(np.abs(np.diag(cov))); se_map = {"Li_Ca":se[0],"Li_Mg":se[0],"Co_Ca":se[1],"Co_Mg":se[1]}
-names = {"Li_Ca":">CaOH0 + Li+  = >CaOLi(0) + H+","Li_Mg":">MgOH0 + Li+  = >MgOLi(0) + H+",
-         "Co_Ca":">CaOH0 + Co2+ = >CaOCo+  + H+","Co_Mg":">MgOH0 + Co2+ = >MgOCo+  + H+"}
+se = np.sqrt(np.abs(np.diag(cov))); se_map = {"Li":se[0],"Co":se[1]}
 print("Fitted intrinsic stability constants (25 C, I = 0.7 M):")
-for k in ["Li_Ca","Li_Mg","Co_Ca","Co_Mg"]:
-    print(f"  {names[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}")
+for k in ["Li","Co"]:
+    print(f"  {NAMES[k]:32}  log K = {logK[k]:+.2f} +/- {se_map[k]:.2f}")
 print()
+print("  For scale, Pokrovsky >CO3H0 + Ca2+ = >CO3Ca+ + H+ has log K = -1.8.")
 print(f"  WSOS/DF = {wsos_df:.3f}   (near 1 = good fit)")'''
 
 PY_VALID = r'''rows = []
 for row in ADS.itertuples():
     T_Me = row.C0_ppm / MM[row.metal] / 1e3
-    pr = predict_point(row.metal, row.pH, T_Me, logK[f"{row.metal}_Ca"], logK[f"{row.metal}_Mg"])
+    pr = predict_point(row.metal, row.pH, T_Me, logK[row.metal])
     rows.append(dict(metal=row.metal, pH=row.pH, Ceq_meas=row.Ceq_ppm,
                      Ceq_pred=round(pr["dissolved"]*MM[row.metal]*1e3,3),
                      uptake_meas=round(row.C0_ppm-row.Ceq_ppm,3),
@@ -318,7 +315,7 @@ ax.set_title("FITEQL-style fit"); ax.grid(alpha=0.3); plt.show()'''
 
 PY_SIGMA = r'''# Surface charge from surface species only (ProtoFit Eq 2.2.3) - correct magnitude
 def sigma_at(pH):
-    Xfix, species, kappa = prepare_point("Co", pH, -99, -99)
+    Xfix, species, kappa = prepare_point("Co", pH, -99)
     totals = {"Me":1e-15, "sCO3H":SITE_TOT["CO3"], "sCaOH":SITE_TOT["Ca"], "sMgOH":SITE_TOT["Mg"]}
     return equilibrium(Xfix, species, kappa, totals)["sigma"]
 
@@ -425,69 +422,65 @@ metalActivity[metal_, Meq_, act_] := Module[{aCl, aH, aCO3, r},
 
 WL_SPECIES = r'''(* ===== Surface speciation and net surface charge at a given potential psi ===== *)
 (* Each site is written relative to its neutral reference form; b = Exp[-FRT psi] is the
-   Boltzmann factor, and a surface species of charge z carries b^z. *)
-speciesAt[metal_, aMe_, act_, logKca_, logKmg_, psi_?NumericQ] := Module[
+   Boltzmann factor, and a surface species of charge z carries b^z. Per Pokrovsky 1999
+   the metal cation binds the CARBONATE site: >CO3H0 + Me = >CO3Me + H+. *)
+speciesAt[metal_, aMe_, act_, logKme_, psi_?NumericQ] := Module[
    {aH, aCO3, aCa, aMg, zm, b, denCO3, CO3H, denCa, CaOH, denMg, MgOH,
-    sCaOH2, sMgOH2, sCO3Ca, sCO3Mg, sCO3m, sCaO, sMgO, sCaCO3, sMgCO3,
-    sCaOMe, sMgOMe, sig},
+    sCaOH2, sMgOH2, sCO3Ca, sCO3Mg, sCO3Me, sCO3m, sCaO, sMgO, sCaCO3, sMgCO3, sig},
    aH = act["aH"]; aCO3 = act["aCO3"]; aCa = act["aCa"]; aMg = act["aMg"];
    zm = zMet[metal]; b = Exp[-FRT*psi];
-   denCO3 = 1 + 10^(-4.8)/aH/b + 10^(-1.8)*aCa/aH*b + 10^(-2.0)*aMg/aH*b;
+   denCO3 = 1 + 10^(-4.8)/aH/b + 10^(-1.8)*aCa/aH*b + 10^(-2.0)*aMg/aH*b +
+      10^(logKme)*aMe/aH*b^(zm - 1);
    CO3H = TCO3site/denCO3;
-   denCa = 1 + 10^(11.5)*aH*b + 10^(-12)/aH/b + 10^(-4.0)*aCO3*aH^2 +
-      10^(16.6)*aCO3*aH/b + 10^(logKca)*aMe/aH*b^(zm - 1);
+   denCa = 1 + 10^(11.5)*aH*b + 10^(-12)/aH/b + 10^(-4.0)*aCO3*aH^2 + 10^(16.6)*aCO3*aH/b;
    CaOH = TCasite/denCa;
-   denMg = 1 + 10^(10.6)*aH*b + 10^(-12)/aH/b + 10^(-3.5)*aCO3*aH^2 +
-      10^(15.4)*aCO3*aH/b + 10^(logKmg)*aMe/aH*b^(zm - 1);
+   denMg = 1 + 10^(10.6)*aH*b + 10^(-12)/aH/b + 10^(-3.5)*aCO3*aH^2 + 10^(15.4)*aCO3*aH/b;
    MgOH = TMgsite/denMg;
    sCaOH2 = 10^(11.5)*aH*b*CaOH; sMgOH2 = 10^(10.6)*aH*b*MgOH;
    sCO3Ca = 10^(-1.8)*aCa/aH*b*CO3H; sCO3Mg = 10^(-2.0)*aMg/aH*b*CO3H;
+   sCO3Me = 10^(logKme)*aMe/aH*b^(zm - 1)*CO3H;
    sCO3m = 10^(-4.8)/aH/b*CO3H; sCaO = 10^(-12)/aH/b*CaOH; sMgO = 10^(-12)/aH/b*MgOH;
    sCaCO3 = 10^(16.6)*aCO3*aH/b*CaOH; sMgCO3 = 10^(15.4)*aCO3*aH/b*MgOH;
-   sCaOMe = 10^(logKca)*aMe/aH*b^(zm - 1)*CaOH;
-   sMgOMe = 10^(logKmg)*aMe/aH*b^(zm - 1)*MgOH;
-   sig = Fc/Sarea*(sCaOH2 + sMgOH2 + sCO3Ca + sCO3Mg + (zm - 1)*(sCaOMe + sMgOMe)
+   sig = Fc/Sarea*(sCaOH2 + sMgOH2 + sCO3Ca + sCO3Mg + (zm - 1)*sCO3Me
         - sCO3m - sCaO - sMgO - sCaCO3 - sMgCO3);
-   <|"sigma" -> sig, "adsorbed" -> sCaOMe + sMgOMe|>];
+   <|"sigma" -> sig, "adsorbed" -> sCO3Me|>];
 
 (* solve the constant-capacitance constraint psi = sigma/Ccap for psi *)
-surfaceSolve[metal_, aMe_, act_, logKca_, logKmg_] := Module[{ps, sol},
-   sol = FindRoot[speciesAt[metal, aMe, act, logKca, logKmg, ps]["sigma"] == Ccap*ps,
-      {ps, 0.0}];
-   speciesAt[metal, aMe, act, logKca, logKmg, ps /. sol]];'''
+surfaceSolve[metal_, aMe_, act_, logKme_] := Module[{ps, sol},
+   sol = FindRoot[speciesAt[metal, aMe, act, logKme, ps]["sigma"] == Ccap*ps, {ps, 0.0}];
+   speciesAt[metal, aMe, act, logKme, ps /. sol]];'''
 
 WL_PREDICT = r'''(* ===== Forward prediction of the equilibrium dissolved metal ===== *)
-predictCeq[metal_, pH_, C0ppm_, logKca_, logKmg_] := Module[
+predictCeq[metal_, pH_, C0ppm_, logKme_] := Module[
    {act, Ttot, Meq, aMe, sol, k},
    act = activities[pH];
    Ttot = C0ppm/MM[metal]/1000.0;
    Meq = Ttot;
    Do[
      aMe = metalActivity[metal, Meq, act];
-     sol = surfaceSolve[metal, aMe, act, logKca, logKmg];
+     sol = surfaceSolve[metal, aMe, act, logKme];
      Meq = Max[Ttot - sol["adsorbed"], 1.0*10^-12];
    , {k, 40}];
    Meq*MM[metal]*1000.0];'''
 
-WL_FIT = r'''(* ===== Fit log K by minimising WSOS (Mg tied with the -0.9 offset) ===== *)
-wsos[liCa_?NumericQ, coCa_?NumericQ] := Module[{ss, kk, row, metal, pH, C0, Ceq, pred, s, kca, kmg},
+WL_FIT = r'''(* ===== Fit log K by minimising WSOS. One constant per metal (carbonate site) ===== *)
+wsos[kLi_?NumericQ, kCo_?NumericQ] := Module[{ss, kk, row, metal, pH, C0, Ceq, pred, s, km},
    ss = 0.0;
    Do[
      row = adsData[[kk]]; metal = row[[1]]; pH = row[[2]]; C0 = row[[3]]; Ceq = row[[4]];
-     kca = If[metal == "Li", liCa, coCa]; kmg = kca - 0.9;
-     pred = predictCeq[metal, pH, C0, kca, kmg];
+     km = If[metal == "Li", kLi, kCo];
+     pred = predictCeq[metal, pH, C0, km];
      s = Sqrt[errAbs^2 + (errRel*Ceq)^2];
      ss = ss + ((pred - Ceq)/s)^2;
    , {kk, Length[adsData]}];
    ss];
 
-fit = FindMinimum[wsos[liCa, coCa], {{liCa, 2.0}, {coCa, 2.0}}];
-{liCaOpt, coCaOpt} = {liCa, coCa} /. fit[[2]];
+fit = FindMinimum[wsos[kLi, kCo], {{kLi, 0.0}, {kCo, -1.8}}];
+{kLiOpt, kCoOpt} = {kLi, kCo} /. fit[[2]];
 ndf = Length[adsData] - 2;
-Print["log K  Li-Ca = ", NumberForm[liCaOpt, {5, 2}]];
-Print["log K  Li-Mg = ", NumberForm[liCaOpt - 0.9, {5, 2}]];
-Print["log K  Co-Ca = ", NumberForm[coCaOpt, {5, 2}]];
-Print["log K  Co-Mg = ", NumberForm[coCaOpt - 0.9, {5, 2}]];
+Print["log K  Li (>CO3Li) = ", NumberForm[kLiOpt, {5, 2}]];
+Print["log K  Co (>CO3Co) = ", NumberForm[kCoOpt, {5, 2}]];
+Print["(for scale, Pokrovsky >CO3Ca+ has log K = -1.8)"];
 Print["WSOS/DF = ", NumberForm[fit[[1]]/ndf, {5, 3}]];'''
 
 WL_VALID = r'''(* ===== Validation table ===== *)
@@ -496,13 +489,11 @@ Do[
   With[{row = adsData[[kk]]},
    With[{metal = row[[1]], pH = row[[2]], C0 = row[[3]], Ceq = row[[4]]},
     Print[metal, "   ", pH, "   ", NumberForm[Ceq, {6, 3}], "   ",
-      NumberForm[predictCeq[metal, pH, C0,
-        If[metal == "Li", liCaOpt, coCaOpt], If[metal == "Li", liCaOpt, coCaOpt] - 0.9],
-       {6, 3}]]]],
+      NumberForm[predictCeq[metal, pH, C0, If[metal == "Li", kLiOpt, kCoOpt]], {6, 3}]]]],
   {kk, Length[adsData]}];'''
 
 WL_SIGMA = r'''(* ===== Surface charge from surface species only (ProtoFit Eq 2.2.3) ===== *)
-sigmaAt[pH_?NumericQ] := surfaceSolve["Co", 0.0, activities[pH], -99, -99]["sigma"];
+sigmaAt[pH_?NumericQ] := surfaceSolve["Co", 0.0, activities[pH], -99]["sigma"];
 Print["pH   sigma(C/m2)   sigma(mmol/m2)   [Pokrovsky 0.01-0.02 mmol/m2]"];
 Do[Print[pH, "   ", NumberForm[sigmaAt[pH], {7, 4}], "   ",
     NumberForm[sigmaAt[pH]/Fc*1000, {8, 5}]], {pH, {5.5, 6.5, 7.3, 8.0, 8.5, 9.0}}];

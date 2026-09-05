@@ -1,30 +1,30 @@
-FITEQL-STYLE DETERMINATION OF log K FOR Li AND Co ON DOLOMITE
+FITEQL/MINTEQ-STYLE DETERMINATION OF log K FOR Li AND Co ON DOLOMITE
 Method: component/species tableau, Newton-Raphson multicomponent
-equilibrium with an electrostatic component, WSOS/DF objective
-(Westall 1982; Herbelin & Westall 1999). Model: Pokrovsky 1999.
+equilibrium with an electrostatic (Boltzmann) component, WSOS/DF objective
+(Westall 1982; Herbelin & Westall 1999; Visual MINTEQ Eqs 4.4, 4.6, 4.11).
+Chemical model: Pokrovsky 1999. Metal cations bind the CARBONATE site.
 25 C, I = 0.7 M NaCl, open system pCO2 = 10^-3.5 atm.
 ======================================================================
 
-  >CaOH0 + Li+  = >CaOLi(0) + H+    log K = +1.88 +/- 1.02
-  >MgOH0 + Li+  = >MgOLi(0) + H+    log K = +0.98 +/- 1.02
-  >CaOH0 + Co2+ = >CaOCo+  + H+     log K = +2.31 +/- 0.10
-  >MgOH0 + Co2+ = >MgOCo+  + H+     log K = +1.41 +/- 0.10
+  >CO3H0 + Li+  = >CO3Li(0) + H+    log K = +0.16 +/- 0.38
+  >CO3H0 + Co2+ = >CO3Co+  + H+     log K = -1.89 +/- 0.05
 
-  WSOS/DF = 0.532
+  WSOS/DF = 0.106
 
 metal  pH  Ceq_meas  Ceq_pred  uptake_meas  uptake_pred  psi_mV
-   Co 6.0    74.393    74.393        6.120        6.120    0.40
-   Co 2.0    80.398    80.513        0.115        0.000    6.44
-   Li 6.0   135.262   135.262        3.168        3.168   -4.15
-   Li 2.0   135.592   138.430        2.838        0.000    6.44
+   Co 6.0    74.393    74.393        6.120        6.120    2.41
+   Co 2.0    80.398    80.501        0.115        0.012    6.45
+   Li 6.0   135.262   134.004        3.168        4.426    6.45
+   Li 2.0   135.592   135.599        2.838        2.831    6.45
 
 Notes:
-  - The equilibrium at each pH is solved as one coupled system: free
-    metal, three surface sites, and the surface potential (Boltzmann
-    component P), by Newton-Raphson with the analytical Jacobian
-    Z_jk = sum_i a_ij a_ik C_i and kappa on the P diagonal.
-  - One constant per metal is fitted; the Mg-site constant is tied with
-    the offset -0.9 because two pH points cannot resolve both.
+  - Per Pokrovsky 1999, metal CATIONS adsorb on the carbonate site
+    (>CO3H0 + Me = >CO3Me + H+), replacing >CO3Ca+/>CO3Mg+/>CO3-; the
+    >CaOH/>MgOH hydroxyl sites take anions/ligands, not metal cations.
+  - One constant per metal (one site), so no Ca/Mg site tie is needed.
+  - The equilibrium at each pH is solved as one coupled system by
+    Newton-Raphson with the analytical Jacobian Z_jk = sum_i a_ij a_ik C_i
+    and kappa on the electrostatic (P) diagonal.
   - alpha = 0.004 (Pokrovsky), high capacitance, so psi is a few mV.
   - Sorption-only model; Co mineralisation (CoCO3) is not fitted here.
   - Surface charge follows the ProtoFit definition (proton and charged

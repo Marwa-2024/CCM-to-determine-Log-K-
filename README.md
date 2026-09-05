@@ -14,21 +14,28 @@ capacitance three-site model of Pokrovsky, Schott & Thomas (1999).
   content and data, implemented in the Wolfram Language. Open it in Mathematica and choose
   Evaluation, Evaluate Notebook.
 
-Both reproduce log K(Co-Ca) = +2.31, log K(Li-Ca) = +1.88, WSOS/DF = 0.53.
+Both reproduce log K(Co) = −1.89, log K(Li) = +0.16, WSOS/DF = 0.11.
+
+## The binding site (important)
+
+Per Pokrovsky (1999), metal **cations** adsorb on the **carbonate** site,
+`>CO3H0 + Me(z+) = >CO3Me(z-1) + H+` (the deprotonated `>CO3-` binds the cation). The
+`>CaOH`/`>MgOH` hydroxyl sites take anions and ligands, not metal cations. The fitted
+cobalt constant, **−1.89**, sits right next to Pokrovsky's own `>CO3H0 + Ca2+ = >CO3Ca+`
+value of **−1.8**, which is the expected result for a divalent cation on the carbonate
+site and a good check on the model.
 
 ## Which script to run
 
-* **`fiteql_logK_Li_Co_dolomite.py`** — the rigorous method, recommended. It reproduces
-  what the FITEQL program does, in pure Python: a component/species tableau, a
-  Newton-Raphson solve of the full coupled equilibrium at each pH (with the surface
-  potential handled as its own Boltzmann component), and a fit of the unknown constants
-  by minimising WSOS/DF, the error-weighted sum of squares over degrees of freedom
-  (Westall 1982; Herbelin & Westall 1999). Run this one.
-* **`determine_logK_Li_Co_dolomite.py`** — the earlier, simpler pipeline that fits the
-  constants by a direct least-squares match to the measured uptake. Kept for reference;
-  it lands on the same constants, which is a useful cross-check.
-
-Both give Co ≈ +2.3 and Li ≈ +1.9 (Ca site), with Co tightly determined and Li loose.
+* **`fiteql_logK_Li_Co_dolomite.py`** — the correct, recommended method. Pure-Python
+  reproduction of FITEQL / Visual MINTEQ: a component/species tableau, a Newton-Raphson
+  solve of the full coupled equilibrium at each pH (surface potential as its own Boltzmann
+  component), and a fit of the metal constants by minimising WSOS/DF (Westall 1982;
+  Herbelin & Westall 1999; Visual MINTEQ Eqs 4.4, 4.6, 4.11). Metal cations bind the
+  carbonate site. Run this one.
+* **`determine_logK_Li_Co_dolomite.py`** — a first attempt that (a) fit by a direct match
+  to uptake and (b) placed the metal on the `>CaOH`/`>MgOH` sites. **Superseded** by the
+  script above; kept only as a record of the earlier approach.
 
 ## The FITEQL method, in three steps
 
