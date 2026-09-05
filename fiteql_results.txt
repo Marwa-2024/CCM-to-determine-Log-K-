@@ -1,0 +1,29 @@
+FITEQL-STYLE DETERMINATION OF log K FOR Li AND Co ON DOLOMITE
+Method: component/species tableau, Newton-Raphson multicomponent
+equilibrium with an electrostatic component, WSOS/DF objective
+(Westall 1982; Herbelin & Westall 1999). Model: Pokrovsky 1999.
+25 C, I = 0.7 M NaCl, open system pCO2 = 10^-3.5 atm.
+======================================================================
+
+  >CaOH0 + Li+  = >CaOLi(0) + H+    log K = +1.88 +/- 1.02
+  >MgOH0 + Li+  = >MgOLi(0) + H+    log K = +0.98 +/- 1.02
+  >CaOH0 + Co2+ = >CaOCo+  + H+     log K = +2.31 +/- 0.10
+  >MgOH0 + Co2+ = >MgOCo+  + H+     log K = +1.41 +/- 0.10
+
+  WSOS/DF = 0.532
+
+metal  pH  Ceq_meas  Ceq_pred  uptake_meas  uptake_pred  psi_mV
+   Co 6.0    74.393    74.393        6.120        6.120    0.40
+   Co 2.0    80.398    80.513        0.115        0.000    6.44
+   Li 6.0   135.262   135.262        3.168        3.168   -4.15
+   Li 2.0   135.592   138.430        2.838        0.000    6.44
+
+Notes:
+  - The equilibrium at each pH is solved as one coupled system: free
+    metal, three surface sites, and the surface potential (Boltzmann
+    component P), by Newton-Raphson with the analytical Jacobian
+    Z_jk = sum_i a_ij a_ik C_i and kappa on the P diagonal.
+  - One constant per metal is fitted; the Mg-site constant is tied with
+    the offset -0.9 because two pH points cannot resolve both.
+  - alpha = 0.004 (Pokrovsky), high capacitance, so psi is a few mV.
+  - Sorption-only model; Co mineralisation (CoCO3) is not fitted here.

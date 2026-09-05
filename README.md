@@ -1,8 +1,39 @@
 # CCM to determine log K — Li and Co on dolomite
 
-A single, self-contained Python pipeline that determines the intrinsic surface
-complexation constants (log K) for lithium and cobalt binding on dolomite, using the
-constant capacitance three-site model of Pokrovsky, Schott & Thomas (1999).
+Two self-contained Python scripts that determine the intrinsic surface complexation
+constants (log K) for lithium and cobalt binding on dolomite, using the constant
+capacitance three-site model of Pokrovsky, Schott & Thomas (1999).
+
+## Which file to run
+
+* **`fiteql_logK_Li_Co_dolomite.py`** — the rigorous method, recommended. It reproduces
+  what the FITEQL program does, in pure Python: a component/species tableau, a
+  Newton-Raphson solve of the full coupled equilibrium at each pH (with the surface
+  potential handled as its own Boltzmann component), and a fit of the unknown constants
+  by minimising WSOS/DF, the error-weighted sum of squares over degrees of freedom
+  (Westall 1982; Herbelin & Westall 1999). Run this one.
+* **`determine_logK_Li_Co_dolomite.py`** — the earlier, simpler pipeline that fits the
+  constants by a direct least-squares match to the measured uptake. Kept for reference;
+  it lands on the same constants, which is a useful cross-check.
+
+Both give Co ≈ +2.3 and Li ≈ +1.9 (Ca site), with Co tightly determined and Li loose.
+
+## The FITEQL method, in three steps
+
+1. **Tableau.** Every species, aqueous and surface, is written as a product of a few
+   components: `C_i = K_i · Π_j X_j^(a_ij)`. The surface potential enters as its own
+   component `P = exp(−Fψ/RT)`, and each surface species carries `P` to its charge.
+2. **Inner loop (equilibrium).** For fixed log K, the mole-balance residuals
+   `Y_j = Σ_i a_ij C_i − T_j = 0` are solved together by Newton-Raphson with the
+   analytical Jacobian `Z_jk = Σ_i a_ij a_ik C_i`, plus the capacitance term on the
+   electrostatic component.
+3. **Outer loop (fit).** The unknown constants are adjusted to minimise
+   `WSOS/DF = Σ(Y_i/s_i)² / (N_obs − N_param)`; a value near 1 means the model matches
+   the data to within its measurement error.
+
+---
+
+Below refers to the earlier `determine_logK_Li_Co_dolomite.py` pipeline.
 
 The workflow supports the study *"Lithium and cobalt recovery from petroleum produced
 water using dolomite"* (Elshebli, Vilcáez & Smay). This stage covers the single-ion Li
