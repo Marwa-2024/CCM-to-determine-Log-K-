@@ -1,0 +1,132 @@
+id,study,year,family,subclass,material_or_system,feed_type,capacity_mg_g,energy_Wh_mol,recovery_pct,purity_pct,sel_Li_Mg,cycles,retention_pct,compiled_in
+S001,Chitrakar et al.,2014,Adsorption / ion sieve,Mn/Ti oxide sieve,Layered H2TiO3,salt-lake brine,32.7,,,,,,,R6
+S002,Wang et al.,2017,Adsorption / ion sieve,Mn/Ti oxide sieve,HxTiO3,salt-lake brine,36.3,,,,,,,R6
+S003,Wang et al.,2018,Adsorption / ion sieve,Mn/Ti oxide sieve,Iron-doped Li-Ti oxide,concentrated natural brine,34.8,,,,,,,R6
+S004,Zandvakili & Ranjbar,2018,Adsorption / ion sieve,composite sieve,MnO2/PVDF composite,enriched salt-lake brine,11.06,,,,,,,R6
+S005,Ohashi & Tai,2019,Adsorption / ion sieve,Mn oxide sieve,Li1.33Mn1.67O4 (surface-modified),natural brine,50.0,,,,,,,R6
+S006,Marthi & Smith,2019,Adsorption / ion sieve,composite sieve,LiMn2O4 nanowire/diatomaceous earth,salt-lake water,18.6,,,,,,,R6
+S007,Zhang et al.,2019,Adsorption / ion sieve,Mn oxide sieve,Al-doped Li manganese oxide,synthetic salt solution,32.6,,,,,,,R6
+S008,Liang et al.,2020,Adsorption / ion sieve,imprinted polymer,Li+-IIP-Fe3O4@C,synthetic salt solution,22.26,,,,,,,R6
+S009,Lai et al.,2020,Adsorption / ion sieve,granular sieve,Granular H4Mn5O12 (EP/HMO),salt-lake brine,17.2,,,,,,,R6
+S010,Chen et al.,2020,Adsorption / ion sieve,layered double hydroxide,Magnetic Li-Al-LDH,salt-lake brine,5.83,,,,,,,R6
+S011,Wei et al.,2020,Adsorption / ion sieve,Ti oxide sieve,Porous H4Ti5O12 nanofibre,simulated brine,59.1,,,,,,,R6
+S012,Wei et al.,2021,Adsorption / ion sieve,metal-organic framework,Al-based MOF (MIL-121),synthetic salt solution,1.25,,,,,,,R6
+S013,Marthi & Smith,2021,Adsorption / ion sieve,composite sieve,H2TiO3/diatomaceous earth,salt-lake brine,8.25,,,,,,,R6
+S014,Zhong et al.,2021,Adsorption / ion sieve,layered double hydroxide,Li-Al-LDH,salt-lake brine,7.27,,,,,,,R6
+S015,Luo et al.,2021,Adsorption / ion sieve,layered double hydroxide,Granular Li-Al-LDH/NH4Al3(SO4)2(OH)6,salt-lake brine,9.16,,,,,,,R6
+S016,Marthi et al.,2021,Adsorption / ion sieve,Ti oxide sieve,Layered H2TiO3,synthetic salt solution,40.0,,,,,,,R6
+S017,Jiang et al.,2021,Adsorption / ion sieve,metal-organic framework,Fluorine-pillared MOF,salt-lake brine,18.8,,,,,,,R6
+S018,Zhu et al.,2021,Adsorption / ion sieve,Ti oxide sieve,Shaped Ti-based Li ion-sieve,salt-lake brine (W. Taijinar),19.22,,,,,,,R6
+S019,Zhang et al.,2021,Adsorption / ion sieve,metal-organic framework,PNIPAM-co-crown-6 MOF-808,synthetic salt solution,7.21,,,,,,,R6
+S020,Zhang et al.,2014,Adsorption / ion sieve,Ti oxide sieve,LTO from anatase precursor,synthetic solution,39.2,,,,,,,R1
+S021,He et al.,2015,Adsorption / ion sieve,Ti oxide sieve,H2TiO3,synthetic solution,57.8,,,,,,,R1
+S022,Lawagon et al.,2016,Adsorption / ion sieve,Ti oxide sieve,H2TiO3,synthetic solution,94.5,,,,,,,R1
+S023,Sun et al.,2017,Adsorption / ion sieve,imprinted membrane,PVDF/crown-ether ion-imprinted membrane,brine,27.1,,,,,,,R1
+S024,Sun et al.,2018,Hybrid membrane-adsorbent,adsorptive membrane,Crown-ether functionalised GO/PVDF,synthetic salt solution,24.25,,,,,,,R6
+S025,Xue et al.,2020,Hybrid membrane-adsorbent,adsorptive membrane,alpha-Al2O3 supported Li4Mn5O12,synthetic salt solution,22.9,,,,,,,R6
+S026,Wang et al.,2021,Hybrid membrane-adsorbent,adsorptive membrane,Sulfonated polyarylene ether nitrile hollow fibre,synthetic brine,20.54,,,,,,,R6
+S027,Zheng et al.,2021,Hybrid membrane-adsorbent,adsorptive membrane,Crown-ether GO/chitosan/PVA,synthetic salt solution,168.5,,,,,,,R6
+S028,Kanoh et al.,1993,Electrosorption / ion pumping,battery-type electrode pair,Pt // lambda-MnO2,aqueous LiCl,,11.0,,,,,,R4
+S029,Pasta et al.,2012,Electrosorption / ion pumping,battery-type electrode pair,Ag // LiFePO4,simulated brine,7.76,1.0,,84.56,,,,R4
+S030,Lee et al.,2013,Electrosorption / ion pumping,battery-type electrode pair,Ag // lambda-MnO2,1 M LiCl / brine,,4.5,,91.8,,20,87,R5
+S031,Trocoli et al.,2014,Electrosorption / ion pumping,battery-type electrode pair,Ag // LiFePO4,artificial brine,,2.8,,97.86,,,,R5
+S032,Trocoli et al.,2015,Electrosorption / ion pumping,battery-type electrode pair,NiHCF // LiFePO4,Atacama brine,,8.7,,97.9,,,,R5
+S033,Kim et al.,2015,Electrosorption / ion pumping,battery-type electrode pair,AC // lambda-MnO2,simulated brine,14.88,4.2,,91.8,,50,96,R4
+S034,Missoni et al.,2016,Electrosorption / ion pumping,battery-type electrode pair,PPy // LiMn2O4,natural brine,1.73,7.5,,,,200,50,R4
+S035,Zhao et al.,2017,Electrosorption / ion pumping,battery-type electrode pair,LiMn2O4 // Li(1-x)Mn2O4,simulated brine,22.0,18.0,,89.0,,,97,R6
+S036,Zhao et al.,2017,Electrosorption / ion pumping,battery-type electrode pair,LiMn2O4 // Li(1-x)Mn2O4,simulated concentrated seawater,21.0,18.6,,86.0,,,97,R6
+S037,Trocoli et al.,2017,Electrosorption / ion pumping,battery-type electrode pair,NiHCF // lambda-MnO2,Atacama brine,,3.58,,96.2,,100,83.3,R5
+S038,Kim et al.,2018,Electrosorption / ion pumping,battery-type electrode pair,LiMn2O4 // Zn,salt-lake brine,,6.3,,,,100,73,R5
+S039,Lawagon et al.,2018,Electrosorption / ion pumping,battery-type electrode pair,Ag // LNCM,simulated brine,10.83,2.6,,96.4,,50,83.3,R6
+S040,Xu et al.,2018,Electrosorption / ion pumping,battery-type electrode pair,Graphite // lambda-MnO2 film,simulated brine,,4.14,,99.0,,100,91,R4
+S041,Kim et al.,2019,Electrosorption / ion pumping,battery-type electrode pair,Ag // lambda-MnO2,desalination brine,10.1,3.07,,99.0,,,,R6
+S042,Lawagon et al.,2019,Electrosorption / ion pumping,battery-type electrode pair,Ag // LiNi0.5Mn1.5O4,simulated brine,8.74,1.32,,98.14,,,,R6
+S043,Zhao et al.,2019,Electrosorption / ion pumping,battery-type electrode pair,PANI // lambda-MnO2,simulated brine,23.13,3.95,,81.4,,200,70.8,R4
+S044,Wang et al.,2019,Electrosorption / ion pumping,battery-type electrode pair,PPy-threaded HKUST-1,simulated brine,37.55,,,,,,,R6
+S045,Joo et al.,2020,Electrosorption / ion pumping,battery-type electrode pair,Ag // lambda-MnO2,seawater concentrate,,,,88.0,,5,,R4
+S046,Zhao et al.,2020,Electrosorption / ion pumping,battery-type electrode pair,AC // LNCM/rGO,simulated brine,13.84,1.4,,93.5,,30,88.89,R4
+S047,Zhao et al.,2020,Electrosorption / ion pumping,battery-type electrode pair,AC // CF-NMMO,simulated brine,14.4,7.91,,97.2,,30,90.8,R6
+S048,Zhao et al.,2020,Electrosorption / ion pumping,battery-type electrode pair,AC // PPy/Al2O3/LiMn2O4,simulated brine,12.84,1.41,,97.37,,,,R6
+S049,Niu et al.,2021,Electrosorption / ion pumping,battery-type electrode pair,BiOCl@PPy // lambda-MnO2,brine lake,10.88,1.007,,,,100,96,R6
+S050,Xu et al.,2021,Electrosorption / ion pumping,battery-type electrode pair,LiMn2O4 // Li(1-x)Mn2O4,salt-lake brine,15.5,16.0,,97.0,,100,,R6
+S051,Mu et al.,2021,Electrosorption / ion pumping,battery-type electrode pair,lambda-MnO2/LiMn2O4 on graphite felt,high Mg/Li simulated brine,26.14,23.38,,,,20,89.6,R4
+S052,Lee et al.,2013,Electrosorption / ion pumping,selectivity report,Ag // lambda-MnO2,,,,,,18.0,,,R4
+S053,Kim et al.,2015,Electrosorption / ion pumping,selectivity report,AC // lambda-MnO2,,,,,,286.67,,,R4
+S054,Zhao et al.,2017,Electrosorption / ion pumping,selectivity report,LiMn2O4 // Li(1-x)Mn2O4,,,,,,74.03,,,R4
+S055,Lawagon et al.,2018,Electrosorption / ion pumping,selectivity report,Ag // LNCM,,,,,,42.87,,,R4
+S056,Kim et al.,2019,Electrosorption / ion pumping,selectivity report,Ag // lambda-MnO2,,,,,,5.57,,,R4
+S057,Wang et al.,2019,Electrosorption / ion pumping,selectivity report,Pt // HMO/rGO,,,,,,10.23,,,R4
+S058,Zhao et al.,2020,Electrosorption / ion pumping,selectivity report,AC // LNCM/rGO,,,,,,308.3,,,R4
+S059,Kim et al.,2021,Electrosorption / ion pumping,selectivity report,lambda-MnO2 with ferri/ferrocyanide redox,,,,,,804.0,,,R6
+S060,Mu et al.,2021,Electrosorption / ion pumping,selectivity report,lambda-MnO2/LiMn2O4 graphite felt,,,,,,45.58,,,R4
+S061,Jiang et al.,2014,Electrodialysis / membrane electro-process,BMED,Neosepta CMX / BP-1,lake brine (Li2CO3 feed),,8.0,95.0,99.0,,,,R4
+S062,Parsa et al.,2015,Electrodialysis / membrane electro-process,ED,AR204SXR412 / CR67-MK111,Li-Na solution,,,20.0,99.6,,,,R4
+S063,Nie et al.,2017,Electrodialysis / membrane electro-process,SED,Selemion ASA / CSO,high Mg/Li brine,,131.0,62.5,,20.2,,,R4
+S064,Nie et al.,2017,Electrodialysis / membrane electro-process,SED,Selemion ASA / CSO,high Mg/Li brine,,31.0,55.2,,9.89,,,R4
+S065,Ji et al.,2017,Electrodialysis / membrane electro-process,SED,Astom ACS / CIMS,high Mg/Li brine,,,75.44,,8.57,,,R4
+S066,Bunani et al.,2017,Electrodialysis / membrane electro-process,BMED,Astom CMB/CHA + BP-1E,geothermal water,,,20.0,,,,,R4
+S067,Hwang et al.,2016,Electrodialysis / membrane electro-process,BMED,Neosepta BP-1,lake brine,,,70.0,,,,,R3
+S068,Ipekci et al.,2018,Electrodialysis / membrane electro-process,BMED,Astom CMB/CHA + BP-1E,geothermal water,,,62.0,94.7,,,,R4
+S069,Guo et al.,2018,Electrodialysis / membrane electro-process,SED,Astom ACS / CIMS,concentrated seawater / brine,,660.0,,,7.94,,,R4
+S070,Qiu et al.,2019,Electrodialysis / membrane electro-process,BMSED,SED + BMED integration,high Mg/Li brine,,38.0,58.3,99.0,,,,R4
+S071,Qiu et al.,2019,Electrodialysis / membrane electro-process,ED (two-stage),Astom ACS / CIMS,brine,,,73.0,,,,,R4
+S072,Zhao et al.,2019,Electrodialysis / membrane electro-process,LMED,TBP + ClO4 liquid membrane,high Mg/Li brine,,130.0,68.0,92.0,25.43,,,R4
+S073,Hoshino,2013,Electrodialysis / membrane electro-process,LMED,PP13-TFSI / Nafion 324,seawater,,,22.2,,,,,R4
+S074,Yang et al.,2018,Electrodialysis / membrane electro-process,SCED,NASICON superionic conductor,seawater,,,,,,,,R4
+S075,Li et al.,2021,Electrodialysis / membrane electro-process,SCED,LLTO dense glass membrane,Red Sea water,,530.0,,99.0,6090.0,,,R4
+S076,Liu et al.,2020,Electrodialysis / membrane electro-process,LMED,[C4mim][TFSI] liquid membrane,high Mg/Li brine,,,83.4,,266.9,,,R4
+S077,Shi et al.,2019,Electrodialysis / membrane electro-process,MCDI,monovalent-selective CEM + AC,LiCl/MgCl2 solution,,1.8,38.0,,2.95,,,R6
+S078,Wei et al.,2022,Electrodialysis / membrane electro-process,BMED,Li3PO4 conversion to LiOH,Li3PO4 solution,,,99.0,,,,,R4
+S079,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,75.8,,,,,R3
+S080,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,70.0,,,,,R3
+S081,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,90.5,,,,,R3
+S082,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,72.5,,,,,R3
+S083,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,77.5,,,,,R3
+S084,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,76.0,,,,,R3
+S085,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,67.7,,,,,R3
+S086,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,SED,see R3 Table 2,brine / seawater,,,76.5,,,,,R3
+S087,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,BMED,see R3 Table 2,brine / seawater,,,97.8,,,,,R3
+S088,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,BMED,see R3 Table 2,brine / seawater,,,83.7,,,,,R3
+S089,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,BMED,see R3 Table 2,brine / seawater,,,62.0,,,,,R3
+S090,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,BMED,see R3 Table 2,brine / seawater,,,73.0,,,,,R3
+S091,compiled entry (R3 Table 2),,Electrodialysis / membrane electro-process,ILM-ED,see R3 Table 2,brine / seawater,,,22.2,,,,,R3
+S092,Li et al.,2019,Nanofiltration / selective membrane,NF,Commercial polyamide,synthetic brine / salt solution,,,,,,,,R6
+S093,Wu et al.,2020,Nanofiltration / selective membrane,NF,[MimAP][Tf2N]-modified polyamide,synthetic brine / salt solution,,,,,8.12,,,R6
+S094,Ashraf et al.,2020,Nanofiltration / selective membrane,NF,PDA/PEI-modified polyamide,synthetic brine / salt solution,,,,,7.15,,,R6
+S095,Wu et al.,2020,Nanofiltration / selective membrane,NF,BTESE-coated TiO2 hybrid silica,synthetic brine / salt solution,,,,,,,,R6
+S096,Mohammad et al.,2020,Nanofiltration / selective membrane,ED,MOF (ZIF-8)/polypropylene,synthetic brine / salt solution,,,,,3.87,,,R6
+S097,Sharma et al.,2020,Nanofiltration / selective membrane,ED,Mg-doped LMO / sulfonated PEEK,synthetic brine / salt solution,,,,,4.82,,,R6
+S098,Xu et al.,2021,Nanofiltration / selective membrane,NF,Polyamide on MWCNT-COOK PES/PEG,synthetic brine / salt solution,,,,,58.66,,,R6
+S099,Feng et al.,2022,Nanofiltration / selective membrane,NF,PEI-grafted polyamide,synthetic brine / salt solution,,,,,33.4,,,R6
+S100,Peng & Zhao,2021,Nanofiltration / selective membrane,NF,Diaminoethimidazole-modified polyamide,synthetic brine / salt solution,,,,,,,,R6
+S101,Saif et al.,2021,Nanofiltration / selective membrane,electro-diffusion,HMO/PSS-Na/LiCF3SO3 composite,synthetic brine / salt solution,,,,,11.75,,,R6
+S102,Wang et al.,2021,Nanofiltration / selective membrane,NF,Cu-modified polyamide,synthetic brine / salt solution,,,,,8.0,,,R6
+S103,Feng et al.,2022,Nanofiltration / selective membrane,NF,Quaternized bipyridine-modified PEI,synthetic brine / salt solution,,,,,,,,R6
+S104,Shi et al.,2014,Solvent extraction,extractant system,TBP / [C4mim][PF6],salt-lake brine,,,90.93,,,,,R6
+S105,Shi et al.,2015,Solvent extraction,extractant system,TBP + NaClO4 / [C4mim][PF6],salt-lake brine,,,99.12,,,,,R6
+S106,Xiang et al.,2016,Solvent extraction,extractant system,TBP + FeCl3 / MIBK,salt-lake brine,,,98.9,,,,,R6
+S107,Xiang et al.,2017,Solvent extraction,extractant system,TBP + FeCl3 / MIBK,salt-lake brine,,,98.0,,,,,R6
+S108,Shi et al.,2018,Solvent extraction,extractant system,N523 + TBP + FeCl3 / kerosene,salt-lake brine,,,96.0,,,,,R6
+S109,Wang et al.,2019,Solvent extraction,extractant system,TBP + [Bmim]3PW12O40 / dimethyl phthalate,simulated brine,,,99.23,,,,,R6
+S110,Zhou et al.,2020,Solvent extraction,extractant system,TBP + FeCl3 / diethyl succinate,simulated brine,,,65.0,,,,,R6
+S111,Su et al.,2020,Solvent extraction,extractant system,TBP + P507 + FeCl3 / kerosene,salt-lake brine,,,99.8,,,,,R6
+S112,Zhou et al.,2021,Solvent extraction,extractant system,TBP + [OHEMIM][NTf2],simulated brine,,,94.2,,,,,R6
+S113,Ren et al.,2021,Solvent extraction,extractant system,TBP + NaBPh4 / CH2ClBr,simulated brine,,,87.65,,,,,R6
+S114,Li et al.,2021,Solvent extraction,extractant system,TBP + [Bmim]BPh4 / CH2BrCl,simulated brine,,,99.47,,,,,R6
+S115,Bai et al.,2021,Solvent extraction,extractant system,TBP + [N1888][P507] + FeCl3 / kerosene,simulated brine,,,70.0,,,,,R6
+S116,An et al.,2012,Precipitation,chemical precipitant,Na2CO3 + Ca(OH)2,salt-lake brine (Uyuni),,,90.0,99.55,,,,R6
+S117,Xu et al.,2014,Precipitation,chemical precipitant,Na2CO3,salt-lake brine,,,84.0,99.6,,,,R6
+S118,Li et al.,2015,Precipitation,chemical precipitant,Activated Al-Ca / Al-Fe alloys,synthetic salt solution,,,94.6,,,,,R6
+S119,Liu et al.,2018,Precipitation,chemical precipitant,Aluminium-based material,salt-lake brine,,,78.3,,,,,R6
+S120,Quintero et al.,2020,Precipitation,chemical precipitant,NaOH + Na2CO3,industrially refined brine,,,85.0,99.0,,,,R6
+S121,Zhang et al.,2019,Precipitation,chemical precipitant,Sodium metasilicate nonahydrate,simulated brine,,,86.73,,,,,R6
+S122,Lai et al.,2020,Precipitation,chemical precipitant,Na2HPO4 (crystallisation-precipitation),refined salt-lake brine,,,93.2,,,,,R6
+S123,Liu et al.,2021,Precipitation,chemical precipitant,Facet-engineered Li3PO4,salt-lake brine,,,51.62,,,,,R6
+S124,Alsabbagh et al.,2021,Precipitation,chemical precipitant,Tri-sodium phosphate,Dead Sea end brine,,,40.0,,,,,R6
+S125,compiled entry (R3 Table 1),,Capacitive deionisation,MCDI,monovalent-selective CEM,"LiCl+MgCl2, 152.6 ppm",,1.8,,,,,,R3
+S126,compiled entry (R3 Table 1),,Capacitive deionisation,HCDI,PVDF-EDA AEM,"LiCl, 848 ppm",30.0,,,,,,,R3
+S127,compiled entry (R3 Table 1),,Capacitive deionisation,HCDI,lambda-LMO/AC,"Li binary solution, 1457 ppm",,160.77,,,,,,R3
+S128,compiled entry (R3 Table 1),,Capacitive deionisation,HCDI,LMO/AC with EFA,"LiOH, 60 ppm",,,,,,,,R3
+S129,compiled entry (R3 Table 1),,Capacitive deionisation,HCDI,Li-Mn-Fe spinel,"LiCl, 424 ppm",32.0,,,,,,,R3
+S130,Siekierka et al.,2019,Capacitive deionisation,HCDI,LMTO / AC with PVC-EDA AEM,"geothermal brine, 16 ppm",800.0,1.26,,,,,,R3
+S131,Ha et al.,2019,Capacitive deionisation,FCDI,AC flow electrode,"LiCl, 100 ppm",,,91.7,,,,,R3
