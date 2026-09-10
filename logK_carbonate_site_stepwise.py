@@ -770,15 +770,22 @@ expected_Co = LOGK_SURF["CO3Ca"] + (lb_CoCO3 - lb_CaCO3)
 got_Co = float(fits[(fits.metal=="Co")&(fits.model=="CCM")].logK.iloc[0])
 print(f"\nPokrovsky / Van Cappellen aqueous-surface analogy for Co:")
 print(f"  expected log K(>CO3Co+) = log K(>CO3Ca+) + [log b(CoCO3) - log b(CaCO3)] = {LOGK_SURF['CO3Ca']} + ({lb_CoCO3} - {lb_CaCO3}) = {expected_Co:+.2f}")
-print(f"  fitted  log K(>CO3Co+) = {got_Co:+.2f}   ->  difference {got_Co-expected_Co:+.2f} log units")
-print("  The fitted value sits BELOW the analogy line. Two explanations that would normally be")
-print("  offered are ruled out by this data set itself:")
+print(f"  bound from these data   : log K(>CO3Co+) >= {got_Co:+.2f}")
+print(f"  The analogy value sits {expected_Co-got_Co:+.2f} log units ABOVE the bound, so it is ADMISSIBLE:")
+print(f"  nothing in this data set excludes it. That is the whole content of a one-sided result -")
+print(f"  it says how weak the binding cannot be, not how strong it is. Two explanations for the")
+print("  gap that would normally be offered are ruled out by this data set itself:")
 print("    - Ca/Mg competition: the swap test (Data check) moves the constant by less than 0.01,")
 print("      because the two competitor constants differ by only 0.2 log units;")
 print("    - precipitation inflating the removal: Step 8 shows the model predicts MORE sorption")
 print("      than the removal actually measured, so there is no excess removal to attribute.")
-print("  What remains is a reactive area well below BET, or incomplete equilibration, or the")
-print("  borrowed constant being too strong for dolomite in brine. Step 8 sizes each one.")
+print("  Three candidates remain - a reactive area well below BET, incomplete equilibration, or the")
+print("  borrowed constant being too strong for dolomite in brine - and Step 8 does not leave them")
+print("  open. It sizes each one and then discriminates among them on the TIME TREND: the two")
+print("  time-invariant candidates predict a flat prediction/measurement ratio, and the observed")
+print("  ratio closes monotonically (7.44, 4.69, 3.50 over days 2, 4, 6). Incomplete equilibration")
+print("  is the surviving explanation, which is also why the bound above is one-sided. Read Step 8")
+print("  before drawing conclusions from Table 1.")
 print("\nJudgment calls to record in the methods: (1) total BET area vs a reduced reactive area -")
 print("Belova's 70 % case raises log K, but closing this gap needs 13 to 29 % of BET, a far larger")
 print("reduction (Step 8b); (2) >CO3Ca/>CO3Mg fractions follow the measured Ca and Mg")
@@ -890,18 +897,46 @@ print("rise, and candidate (c) survives the confound rather than merely being fl
 print("\nThe pH 2 batch ratio runs the other way (9.4, 23, 148) because its measured removal collapses")
 print("into analytical noise; those three points are excluded on that basis and carry no trend.")
 
-print("\nTHE EXPERIMENT THIS IMPLIES. Extend one pH 6 cobalt batch to a month AT FIXED pH - by buffer")
-print("or by periodic adjustment - because a run that lets pH drift reproduces exactly the same")
-print("time/pH ambiguity at longer timescale. Sample at days 7, 10, 14, 21 and 28 rather than")
-print(f"strictly weekly, so the day-{t_log:.0f} extrapolation is bracketed instead of stepped over. Then watch")
-print("the ratio:")
+# --- AT WHAT pH? fixing pH at the day-6 value would hold the run above saturation for a month ---
+row6 = data[(data.metal=="Co") & (data.batch=="pH6") & (data.day==6)].iloc[0]
+def SI_Co_at(pH, Co_ppm, Ca_ppm=row6.Ca_ppm, Mg_ppm=row6.Mg_ppm):
+    tot = {"Ca":Ca_ppm/MM["Ca"]/1e3, "Mg":Mg_ppm/MM["Mg"]/1e3, "Na":NACL_M, "Cl":NACL_M,
+           "Co":Co_ppm/MM["Co"]/1e3}
+    return speciate(pH, tot, "Co")["SI"]["CoCO3 (sphaerocobaltite)"]
+CO_DOSE = float(data[(data.metal=="Co") & (data.day==0)].Me_ppm.iloc[0])      # 80.5 mg/L
+pH_sat = brentq(lambda q: SI_Co_at(q, CO_DOSE), 6.0, 9.5)                     # SI = 0 at full dose
+PH_RUN = 7.35
+d2 = data[(data.metal=="Co") & (data.batch=="pH6") & (data.day==2)].iloc[0]
+rem_d2 = 100*(CO_DOSE - d2.Me_ppm)/CO_DOSE
+
+print("\nAT WHAT pH? This decides whether the experiment can answer its own question. Fixing pH at")
+print(f"the day-6 value of {row6.pH:.2f} would hold the bottle ABOVE sphaerocobaltite saturation for the whole")
+print(f"month (SI {SI_Co_at(row6.pH, row6.Me_ppm):+.2f} at the day-6 residual, {SI_Co_at(row6.pH, CO_DOSE):+.2f} at the full dose). The ratio would then")
+print("converge for either of two reasons - sorption reaching equilibrium, or precipitate")
+print("accumulating - and a solution-phase measurement cannot separate them, because the ratio is")
+print("built from solution concentrations alone. The test would not decide what it was built to decide.")
+print(f"  At the full {CO_DOSE:.0f} mg/L dose, SI(CoCO3) = 0 at pH {pH_sat:.2f}.")
+print(f"  Holding at pH {PH_RUN:.2f} instead gives SI {SI_Co_at(PH_RUN, CO_DOSE):+.2f} at the dose and {SI_Co_at(PH_RUN, row6.Me_ppm):+.2f} at day-6 depletion,")
+print(f"  i.e. undersaturated from the first hour to the last, with margin. Cobalt only leaves")
+print(f"  solution as the run proceeds, so the SI can only fall further: pH {PH_RUN:.2f} is safe for the month.")
+print(f"  And the signal survives: the day-2 point sat at pH {d2.pH:.2f} with SI {SI_Co_at(d2.pH, d2.Me_ppm):+.2f} and still gave")
+print(f"  {rem_d2:.1f} % removal, well above the +/-3 % ICP precision.")
+print("  Diluting the cobalt would also drop the SI, but a tenfold cut pushes removal into the same")
+print("  analytical noise that already cost the pH 2 batch. The pH route keeps the signal.")
+
+print("\nTHE EXPERIMENT THIS IMPLIES. Extend one cobalt batch to a month AT FIXED pH - by buffer or")
+print(f"by periodic adjustment - held at pH {PH_RUN:.2f} rather than allowed to drift to {row6.pH:.2f}. Fixing pH removes")
+print("the time/pH ambiguity that this data set ran into, and fixing it LOW keeps the entire month")
+print("inside the sorption-only regime, so convergence of the ratio has one possible cause.")
+print(f"Sample at days 7, 10, 14, 21 and 28 rather than strictly weekly, so the day-{t_log:.0f} extrapolation is")
+print("bracketed instead of stepped over. Then watch the ratio:")
 print("  - if it converges on 1, the analogy constant of -0.79 was right and the six-day run stopped")
 print("    too early. That validates the borrowed constant and dates the kinetics.")
 print("  - if it plateaus near 3, equilibrium is reached and the residual gap belongs to the constant")
 print("    or to the reactive area, which the isotherm and pH-edge design then separates.")
-print("Either outcome is informative, and it is one bottle and five samplings. Track the solid by")
-print("XRD as well: the SI crosses zero between day 4 and day 6, so a longer run enters the regime")
-print("where sphaerocobaltite begins to contribute and the sorption-only reading would break down.")
+print("Either outcome is informative, and it is one bottle and five samplings. Run XRD on the final")
+print("solid regardless - not to interpret the ratio, which the pH choice has already made")
+print("unambiguous, but to confirm that nothing precipitated after all.")
 
 print("\nThe isotherm and pH-edge experiment in the Discussion remains what separates (a) from (b).")
 print(f"\nAbsolute ceiling if EVERY carbonate site held Co at 45.6 m2/L: {ceiling_mM:.3f} mmol/L "
