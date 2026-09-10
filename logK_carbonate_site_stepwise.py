@@ -29,12 +29,17 @@ def banner(t): print("\n" + "="*88 + f"\n{t}\n" + "="*88)
 # publication figure style: one palette, readable fonts, 300 dpi PNG + vector PDF in ./figures
 import os
 os.makedirs("figures", exist_ok=True)
-plt.rcParams.update({"font.size": 11, "axes.labelsize": 11, "axes.titlesize": 11.5,
-    "legend.fontsize": 8.5, "xtick.labelsize": 10, "ytick.labelsize": 10,
+plt.rcParams.update({"font.size": 10, "axes.labelsize": 10.5, "axes.titlesize": 10.5,
+    "legend.fontsize": 8.5, "legend.frameon": False, "xtick.labelsize": 9.5, "ytick.labelsize": 9.5,
     "axes.spines.top": False, "axes.spines.right": False, "figure.dpi": 110,
-    "savefig.dpi": 300, "savefig.bbox": "tight", "axes.grid": True, "grid.alpha": 0.25})
-COL = {"Co": "#1f5f8b", "Li": "#c8542a", "model": "#3a7d5d", "grey": "#7a7a7a"}
+    "savefig.dpi": 300, "savefig.bbox": "tight", "axes.grid": True, "grid.alpha": 0.22,
+    "lines.linewidth": 1.6, "axes.titlelocation": "left", "axes.titleweight": "bold"})
+# one palette for every figure: cobalt blue, lithium rust, model green, excluded grey
+COL = {"Co": "#1f5f8b", "Li": "#c8542a", "model": "#3a7d5d", "grey": "#8a8a8a", "pH2": "#7a5c99"}
+MK  = {"Co": "o", "Li": "s"}
+def panel(ax, letter): ax.set_title(f"({letter})", loc="left", fontsize=10, pad=6)
 def savefig(fig, name):
+    """300 dpi PNG and vector PDF into ./figures; captions live in the paper, not in the figure."""
     fig.savefig(f"figures/{name}.png"); fig.savefig(f"figures/{name}.pdf"); plt.show()
 
 # %% [markdown]
@@ -491,19 +496,24 @@ print("there is insensitivity, not precision: the propagated width is the number
 
 # %%
 banner("STEP 6  Diagnostic: is log K flat?")
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
-for ax, xcol, xlab in [(axes[0],"pH","measured equilibrium pH"),(axes[1],"Gamma","surface loading Γ (mol/m²)")]:
-    for metal, mk in [("Co","o"),("Li","s")]:
+fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.0), constrained_layout=True)
+for ax, xcol, xlab, letter in [(axes[0],"pH","measured pH at sampling","a"),(axes[1],"Gamma","surface coverage Γ (mol m$^{-2}$)","b")]:
+    for metal in ["Co","Li"]:
         d = ppdf[(ppdf.metal==metal)&np.isfinite(ppdf.logK_CCM)]
-        e = d[d.equilibrium]; k = d[~d.equilibrium]
-        ax.errorbar(e[xcol], e.logK_CCM, yerr=[e.logK_CCM-e.logK_lo, e.logK_hi-e.logK_CCM],
-                    fmt=mk, ms=8, color=COL[metal], capsize=3, label=f"{metal} day 6 (equilibrium)")
-        ax.scatter(k[xcol], k.logK_CCM, marker=mk, s=45, facecolors="none", edgecolors="gray",
-                   label=f"{metal} day 2, 4 (pre-equilibrium)")
-    ax.set_xlabel(xlab); ax.set_ylabel("point-by-point log K (CCM)"); ax.grid(alpha=0.3)
-    if xcol=="Gamma": ax.set_xscale("log")
-axes[0].axhline(-1.8, color="0.5", ls=":", lw=1); axes[0].text(4.2,-1.7,"Pokrovsky >CO3Ca+ (-1.8)",fontsize=8,color="0.4")
-axes[0].legend(fontsize=7); fig.suptitle("Step 6 diagnostic: log K should be flat"); fig.tight_layout(); savefig(fig, "Fig6_logK_diagnostic")
+        u = d[d.usable]; x = d[~d.usable]
+        ax.errorbar(u[xcol], u.logK_CCM, yerr=[u.logK_CCM-u.logK_lo, u.logK_hi-u.logK_CCM],
+                    fmt=MK[metal], ms=6.5, color=COL[metal], ecolor=COL[metal], elinewidth=0.8, capsize=2.5,
+                    alpha=0.95, ls="none", label=f"{metal}, usable point (bar: propagated interval)")
+        ax.plot(x[xcol], x.logK_CCM, "x", color=COL["grey"], ms=6.5, mew=1.3, ls="none",
+                label=f"{metal}, excluded (noise or SI > 0)")
+        fitv = float(fits[(fits.metal==metal)&(fits.model=="CCM")].logK.iloc[0])
+        ax.axhline(fitv, color=COL[metal], ls="--", lw=1.0, alpha=0.7, label=f"{metal}, weighted fit {fitv:+.2f}")
+    ax.axhline(-1.8, color=COL["grey"], ls=":", lw=1.1, label="Pokrovsky >CO$_3$Ca$^+$ (−1.8)")
+    ax.set_xlabel(xlab); ax.set_ylabel("point-by-point log K (CCM)"); ax.set_ylim(-7, 1.2); panel(ax, letter)
+    if xcol == "Gamma": ax.set_xscale("log")
+h, l = axes[0].get_legend_handles_labels()
+fig.legend(h, l, loc="outside lower center", ncol=3, fontsize=8)
+savefig(fig, "Fig6_logK_diagnostic")
 for metal in ["Li","Co"]:
     d = ppdf[(ppdf.metal==metal)&ppdf.equilibrium&np.isfinite(ppdf.logK_CCM)]
     if len(d)>1:
@@ -517,16 +527,21 @@ for metal in ["Li","Co"]:
 # recrystallisation) is present.
 
 # %%
-fig, ax = plt.subplots(figsize=(7.2, 4.6))
-ins = ax.inset_axes([0.55, 0.15, 0.4, 0.4])
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.2, 3.8), constrained_layout=True)
 for (metal, batch), d in data.groupby(["metal","batch"]):
-    lab = f"{metal}, initial {batch.replace('pH','pH ')}"
-    ax.plot(d.day, d["removal_%"], "o-", label=lab)
+    filled = batch == "pH6"
+    kw = dict(marker=MK[metal], color=COL[metal], ms=6, mfc=COL[metal] if filled else "white", mew=1.4,
+              ls="-" if filled else "--", label=f"{metal}, initial {batch.replace('pH','pH ')}")
+    ax.plot(d.day, d["removal_%"], **kw)
     G = [coverage(c0, c, metal)[0]*1e6 for c0, c in zip(d.C0_ppm, d.Me_ppm)]
-    ins.plot(d.day, G, "o-")
-ax.set_xlabel("time (days)"); ax.set_ylabel("removal (%)"); ax.set_title("Figure 1  Kinetics of Li and Co uptake by dolomite")
-ins.set_xlabel("days", fontsize=8); ins.set_ylabel("Γ (µmol/m²)", fontsize=8); ins.tick_params(labelsize=7)
-ax.legend(fontsize=8); fig.tight_layout(); savefig(fig, "Fig1_kinetics")
+    bx.plot(d.day, G, **kw)
+bx.axhline(SITE_DENS["CO3"]*1e6, color=COL["grey"], ls=":", lw=1.2, label="carbonate site density")
+ax.set_xlabel("time (days)"); ax.set_ylabel("removal (% of initial)")
+bx.set_xlabel("time (days)"); bx.set_ylabel("surface coverage Γ (µmol m$^{-2}$)")
+ax.set_xticks([0,2,4,6]); bx.set_xticks([0,2,4,6]); bx.set_ylim(0, 15.5)
+ax.legend(loc="upper left"); bx.legend(loc="upper left")
+panel(ax, "a"); panel(bx, "b")
+savefig(fig, "Fig1_kinetics")
 
 # %% [markdown]
 # ## Figure 2 — adsorption edges (percent removal vs pH) with the model
@@ -547,19 +562,26 @@ def forward_removal(metal, pH, C0_ppm, Ca_ppm, Mg_ppm, logK, electrostatic=True)
         D = 0.5*D + 0.5*Dn
     return 100*(C0-D)/C0
 best = {m: float(fits[(fits.metal==m)&(fits.model=="CCM")].logK.iloc[0]) for m in ["Li","Co"]}
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
-grid = np.linspace(3, 10, 50)
-for ax, metal in zip(axes, ["Co","Li"]):
-    for batch, ls in [("pH6","-"),("pH2","--")]:
+fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.9), constrained_layout=True)
+grid = np.linspace(3, 10, 141)
+for ax, metal, letter in zip(axes, ["Co","Li"], "ab"):
+    for batch, ls, lab in [("pH6","-","model, pH 6 batch chemistry"),("pH2","--","model, pH 2 batch chemistry")]:
         e = eq[(eq.metal==metal)&(eq.batch==batch)].iloc[0]
         curve = [forward_removal(metal, p, e.C0_ppm, e.Ca_ppm, e.Mg_ppm, best[metal]) for p in grid]
-        ax.plot(grid, curve, ls, color="#2c5f8a", label=f"model, {batch} batch chemistry")
+        ax.plot(grid, curve, ls, color=COL["model"], label=lab)
     d = data[(data.metal==metal)&(data.day>0)]
-    ax.scatter(d[d.day==6].pH, d[d.day==6]["removal_%"], s=80, color="#c1440e", zorder=3, label="measured, day 6")
-    ax.scatter(d[d.day<6].pH, d[d.day<6]["removal_%"], s=35, facecolors="none", edgecolors="gray", label="days 2, 4")
-    ax.set_xlabel("pH"); ax.set_ylabel("removal (%)"); ax.set_title(f"Figure 2  {metal} adsorption edge (log K = {best[metal]:+.2f})")
-    ax.legend(fontsize=8)
-fig.tight_layout(); savefig(fig, "Fig2_adsorption_edges")
+    ax.plot(d[d.day==6].pH, d[d.day==6]["removal_%"], MK[metal], color=COL[metal], ms=7.5, ls="none",
+            label="measured, day 6", zorder=3)
+    ax.plot(d[d.day<6].pH, d[d.day<6]["removal_%"], MK[metal], color=COL[metal], mfc="white", mew=1.3,
+            ms=6, ls="none", label="measured, days 2 and 4 (pre-equilibrium)")
+    if metal == "Li":
+        C0 = data[data.metal=="Li"].C0_ppm.iloc[0]/MM["Li"]/1e3
+        ax.axhline(100*S_T["CO3"]/C0, color=COL["grey"], ls=":", lw=1.2, label="site ceiling (all carbonate sites)")
+    ax.set_xlabel("pH"); ax.set_ylabel(f"{metal} removal (% of initial)")
+    ax.text(0.98, 0.04 if metal=="Co" else 0.96, f"apparent log K = {best[metal]:+.2f}", transform=ax.transAxes,
+            ha="right", va="bottom" if metal=="Co" else "top", fontsize=9, color=COL["grey"])
+    ax.legend(loc="upper left" if metal=="Co" else "lower right"); panel(ax, letter)
+savefig(fig, "Fig2_adsorption_edges")
 
 # %% [markdown]
 # ## Figures 3 and 4 — isotherms (log Γ vs log C_eq) with the model
@@ -568,23 +590,25 @@ fig.tight_layout(); savefig(fig, "Fig2_adsorption_edges")
 # concentration is precipitation, not adsorption. At 100 mg/L this is where it would show.
 
 # %%
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
-C0_grid = np.logspace(-6, -1, 40)
-for ax, metal in zip(axes, ["Co","Li"]):
-    for batch, ls in [("pH6","-"),("pH2","--")]:
+fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.9), constrained_layout=True)
+C0_grid = np.logspace(-6, -1, 60)
+for ax, metal, letter in zip(axes, ["Co","Li"], "ab"):
+    for batch, ls, filled in [("pH6","-",True),("pH2","--",False)]:
         e = eq[(eq.metal==metal)&(eq.batch==batch)].iloc[0]
         Ceq, Gam = [], []
         for C0 in C0_grid:
             rem = forward_removal(metal, e.pH, C0*MM[metal]*1e3, e.Ca_ppm, e.Mg_ppm, best[metal])
             Ceq.append(C0*(1-rem/100)); Gam.append(C0*rem/100/S_AREA)
-        ax.plot(np.log10(Ceq), np.log10(np.maximum(Gam,1e-30)), ls, color="#2c5f8a", label=f"model at pH {e.pH:.2f}")
+        ax.plot(np.log10(Ceq), np.log10(np.maximum(Gam,1e-30)), ls, color=COL["model"], label=f"model, pH {e.pH:.2f}")
         G, _ = coverage(e.C0_ppm, e.Me_ppm, metal)
-        if G>0: ax.scatter(np.log10(e.Me_ppm/MM[metal]/1e3), np.log10(G), s=90, color="#c1440e", zorder=3,
-                           label=f"measured, {batch} batch")
-    ax.axhline(np.log10(SITE_DENS["CO3"]), color="0.6", ls=":", lw=1); ax.text(-6, np.log10(SITE_DENS["CO3"])+0.1, "site density", fontsize=8, color="0.4")
-    ax.set_xlabel("log C_eq (mol/L)"); ax.set_ylabel("log Γ (mol/m²)"); ax.set_title(f"Figure {3 if metal=='Co' else 4}  {metal} isotherm")
-    ax.legend(fontsize=8)
-fig.tight_layout(); savefig(fig, "Fig3_4_isotherms")
+        if G > 0:
+            ax.plot(np.log10(e.Me_ppm/MM[metal]/1e3), np.log10(G), MK[metal], color=COL[metal], ms=7.5, ls="none",
+                    mfc=COL[metal] if filled else "white", mew=1.4,
+                    label=f"measured day 6, {batch.replace('pH','pH ')} batch", zorder=3)
+    ax.axhline(np.log10(SITE_DENS["CO3"]), color=COL["grey"], ls=":", lw=1.2, label="carbonate site density")
+    ax.set_xlabel("log C$_{eq}$ (mol L$^{-1}$)"); ax.set_ylabel("log Γ (mol m$^{-2}$)")
+    ax.set_ylim(-9.4, -4.6); ax.legend(loc="lower right"); panel(ax, letter)
+savefig(fig, "Fig3_4_isotherms")
 print("The unit-slope region is adsorption; the flattening is site saturation (Langmuir behaviour).")
 
 # %% [markdown]
@@ -593,20 +617,25 @@ print("The unit-slope region is adsorption; the flattening is site saturation (L
 # column capacity or bed-volume estimate.
 
 # %%
-fig, ax = plt.subplots(figsize=(7, 4.4))
-for metal, mk in [("Co","o"),("Li","s")]:
+fig, ax = plt.subplots(figsize=(6.4, 4.0), constrained_layout=True)
+grid = np.linspace(3, 10, 141)
+for metal in ["Co","Li"]:
     d = data[(data.metal==metal)&(data.day>0)].copy()
     d["Kd"] = (d.C0_ppm - d.Me_ppm)/d.Me_ppm*V_L/M_G*1e3
-    e = d[d.day==6]; k = d[(d.day<6)&(d.Kd>0)]
-    ax.scatter(e.pH, np.log10(e.Kd.clip(lower=1e-3)), marker=mk, s=90, label=f"{metal} day 6")
-    ax.scatter(k.pH, np.log10(k.Kd), marker=mk, s=35, facecolors="none", edgecolors="gray", label=f"{metal} days 2, 4")
-    # model K_d curve at the pH6 batch chemistry
+    noise = (d.metal=="Co")&(d.batch=="pH2")            # within analytical noise (Step 5a)
+    e = d[(d.day==6)&~noise]; k = d[(d.day<6)&~noise&(d.Kd>0)]; x = d[noise&(d.Kd>0)]
+    ax.plot(e.pH, np.log10(e.Kd), MK[metal], color=COL[metal], ms=7.5, ls="none", label=f"{metal}, day 6", zorder=3)
+    ax.plot(k.pH, np.log10(k.Kd), MK[metal], color=COL[metal], mfc="white", mew=1.3, ms=6, ls="none",
+            label=f"{metal}, days 2 and 4")
+    if len(x): ax.plot(x.pH, np.log10(x.Kd), "x", color=COL["grey"], ms=7, mew=1.4, ls="none",
+                       label="Co, pH 2 batch (within noise, excluded)")
     e0 = eq[(eq.metal==metal)&(eq.batch=="pH6")].iloc[0]
     rem = np.array([forward_removal(metal, p, e0.C0_ppm, e0.Ca_ppm, e0.Mg_ppm, best[metal]) for p in grid])
     Kd = rem/(100-rem)*V_L/M_G*1e3
-    ax.plot(grid, np.log10(np.maximum(Kd,1e-3)), "-", lw=1.2, label=f"{metal} model")
-ax.set_xlabel("pH"); ax.set_ylabel("log K_d (L/kg)"); ax.set_title("Figure 5  Distribution coefficient")
-ax.legend(fontsize=8); fig.tight_layout(); savefig(fig, "Fig5_Kd_vs_pH")
+    ax.plot(grid, np.log10(np.maximum(Kd,1e-3)), "-", color=COL[metal], lw=1.4, alpha=0.9, label=f"{metal}, model")
+ax.set_xlabel("pH"); ax.set_ylabel("log $K_\\mathrm{d}$ (L kg$^{-1}$)"); ax.set_ylim(-2.1, 0.5)
+ax.legend(loc="lower right", ncol=2)
+savefig(fig, "Fig5_Kd_vs_pH")
 
 # %% [markdown]
 # ## Surface speciation plot — why uptake rises with pH
@@ -614,18 +643,20 @@ ax.legend(fontsize=8); fig.tight_layout(); savefig(fig, "Fig5_Kd_vs_pH")
 # Ca and Mg competition visible instead of asserting it.
 
 # %%
-fig, ax = plt.subplots(figsize=(7.4, 4.6))
+fig, ax = plt.subplots(figsize=(6.8, 4.0), constrained_layout=True)
 e0 = eq[(eq.metal=="Co")&(eq.batch=="pH6")].iloc[0]
+grid = np.linspace(3, 10, 141)
 fr = {k: [] for k in ["CO3H0","CO3m","CO3Ca","CO3Mg","CO3Me"]}
 for p in grid:
-    tot = totals_for(e0); s = speciate(p, tot, "Co")
-    st = surface(s, "Co", logK_Me=best["Co"])
+    tot = totals_for(e0); s_ = speciate(p, tot, "Co")
+    st = surface(s_, "Co", logK_Me=best["Co"])
     for k in fr: fr[k].append(100*st["sp"][k]/S_T["CO3"])
-labels = {"CO3H0":">CO3H0","CO3m":">CO3-","CO3Ca":">CO3Ca+","CO3Mg":">CO3Mg+","CO3Me":">CO3Co+"}
-for k, v in fr.items(): ax.plot(grid, v, label=labels[k], lw=2 if k=="CO3Me" else 1.4)
-ax.set_xlabel("pH"); ax.set_ylabel("fraction of carbonate sites (%)")
-ax.set_title(f"Carbonate-site speciation, Co batch chemistry (Ca {e0.Ca_ppm:.2f}, Mg {e0.Mg_ppm:.1f} ppm)")
-ax.legend(fontsize=8); fig.tight_layout(); savefig(fig, "FigS1_surface_speciation")
+labels = {"CO3H0":">CO$_3$H$^0$","CO3m":">CO$_3^-$","CO3Ca":">CO$_3$Ca$^+$","CO3Mg":">CO$_3$Mg$^+$","CO3Me":">CO$_3$Co$^+$"}
+pal = {"CO3H0":"#4c4c4c","CO3m":"#3a7d5d","CO3Ca":"#c8a44a","CO3Mg":"#7a5c99","CO3Me":COL["Co"]}
+for k, v in fr.items(): ax.plot(grid, v, color=pal[k], lw=2.4 if k=="CO3Me" else 1.6, label=labels[k])
+ax.set_xlabel("pH"); ax.set_ylabel("fraction of carbonate sites (%)"); ax.set_ylim(0, 100)
+ax.legend(loc="center right", title=f"Co pH 6 batch: Ca {e0.Ca_ppm:.2f}, Mg {e0.Mg_ppm:.1f} mg L$^{{-1}}$", title_fontsize=8)
+savefig(fig, "FigS1_surface_speciation")
 
 # %% [markdown]
 # ## Step 7 — report honestly
@@ -737,17 +768,21 @@ print(f"  at +/-1 % ICP precision the propagated half-width would fall to about 
 print("  Lithium is site-limited (Step 2): the value is an order of magnitude, not a constant, until")
 print("  an isotherm at lower Li concentration puts the surface below saturation.")
 
-fig, ax = plt.subplots(figsize=(7.6, 4.6)); ax2 = ax.twinx()
-for batch, mk in [("pH6","o"),("pH2","s")]:
-    d = split[split.batch==batch]
-    ax.plot(d.day, d.measured_pct, mk+"-", color="#c1440e", label=f"measured removal, {batch} batch")
-    ax.plot(d.day, d.predicted_sorbed_pct, mk+"--", color="#2c5f8a", label=f"predicted sorption, {batch} batch")
-    ax2.plot(d.day, d.SI_CoCO3, mk+":", color="#3a7d5d", label=f"SI sphaerocobaltite, {batch}")
-ax2.axhline(0, color="#3a7d5d", lw=0.8, alpha=0.5)
-ax.set_xlabel("time (days)"); ax.set_ylabel("Co removed or sorbed (% of initial)"); ax2.set_ylabel("SI CoCO3")
-ax.set_title("Step 8  Cobalt: measured removal vs predicted sorption, with saturation index")
-h1,l1 = ax.get_legend_handles_labels(); h2,l2 = ax2.get_legend_handles_labels()
-ax.legend(h1+h2, l1+l2, fontsize=7, loc="upper left"); fig.tight_layout(); savefig(fig, "Fig8_Co_sorption_vs_removal_SI")
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.2, 3.8), constrained_layout=True)
+bcol = {"pH6": COL["Co"], "pH2": COL["pH2"]}
+for batch in ["pH6","pH2"]:
+    d = split[split.batch==batch]; lab = batch.replace("pH","pH ")
+    ax.plot(d.day, d.measured_pct, "o-", color=bcol[batch], ms=6.5, label=f"measured removal, {lab} batch")
+    ax.plot(d.day, d.predicted_sorbed_pct, "o--", color=bcol[batch], mfc="white", mew=1.3, ms=6,
+            label=f"predicted sorption (log K = {LOGK_CO_PRED:+.2f}), {lab} batch")
+    bx.plot(d.day, d.SI_CoCO3, "o-", color=bcol[batch], ms=6.5, label=f"{lab} batch")
+bx.axhline(0, color=COL["grey"], lw=1); bx.axhspan(0, 2, color=COL["grey"], alpha=0.12)
+bx.text(2.05, 0.15, "supersaturated", fontsize=8.5, color=COL["grey"])
+ax.set_xlabel("time (days)"); ax.set_ylabel("Co removed or sorbed (% of initial)")
+bx.set_xlabel("time (days)"); bx.set_ylabel("saturation index, sphaerocobaltite CoCO$_3$")
+ax.set_xticks([2,4,6]); bx.set_xticks([2,4,6]); ax.set_ylim(-1, 30); bx.set_ylim(-7.5, 1.5)
+ax.legend(loc="center left", fontsize=8); bx.legend(loc="lower right"); panel(ax, "a"); panel(bx, "b")
+savefig(fig, "Fig8_Co_sorption_vs_removal_SI")
 print("Read the two curves together with the SI: predicted sorption sits ABOVE measured removal at")
 print("every point, so in this coarse, low-uptake data set precipitation is not needed to explain the")
 print("removal; the model is over-predicting sorption. The SI crossing zero at day 6 marks where")

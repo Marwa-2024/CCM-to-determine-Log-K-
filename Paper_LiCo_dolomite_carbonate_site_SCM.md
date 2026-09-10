@@ -278,6 +278,38 @@ Three features of the experimental design limit what can be fitted irrespective 
 
 ---
 
+## Figures
+
+![Figure 1](figures/Fig1_kinetics.png)
+
+**Figure 1.** Kinetics of Li⁺ and Co²⁺ uptake by dolomite (60 g L⁻¹, 40 g L⁻¹ NaCl, 25 °C). (a) Removal as a percentage of the initial concentration; (b) surface coverage Γ from Eq. 12, with the carbonate-site density of 14 µmol m⁻² shown. Filled symbols, batches with initial pH 6; open symbols, initial pH 2. Cobalt removal in the pH 6 batch is still rising at day 6; lithium reaches 64 to 72 % of the site density by day 2.
+
+![Figure 2](figures/Fig2_adsorption_edges.png)
+
+**Figure 2.** Adsorption edges. (a) Cobalt and (b) lithium removal against pH. Filled symbols are the day-6 points, open symbols the day-2 and day-4 samples plotted at their measured pH. Model curves are the forward prediction with the apparent constant of Table 6 and each batch's day-6 Ca and Mg (solid, pH 6 batch chemistry; dashed, pH 2 batch chemistry). The dotted line in (b) is the site ceiling: the removal if every carbonate site held lithium.
+
+![Figures 3 and 4](figures/Fig3_4_isotherms.png)
+
+**Figures 3 and 4.** Isotherms, log Γ against log C_eq, for (a) cobalt and (b) lithium. Lines are the forward model at the day-6 pH of each batch with the initial concentration varied; symbols are the single measured point of each batch. The unit-slope region is low-coverage adsorption; the flattening toward the dotted line is site saturation. Lithium sits on the saturation shoulder.
+
+![Figure 5](figures/Fig5_Kd_vs_pH.png)
+
+**Figure 5.** Distribution coefficient, log K_d against pH, with the model curves at the pH 6 batch chemistry. The cobalt pH 2 batch points are within analytical noise and are marked as excluded.
+
+![Figure 6](figures/Fig6_logK_diagnostic.png)
+
+**Figure 6.** The flat-line diagnostic: point-by-point log K on the carbonate site against (a) measured pH and (b) surface coverage. Filled symbols are the usable points with the interval obtained by recomputing log K at Γ ∓ σ_Γ (±3 % ICP precision); crosses are the points excluded for being within noise or above sphaerocobaltite saturation. Dashed lines are the weighted fits of Table 6; the dotted line is Pokrovsky et al.'s >CO₃Ca⁺ constant. Lithium is flat in pH but its interval is wide because the surface is near saturation.
+
+![Figure 7](figures/Fig8_Co_sorption_vs_removal_SI.png)
+
+**Figure 7.** Cobalt: (a) measured removal (solid) against the sorption predicted with the analogy constant log K = −0.79 (dashed), for the two batches; (b) saturation index of sphaerocobaltite at the same points, with the supersaturated region shaded. The prediction lies above the measurement at every point (Table 7).
+
+![Figure S1](figures/FigS1_surface_speciation.png)
+
+**Figure S1.** Fractional occupancy of the carbonate site against pH at the cobalt pH 6 batch chemistry, showing the >CO₃H⁰ to >CO₃⁻ transition, the >CO₃Mg⁺ competition and the >CO₃Co⁺ complex.
+
+---
+
 ## Data and code availability
 
 The complete workflow, with every reaction, constant and datum embedded, is in `LogK_LiCo_dolomite_carbonate_site_STEPWISE.ipynb` (Python 3) in the project repository. A Wolfram Mathematica notebook implementing the same model is provided alongside.
