@@ -649,8 +649,8 @@ for ax, metal, letter in zip(axes, ["Co","Li"], "ab"):
     if np.any(_si > 0):
         p_sat = grid[np.argmax(_si > 0)]
         ax.axvspan(p_sat, grid[-1], color=COL["grey"], alpha=0.13, lw=0, zorder=0)
-        ax.text(p_sat + 0.08, 0.965, f"SI({_phase.split()[0]}) > 0\nmodel not valid", fontsize=7.4,
-                color=COL["grey"], va="top", ha="left", transform=ax.get_xaxis_transform())
+        ax.text(grid[-1] - 0.12, 0.975, f"SI({_phase.split()[0]}) > 0\nmodel not valid", fontsize=7.4,
+                color=COL["grey"], va="top", ha="right", transform=ax.get_xaxis_transform())
     else:
         p_sat = grid[-1]
     for batch, ls, lab in [("pH6","-","model, pH 6 batch chemistry"),("pH2","--","model, pH 2 batch chemistry")]:
