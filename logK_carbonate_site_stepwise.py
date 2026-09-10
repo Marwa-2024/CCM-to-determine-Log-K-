@@ -1358,3 +1358,219 @@ except ImportError:
     print("\n(phreeqpython not installed - run  pip install phreeqpython  to execute the cross-check.)")
 except Exception as e:
     print(f"\n(PHREEQC cross-check could not run: {e})")
+
+# %% [markdown]
+# # Appendix A — the Goldberg (1985) constant capacitance procedure, applied to this system
+#
+# Goldberg, S. (1985). *Chemical modeling of anion competition on goethite using the constant
+# capacitance model.* Soil Science Society of America Journal, 49(4), 851–856.
+#
+# That paper is the clearest published statement of the constant capacitance procedure, so this
+# appendix follows it **step for step**, in its own order, with its own numbering, substituting
+# this system's sites, reactions and parameters. Goldberg's equation numbers are given in square
+# brackets so every line can be checked against the source.
+#
+# Goldberg's arc is also this project's arc: fit the adsorbate constants on **single-adsorbate**
+# systems with everything else held fixed, then use those constants, with **no parameter fitting
+# at all**, to predict a **competitive** system. Single-ion Li and Co here, produced water next.
+#
+# ---
+#
+# ### A.1 The four assumptions [Goldberg, Data and Methods]
+#
+# Goldberg states four. Three carry over unchanged; one does not, and where a mimic breaks is
+# worth more than where it holds.
+#
+# | | Goldberg (1985), goethite | This system, dolomite |
+# |---|---|---|
+# | (i) | adsorption proceeds by **ligand exchange** | adsorption proceeds by **proton exchange** at the carbonate site. Cations, not anions, so the exchanged ion is H⁺ rather than OH⁻. The formalism is identical; only the reaction is different |
+# | (ii) | all surface complexes are **inner-sphere** | same — assumed, and the assumption is what Zachara et al. (1991) put in doubt for hydrated divalents |
+# | (iii) | **no complexes with the background electrolyte** | **VIOLATED, and it cannot be waived.** The background here is 0.684 M NaCl, and CoCl⁺ carries ~20 % of the dissolved cobalt. Goldberg could ignore this at 0.1 M; at 0.68 M the aqueous speciation of Step 1 is a required extra stage, not an optional refinement |
+# | (iv) | **linear** σ–ψ relation | same, Eq. [1] below |
+#
+# ### A.2 Charge–potential relation [Goldberg Eq. 1]
+#
+# Goldberg writes the constant capacitance relation on a **volume-of-suspension** basis:
+#
+#     σ = (C·S·a / F) · ψ                                                            [1]
+#
+# with σ in mol_c m⁻³, C in F m⁻², S in m² kg⁻¹, a in kg m⁻³ and F in C mol⁻¹. This is the same
+# statement as σ_area = C·ψ used in the body of this notebook, multiplied by S·a/F to put charge
+# on a per-litre-of-suspension basis. Both are printed below so the two conventions can be
+# compared without unit confusion, which is where most of the disagreement about "surface charge
+# is too big" came from.
+#
+# ### A.3 Surface functional groups and their acid–base reactions [Goldberg Eqs. 2–3]
+#
+# Goethite has one amphoteric group, FeOH. Dolomite has **three** primary hydration sites
+# (Pokrovsky et al., 1999), and only one of them binds metal cations:
+#
+#     >CaOH⁰ + H⁺  ⇌  >CaOH₂⁺                                                       [2a]
+#     >MgOH⁰ + H⁺  ⇌  >MgOH₂⁺                                                       [2b]
+#     >CaOH⁰       ⇌  >CaO⁻ + H⁺                                                    [3a]
+#     >MgOH⁰       ⇌  >MgO⁻ + H⁺                                                    [3b]
+#     >CO₃H⁰       ⇌  >CO₃⁻ + H⁺                                                    [3c]
+#
+# [2a]–[3b] are Goldberg's [2]–[3] written twice, once for each metal site. [3c] has no analogue
+# in the goethite system: it is the carbonate site, and it is the one that takes the cation.
+#
+# ### A.4 Adsorbate surface complexation reactions [Goldberg Eqs. 4–7]
+#
+# Goldberg's [4]–[7] are ligand exchanges of an anion for a surface hydroxyl. The cation analogue
+# exchanges a proton at the carbonate site:
+#
+#     >CO₃H⁰ + Li⁺   ⇌  >CO₃Li⁰ + H⁺                                                [4]
+#     >CO₃H⁰ + Co²⁺  ⇌  >CO₃Co⁺ + H⁺                                                [5]
+#
+# These are the two constants this work sets out to determine. Two further reactions of the same
+# form are **not** adjustable, because the dolomite supplies their cations by dissolving; they are
+# the competitors, and Goldberg has no equivalent because goethite does not dissolve:
+#
+#     >CO₃H⁰ + Ca²⁺  ⇌  >CO₃Ca⁺ + H⁺                                                [6]
+#     >CO₃H⁰ + Mg²⁺  ⇌  >CO₃Mg⁺ + H⁺                                                [7]
+#
+# and the carbonate/bicarbonate complexes of the two hydroxyl sites, which hold no metal but do
+# carry charge, so they enter Eq. [15]:
+#
+#     >MeOH⁰ + CO₃²⁻ + 2H⁺  ⇌  >MeHCO₃⁰ + H₂O          (Me = Ca, Mg)                [8]
+#     >MeOH⁰ + CO₃²⁻ + H⁺   ⇌  >MeCO₃⁻ + H₂O           (Me = Ca, Mg)                [9]
+#
+# ### A.5 Intrinsic conditional equilibrium constants [Goldberg Eqs. 8–13]
+#
+# Goldberg writes one mass-action quotient per reaction, in surface concentrations. The same,
+# for [4]–[7], with {} for aqueous activity and [] for surface concentration (mol L⁻¹):
+#
+#     K_Li  = ( [>CO₃Li⁰] · {H⁺} ) / ( [>CO₃H⁰] · {Li⁺} )                          [10]
+#     K_Co  = ( [>CO₃Co⁺] · {H⁺} ) / ( [>CO₃H⁰] · {Co²⁺} )                         [11]
+#     K_Ca  = ( [>CO₃Ca⁺] · {H⁺} ) / ( [>CO₃H⁰] · {Ca²⁺} )                         [12]
+#     K_Mg  = ( [>CO₃Mg⁺] · {H⁺} ) / ( [>CO₃H⁰] · {Mg²⁺} )                         [13]
+#
+# ### A.6 Mass balance on the surface functional groups [Goldberg Eq. 14]
+#
+# Goldberg has one site balance. Dolomite needs three, one per site:
+#
+#     [>CO₃]_T  = [>CO₃H⁰] + [>CO₃⁻] + [>CO₃Li⁰] + [>CO₃Co⁺] + [>CO₃Ca⁺] + [>CO₃Mg⁺]   [14a]
+#     [>CaOH]_T = [>CaOH⁰] + [>CaOH₂⁺] + [>CaO⁻] + [>CaHCO₃⁰] + [>CaCO₃⁻]              [14b]
+#     [>MgOH]_T = [>MgOH⁰] + [>MgOH₂⁺] + [>MgO⁻] + [>MgHCO₃⁰] + [>MgCO₃⁻]              [14c]
+#
+# ### A.7 Charge balance [Goldberg Eq. 15]
+#
+# Goldberg's [15] sums the charged surface species and nothing else. Exactly the same here — and
+# note what is *absent*: dissolved Ca²⁺ and Mg²⁺ from dissolution appear nowhere in it.
+#
+#     σ = [>CaOH₂⁺] + [>MgOH₂⁺] + [>CO₃Co⁺] + [>CO₃Ca⁺] + [>CO₃Mg⁺]
+#         − [>CO₃⁻] − [>CaO⁻] − [>MgO⁻] − [>CaCO₃⁻] − [>MgCO₃⁻]                       [15]
+#
+# >CO₃Li⁰, >CaHCO₃⁰ and >MgHCO₃⁰ are neutral and contribute nothing. This is the single most
+# important line in the whole procedure for this project: the spreadsheet σ, computed from the
+# total-ion mass balance, includes dissolution and is not the quantity in Eq. [15].
+#
+# ### A.8 Intrinsic versus conditional constants [Goldberg Eqs. 16–17]
+#
+# Goldberg gives the conversion for the protonation constant. The general form is
+#
+#     K(int) = ᶜK · exp( ΔZ · F·ψ / R·T )                                            [16]
+#
+# where ΔZ is the change in the charge of the surface species in the reaction as written, and
+#
+#     ᶜK = the same quotient in concentrations, without the exponential                [17]
+#
+# ΔZ per reaction, which decides which constants feel the electrostatics at all:
+#
+# | Reaction | surface charge before → after | ΔZ | electrostatic term |
+# |---|---|---|---|
+# | [4] Li  | 0 → 0 | **0** | **none** — the Li constant is electrostatically blind |
+# | [5] Co  | 0 → +1 | +1 | exp(+Fψ/RT) |
+# | [6],[7] Ca, Mg | 0 → +1 | +1 | exp(+Fψ/RT) |
+# | [2a],[2b] | 0 → +1 | +1 | exp(+Fψ/RT) |
+# | [3a],[3b],[3c] | 0 → −1 | −1 | exp(−Fψ/RT) |
+#
+# ΔZ = 0 for lithium is why its CCM and non-electrostatic values agree to two decimal places; it
+# is a property of the reaction, not evidence that the model is well constrained.
+#
+# ### A.9 Numerical solution and parameter estimation [Goldberg, FITEQL / MICROQL]
+#
+# Goldberg used FITEQL (Westall, 1982) to fit the adsorbate constants and MICROQL (Westall, 1979)
+# to run the competitive prediction. Both are reimplemented here in Python, because no software
+# is used in this project:
+#
+# * **fitting** — [14a]–[14c] and [15] with [1] are solved together at each data point, and the
+#   adsorbate constants are adjusted to minimise the FITEQL objective, WSOS/DF.
+# * **prediction** — with every constant fixed, the same solver is run forward. No parameter is
+#   fitted in the competitive step, which is Goldberg's point and the whole basis of extending
+#   single-ion constants to produced water.
+#
+# ### A.10 Where the mimic is exact and where it is not
+#
+# Exact: assumptions (i), (ii), (iv); Eqs. [1], [14], [15], [16], [17]; fixed protonation
+# constants and fixed capacitance with only the adsorbate constants adjustable; single-system fit
+# followed by competitive prediction with nothing refitted.
+#
+# Not exact, and each for a stated reason:
+#
+# 1. **Background electrolyte.** Assumption (iii) fails at 0.684 M, so an aqueous speciation stage
+#    is inserted ahead of the surface calculation.
+# 2. **The solid dissolves.** Goethite does not; dolomite does, and supplies the competitors of
+#    [6] and [7]. Their surface fractions therefore move point by point with the measured Ca and Mg.
+# 3. **Capacitance.** Goldberg fixed C = 1.06 F m⁻², the γ-Al₂O₃ value of Westall & Hohl (1980).
+#    Carbonates use C = √I/α (Pokrovsky et al., 1999), giving a much stiffer double layer.
+# 4. **Constraint.** Goldberg fits an adsorption envelope of many points spanning pH 3–12. This
+#    data set has five usable lithium points and two usable cobalt points spanning 0.08 pH units.
+#    The procedure is the same; what it can deliver is not, and that is the result of this work.
+
+# %%
+banner("APPENDIX A  Goldberg (1985) procedure in its own units and numbering")
+S_KG   = SSA*1e3                       # m2 kg-1        (Goldberg's S)
+A_KG   = DOLOMITE_GL                   # kg m-3         (Goldberg's a; 60 g/L = 60 kg/m3)
+GOLD_K = C_CAP*S_KG*A_KG/F             # mol_c m-3 V-1  (the coefficient in Eq. [1])
+print("Eq. [1]   sigma = (C.S.a/F).psi      sigma in mol_c m-3, psi in V")
+print(f"   C  capacitance density        {C_CAP:8.1f} F m-2      (= sqrt(I)/alpha, alpha = {ALPHA})")
+print(f"   S  specific surface area      {S_KG:8.1f} m2 kg-1    ({SSA} m2 g-1)")
+print(f"   a  solid concentration        {A_KG:8.1f} kg m-3     ({DOLOMITE_GL} g L-1)")
+print(f"   F  Faraday constant           {F:8.0f} C mol-1")
+print(f"   -> C.S.a/F                    {GOLD_K:8.1f} mol_c m-3 V-1")
+print(f"      so 1 mV of surface potential is {GOLD_K*1e-3:.4f} mol_c m-3 of surface charge.")
+
+print("\nTable A1  Model parameters, in the layout of Goldberg's Table 1")
+print(f"  {'parameter':46} {'value':>12}   units")
+_rows = [
+    ("Capacitance density, C", C_CAP, "F m-2"),
+    ("Specific surface area, S", S_KG, "m2 kg-1"),
+    ("Solid concentration, a", A_KG, "kg m-3"),
+    ("Surface area per litre, S.a", S_AREA, "m2 L-1"),
+    ("Ionic strength, I", I_BATCH, "mol L-1"),
+    ("Max adsorption density [>CO3]_T", S_T["CO3"]*1e3, "mol m-3"),
+    ("   [>CaOH]_T", S_T["Ca"]*1e3, "mol m-3"),
+    ("   [>MgOH]_T", S_T["Mg"]*1e3, "mol m-3"),
+]
+for nm, v, u in _rows:
+    print(f"  {nm:46} {v:12.4g}   {u}")
+print(f"\n  Fixed intrinsic constants (Pokrovsky et al. 1999, Table 3, dolomite columns):")
+_names = {"CO3_deprot":"[3c] >CO3H0 = >CO3- + H+", "CO3Ca":"[6]  >CO3H0 + Ca2+ = >CO3Ca+ + H+",
+          "CO3Mg":"[7]  >CO3H0 + Mg2+ = >CO3Mg+ + H+", "CaOH2":"[2a] >CaOH0 + H+ = >CaOH2+",
+          "MgOH2":"[2b] >MgOH0 + H+ = >MgOH2+", "CaO":"[3a] >CaOH0 = >CaO- + H+",
+          "MgO":"[3b] >MgOH0 = >MgO- + H+", "CaHCO3":"[8]  >CaOH0 + CO3-2 + 2H+ = >CaHCO3(0) + H2O",
+          "MgHCO3":"[8]  >MgOH0 + CO3-2 + 2H+ = >MgHCO3(0) + H2O",
+          "CaCO3":"[9]  >CaOH0 + CO3-2 + H+ = >CaCO3- + H2O",
+          "MgCO3":"[9]  >MgOH0 + CO3-2 + H+ = >MgCO3- + H2O"}
+for k, lab in _names.items():
+    print(f"     {lab:48} log K(int) = {LOGK_SURF[k]:+7.2f} +/- {LOGK_UNC[k]:.2f}")
+print(f"\n  Adjustable constants (Goldberg fitted 2 to 3; this work fits 1 per metal):")
+for m, lab in [("Li","[4]  >CO3H0 + Li+  = >CO3Li0 + H+"), ("Co","[5]  >CO3H0 + Co2+ = >CO3Co+ + H+")]:
+    _v = float(fits[(fits.metal==m)&(fits.model=="CCM")].logK.iloc[0])
+    print(f"     {lab:48} log K(int) = {_v:+7.2f}   (see Table 1 for how it must be read)")
+
+# Eq [1] and Eq [15]-[17] evaluated at the equilibrium points, both conventions side by side
+print("\nEqs. [1], [15] and [16] at the four equilibrium points:")
+print(f"  {'point':18} {'psi (mV)':>9} {'sigma [C m-2]':>14} {'sigma [mol_c m-3]':>18} {'exp(F.psi/RT)':>14}")
+for r in eq.itertuples():
+    s_ = speciate(r.pH, totals_for(r), r.metal)
+    st = surface(s_, r.metal, logK_Me=float(fits[(fits.metal==r.metal)&(fits.model=="CCM")].logK.iloc[0]))
+    psi = st["psi"]
+    print(f"  {r.metal+' '+r.batch+' pH '+format(r.pH,'.2f'):18} {1e3*psi:9.2f} {C_CAP*psi:14.4f} "
+          f"{GOLD_K*psi:18.4f} {np.exp(FRT*psi):14.4f}")
+print("\n  The two sigma columns are the SAME quantity in Goldberg's units and in the area-based")
+print("  units used in the body of this notebook; the ratio between them is S.a/F. Neither is the")
+print("  spreadsheet sigma, which is a total-ion mass balance and includes dissolution.")
+print("  exp(F.psi/RT) is the Boltzmann factor of Eq. [16]: it multiplies the constant for every")
+print("  reaction with dZ = +1 and divides it for every dZ = -1, and leaves lithium untouched.")
