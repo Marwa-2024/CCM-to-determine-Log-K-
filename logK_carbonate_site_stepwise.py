@@ -535,11 +535,12 @@ for (metal, batch), d in data.groupby(["metal","batch"]):
     ax.plot(d.day, d["removal_%"], **kw)
     G = [coverage(c0, c, metal)[0]*1e6 for c0, c in zip(d.C0_ppm, d.Me_ppm)]
     bx.plot(d.day, G, **kw)
-bx.axhline(SITE_DENS["CO3"]*1e6, color=COL["grey"], ls=":", lw=1.2, label="carbonate site density")
+bx.axhline(SITE_DENS["CO3"]*1e6, color=COL["grey"], ls=":", lw=1.2)
+bx.text(0.05, SITE_DENS["CO3"]*1e6 + 0.35, "carbonate site density (14 µmol m$^{-2}$)", fontsize=8.5, color=COL["grey"])
 ax.set_xlabel("time (days)"); ax.set_ylabel("removal (% of initial)")
 bx.set_xlabel("time (days)"); bx.set_ylabel("surface coverage Γ (µmol m$^{-2}$)")
-ax.set_xticks([0,2,4,6]); bx.set_xticks([0,2,4,6]); bx.set_ylim(0, 15.5)
-ax.legend(loc="upper left"); bx.legend(loc="upper left", frameon=True, framealpha=0.92, edgecolor="none")
+ax.set_xticks([0,2,4,6]); bx.set_xticks([0,2,4,6]); bx.set_ylim(0, 16.2)
+ax.legend(loc="upper left")            # one legend; the series are the same in both panels
 panel(ax, "a"); panel(bx, "b")
 savefig(fig, "Fig1_kinetics")
 
