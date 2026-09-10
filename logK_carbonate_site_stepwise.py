@@ -60,7 +60,7 @@ I_BATCH    = 0.684          # mol/L, 40 g/L NaCl
 NACL_M     = 40.0/58.44
 MM = dict(Li=6.941, Co=58.933, Ca=40.078, Mg=24.305)
 
-# --- site density: Pokrovsky 1999, 1:1:2 Ca:Mg:CO3 (Belova used 8.22 umol/m2 for calcite) ---
+# --- site density: Pokrovsky 1999, dolomite, 1:1:2 Ca:Mg:CO3 ---
 SITE_DENS = dict(CO3=14.0e-6, Ca=7.0e-6, Mg=7.0e-6)      # mol/m2
 S_T = {k: v*S_AREA for k, v in SITE_DENS.items()}         # mol/L of suspension
 
@@ -170,8 +170,9 @@ print(eq[["metal","batch","pH","Ca_ppm","Mg_ppm","C0_ppm","Me_ppm","removal_%"]]
 # ## The capacity check — done before any fitting
 # A surface complexation constant describes a **monolayer** reaction. Removal that exceeds
 # the number of surface sites cannot be adsorption, whatever constant is fitted. The check is
-# Γ = ΔC / (surface area per litre) against the crystallographic site density (14 µmol/m² for
-# the dolomite carbonate site, Pokrovsky 1999; 8.22 µmol/m² for calcite {10.4}, Belova 2014).
+# Γ = ΔC / (surface area per litre) against the crystallographic site density of the **dolomite**
+# carbonate site, 14 µmol/m² (Pokrovsky et al., 1999). The solid here is dolomite, so the
+# dolomite density is the only one the coverages are measured against.
 #
 # It is applied to (a) this single-ion dataset and (b) the highest-recovery runs reported in
 # Elshebli et al. (fine particles, 0.84 m²/g, 6 g/100 mL: Co ≈ 78 → 8 mg/L; Li 8.5 % of
@@ -185,7 +186,7 @@ def capacity_row(label, dC_mg_L, metal, ssa, load_gL):
     area = ssa*load_gL                                   # m2/L
     G = dC_mg_L/MM[metal]/1e3/area                       # mol/m2
     return dict(case=label, removed_mg_L=dC_mg_L, area_m2_L=area, Gamma_umol_m2=G*1e6,
-                x_carbonate_sites=G/SITE_DENS["CO3"], x_calcite_8p22=G/8.22e-6)
+                x_carbonate_sites=G/SITE_DENS["CO3"])
 cap = pd.DataFrame([
     capacity_row("THIS DATA  Co, coarse, pH6 batch, day 6", 80.513-74.393, "Co", SSA, DOLOMITE_GL),
     capacity_row("THIS DATA  Li, coarse, pH6 batch, day 6", 138.43-135.262, "Li", SSA, DOLOMITE_GL),
@@ -206,7 +207,9 @@ print("even admissible, and Step 1 still has to clear the saturation test point 
 # ## Step 1 — aqueous speciation at every data point
 # Inputs: measured equilibrium pH, total Na, Cl, Ca, Mg, metal, fixed pCO₂. Davies activities
 # at I = 0.68 M. Outputs: free-ion activities {Li⁺}, {Co²⁺}, {Ca²⁺}, {Mg²⁺}, {H⁺}, the
-# **fraction of metal that is free**, and saturation indices for CoCO₃, calcite, dolomite.
+# **fraction of metal that is free**, and saturation indices for CoCO₃ and dolomite. Calcite is
+# checked once and then dropped, since the solid is dolomite and calcite never approaches
+# saturation here; the reported value is printed below the table.
 # This is where part of the total cobalt disappears into CoCl⁺, CoCO₃⁰ and CoHCO₃⁺.
 
 # %%
@@ -283,8 +286,18 @@ for r in data.itertuples():
         a_Me=s["aMe"], frac_free=s["frac_free"], a_Ca=s["aCa"], a_Mg=s["aMg"], a_CO3=s["aCO3"],
         SI_CoCO3=s["SI"]["CoCO3 (sphaerocobaltite)"], SI_calcite=s["SI"]["Calcite"],
         SI_dolomite=s["SI"]["Dolomite (ordered)"], SI_Li2CO3=s["SI"]["Li2CO3"]))
+# The solid is dolomite, so calcite is not a phase of this system. It is still computed once,
+# because incongruent dolomite dissolution can in principle reach calcite saturation, and then
+# dropped from the reported table on the strength of the answer rather than by assumption.
 spec = pd.DataFrame(spec_rows)
+_cal_lo, _cal_hi = spec.SI_calcite.min(), spec.SI_calcite.max()
+spec = spec.drop(columns=["SI_calcite"])
 print(spec.to_string(index=False, float_format=lambda x: f"{x:.3g}"))
+print(f"\nCalcite: SI runs {_cal_lo:+.2f} to {_cal_hi:+.2f} across every point, undersaturated throughout,")
+print("so no calcite forms and it is excluded from the tables and figures below. The solid is")
+print("dolomite; the calcite work cited later (Belova et al., 2014; Zachara et al., 1991;")
+print("Van Cappellen et al., 1993) is used as an ANALOGUE for constants dolomite has no")
+print("published value for, never as a claim about the phases present here.")
 print("\nMetal distribution at the four equilibrium points (fraction of total dissolved):")
 for r in eq.itertuples():
     s = speciate(r.pH, totals_for(r), r.metal)
@@ -840,8 +853,8 @@ print("  minor omission but a missing piece of the standard procedure, and it ma
 print("  the measured removal is small - which is every point in this data set.")
 print("  PHASE PURITY. Belova's central finding was that trace surface impurities - clay and")
 print("  polysaccharide, well under 1 % by mass - raised the fitted constant by about 0.7 log units")
-print("  against pure calcite. This dolomite carries calcite cement and quartz, and the source")
-print("  manuscript gives two different numbers for it: 98 % dolomite in the methods, against 94 %")
+print("  against the pure mineral. The solid here is dolomite, but the source manuscript gives two")
+print("  different numbers for how pure: 98 % dolomite in the methods, against 94 %")
 print("  dolomite with 4 % quartz and 2 % ankerite in the XRD. Those must be reconciled before the")
 print("  constant is quoted, because on Belova's evidence a few percent of a non-dolomite surface is")
 print("  enough to move the answer by more than the gap being argued about here. The honest framing")
@@ -1177,7 +1190,7 @@ print(f"  ionic strength           {s0['I']:.4f} M")
 print(f"  free Co2+ activity       {s0['aMe']:.4e}     fraction of total Co free {100*s0['frac_free']:.1f} %")
 for k, v in s0["dist"].items(): print(f"  {k:9} {100*v/tot_d:6.2f} % of dissolved Co")
 print(f"  CO3-2 activity           {s0['aCO3']:.4e}")
-print(f"  SI sphaerocobaltite      {s0['SI']['CoCO3 (sphaerocobaltite)']:+.2f}   SI calcite {s0['SI']['Calcite']:+.2f}   SI dolomite {s0['SI']['Dolomite (ordered)']:+.2f}")
+print(f"  SI sphaerocobaltite      {s0['SI']['CoCO3 (sphaerocobaltite)']:+.2f}   SI dolomite {s0['SI']['Dolomite (ordered)']:+.2f}")
 # activity-model sensitivity: B-dot (extended Debye-Huckel with ion-size and b-dot term)
 def bdot_gammas(I):
     A, B, bdot = 0.5092, 0.3283, 0.041
@@ -1269,7 +1282,7 @@ SELECTED_OUTPUT
     -reset false
     -molalities {' '.join(PHREEQC_SP[metal])}
     -activities {ion} CO3-2 Ca+2 Mg+2
-    -saturation_indices Sphaerocobaltite Calcite Dolomite
+    -saturation_indices Sphaerocobaltite Dolomite
     -ionic_strength true
 END
 """)
