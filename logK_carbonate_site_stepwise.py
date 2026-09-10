@@ -514,11 +514,21 @@ for ax, xcol, xlab, letter in [(axes[0],"pH","measured pH at sampling","a"),(axe
 h, l = axes[0].get_legend_handles_labels()
 fig.legend(h, l, loc="outside lower center", ncol=3, fontsize=8)
 savefig(fig, "Fig6_logK_diagnostic")
+# The slope must be taken over the USABLE points (Step 5a), not the day-6 points, and it is
+# only meaningful if those points span a real pH range.
 for metal in ["Li","Co"]:
-    d = ppdf[(ppdf.metal==metal)&ppdf.equilibrium&np.isfinite(ppdf.logK_CCM)]
-    if len(d)>1:
+    d = ppdf[(ppdf.metal==metal)&ppdf.usable&np.isfinite(ppdf.logK_CCM)]
+    span = d.pH.max() - d.pH.min() if len(d) > 1 else 0.0
+    if len(d) < 2:
+        print(f"  {metal}: fewer than two usable points; no diagnostic possible.")
+    elif span < 0.5:
+        print(f"  {metal}: the {len(d)} usable points span only {span:.2f} pH units "
+              f"(pH {d.pH.min():.2f} to {d.pH.max():.2f}). That baseline is too narrow for a slope,")
+        print(f"       so the flat-line diagnostic cannot be applied to {metal} with this data set.")
+    else:
         slope = np.polyfit(d.pH, d.logK_CCM, 1)[0]
-        print(f"  {metal}: slope of log K vs pH over the equilibrium points = {slope:+.2f} per pH unit "
+        print(f"  {metal}: slope over the {len(d)} usable points (pH {d.pH.min():.2f} to {d.pH.max():.2f}, "
+              f"span {span:.2f}) = {slope:+.2f} per pH unit "
               f"({'flat within noise' if abs(slope)<0.5 else 'a trend - check the surface species / precipitation'})")
 
 # %% [markdown]
@@ -668,44 +678,93 @@ savefig(fig, "FigS1_surface_speciation")
 
 # %%
 banner("STEP 7  Table 1 and the literature comparison")
-t1 = fits.pivot(index="metal", columns="model", values=["logK","se_fit","spread_pbp","WSOS_DF"])
-print("Table 1  Intrinsic stability constants for the carbonate-site complexes, 25 C, I = 0.68 M NaCl")
+print("Table 1  Carbonate-site constants, 25 C, I = 0.68 M NaCl")
+print("=" * 88)
+rxn = {"Co": ">CO3H0 + Co2+ = >CO3Co+ + H+", "Li": ">CO3H0 + Li+  = >CO3Li0 + H+"}
 for metal in ["Co","Li"]:
-    c = fits[(fits.metal==metal)&(fits.model=="CCM")].iloc[0]; n = fits[(fits.metal==metal)&(fits.model=="NEM")].iloc[0]
-    rxn = ">CO3H0 + Co2+ = >CO3Co+ + H+" if metal=="Co" else ">CO3H0 + Li+ = >CO3Li0 + H+"
-    unc_c = np.nanmax([c.se_fit, c.spread_pbp, c.propagated]); unc_n = np.nanmax([n.se_fit, n.spread_pbp, c.propagated])
-    print(f"  {rxn:32}  CCM log K = {c.logK:+.2f} +/- {unc_c:.2f}   NEM log K = {n.logK:+.2f} +/- {unc_n:.2f}")
-print("\nUncertainty = largest of the fit standard error, the point-by-point spread and the propagated width.")
-nco = int(fits[(fits.metal=="Co")&(fits.model=="CCM")].n_points.iloc[0])
-print(f"Cobalt rests on {nco} usable point(s); that is an apparent value, not an intrinsic constant.")
+    c = fits[(fits.metal==metal)&(fits.model=="CCM")].iloc[0]
+    n = fits[(fits.metal==metal)&(fits.model=="NEM")].iloc[0]
+    unc = np.nanmax([c.se_fit, c.spread_pbp, c.propagated])
+    u = ppdf[(ppdf.metal==metal)&ppdf.usable]
+    lo, hi = u.logK_lo.min(), u.logK_hi.max()
+    days = ", ".join(f"{b.replace('pH','pH ')} day {d}" for b, d in zip(u.batch, u.day))
+    print(f"\n  {rxn[metal]}")
+    if unc > 1.5:
+        # the propagated interval spans orders of magnitude: report a bound, not a value
+        print(f"     log K   NOT DETERMINED.  Propagated interval {lo:+.1f} to {hi:+.1f} "
+              f"({hi-lo:.1f} log units, i.e. {hi-lo:.0f} orders of magnitude).")
+        print(f"     The weighted fit returns {c.logK:+.2f} (CCM) / {n.logK:+.2f} (NEM) with an internal")
+        print(f"     spread of {c.spread_pbp:.2f}, but that consistency is insensitivity, not precision:")
+        print(f"     a central value quoted from this data set would be used without its interval.")
+    else:
+        print(f"     apparent log K = {c.logK:+.2f} (CCM) / {n.logK:+.2f} (NEM),  +/- {unc:.2f}")
+    print(f"     basis: {int(c.n_points)} usable point(s) - {days}")
+
+# What kind of number each one is, stated explicitly.
+uco = ppdf[(ppdf.metal=="Co")&ppdf.usable]
+print(f"\n  COBALT is a KINETIC SNAPSHOT, not an equilibrium constant. Both usable points are")
+print(f"  pre-equilibrium (day {sorted(uco.day.unique())[0]} and day {sorted(uco.day.unique())[-1]} of the pH 6 batch);")
+print(f"  every day-6 point is excluded - pH 6 day 6 for supersaturation (SI +0.93), the three pH 2")
+print(f"  points for being within analytical noise. Removal is still rising at day 6 (Figure 1), so the")
+print(f"  system had not finished reacting when the value was measured.")
+print(f"\n  LITHIUM is SITE-LIMITED, which is a different failure. See the contrast below.")
+
+# ---- the two metals fail for different reasons: state it as a result ----
+print("\n" + "-"*88)
+print("  Why neither constant is pinned down - two metals, two distinct reasons")
+print("-"*88)
+for metal in ["Co","Li"]:
+    C0 = data[data.metal==metal].C0_ppm.iloc[0]/MM[metal]/1e3
+    ceil_pct = 100*S_T["CO3"]/C0
+    meas = data[(data.metal==metal)&(data.batch=="pH6")&(data.day==6)]["removal_%"].iloc[0]
+    print(f"  {metal}: site ceiling = {ceil_pct:.1f} % of the added metal; measured removal (pH 6, day 6) "
+          f"= {meas:.1f} %,")
+    print(f"      i.e. {100*meas/ceil_pct:.0f} % of the ceiling.")
+print("  Cobalt sits comfortably inside the monolayer bound; its limits are analytical noise and")
+print("  incomplete equilibration, both fixed by longer runs and better precision.")
+print("  Lithium was dosed above the surface's capacity: 20 mmol/L against 0.64 mmol/L of sites, so")
+print("  2.3 % removal already fills 71 % of the surface and the mass-action inversion goes insensitive.")
+print("  The fix is a lower lithium concentration, not a longer run. Each metal points to a different")
+print("  experiment.")
 lb_CaCO3, lb_CoCO3 = 3.22, 4.23
 expected_Co = LOGK_SURF["CO3Ca"] + (lb_CoCO3 - lb_CaCO3)
 got_Co = float(fits[(fits.metal=="Co")&(fits.model=="CCM")].logK.iloc[0])
 print(f"\nPokrovsky / Van Cappellen aqueous-surface analogy for Co:")
 print(f"  expected log K(>CO3Co+) = log K(>CO3Ca+) + [log b(CoCO3) - log b(CaCO3)] = {LOGK_SURF['CO3Ca']} + ({lb_CoCO3} - {lb_CaCO3}) = {expected_Co:+.2f}")
 print(f"  fitted  log K(>CO3Co+) = {got_Co:+.2f}   ->  difference {got_Co-expected_Co:+.2f} log units")
-print("  If the fitted value sits below the analogy line, the usual reason on a brine is Ca/Mg")
-print("  competition for the sites (Step 3 occupancy) or a part of the removal being precipitation")
-print("  rather than adsorption (Step 1 SI, Step 6 loading trend). Both are results, not caveats.")
-print("\nJudgment calls to record in the methods: (1) total BET area vs a reduced reactive area")
-print("(Belova's 70 % case raises log K); (2) >CO3Ca/>CO3Mg fractions follow the measured Ca and Mg")
+print("  The fitted value sits BELOW the analogy line. Two explanations that would normally be")
+print("  offered are ruled out by this data set itself:")
+print("    - Ca/Mg competition: the swap test (Data check) moves the constant by less than 0.01,")
+print("      because the two competitor constants differ by only 0.2 log units;")
+print("    - precipitation inflating the removal: Step 8 shows the model predicts MORE sorption")
+print("      than the removal actually measured, so there is no excess removal to attribute.")
+print("  What remains is a reactive area well below BET, or incomplete equilibration, or the")
+print("  borrowed constant being too strong for dolomite in brine. Step 8 sizes each one.")
+print("\nJudgment calls to record in the methods: (1) total BET area vs a reduced reactive area -")
+print("Belova's 70 % case raises log K, but closing this gap needs 13 to 29 % of BET, a far larger")
+print("reduction (Step 8b); (2) >CO3Ca/>CO3Mg fractions follow the measured Ca and Mg")
 print("point by point (done here) rather than being fixed; (3) no blank correction was available;")
 print("(4) alkalinity is set by fixed pCO2 rather than measured DIC.")
 
 # %% [markdown]
-# ## Step 8 — turn the problem around: predict, then split the mechanism
-# Because cobalt in the high-recovery runs is beyond the monolayer bound and this dataset's
-# Co "pH 6" point is above sphaerocobaltite saturation, a *fitted* Co constant would be a lumped
-# parameter absorbing the CoCO₃ solubility product, carbonate supply and nucleation. Instead:
+# ## Step 8 — run the model forward from literature constants and locate the discrepancy
+# The mineralisation argument applies to the **high-recovery runs of the manuscript**, where
+# removal exceeds the monolayer bound (capacity check) and XRD finds zabuyelite and
+# sphaerocobaltite. A constant fitted to *those* data would be a lumped parameter absorbing the
+# CoCO₃ solubility product, the carbonate supply from dissolution and the nucleation behaviour.
 #
-# * **Cobalt**: take the constant from the aqueous–surface analogy (Van Cappellen et al. 1993;
-#   Pokrovsky & Schott 2002): log K(>CO₃Co⁺) = log K(>CO₃Ca⁺) + [log β(CoCO₃⁰) − log β(CaCO₃⁰)]
-#   = −1.8 + (4.23 − 3.22) = **−0.79**. Run the model forward with the fixed constants at each
-#   time point, compute the sorbed amount, and read the difference from the measured removal
-#   as the mineralised fraction, checked against the saturation index.
-# * **Lithium**: the one metal whose sorption signal is not swamped, so it is the single
-#   adjustable parameter, constrained by all the Li points (uptake plateaus by day 2), and
-#   reported as conditional on the borrowed site parameters.
+# **This low-uptake data set turns out to be the opposite case, and the result below is not what
+# the mineralisation framing would predict.** Running the model forward with the cobalt constant
+# from the aqueous–surface analogy (Van Cappellen et al. 1993; Pokrovsky & Schott 2002),
+# log K(>CO₃Co⁺) = log K(>CO₃Ca⁺) + [log β(CoCO₃⁰) − log β(CaCO₃⁰)] = −1.8 + (4.23 − 3.22) =
+# **−0.79**, predicts *more* cobalt on the surface than actually left solution, at every point.
+# Precipitation is therefore **not needed** to explain the removal measured here; the sorption
+# prediction itself is too high. The signed residual below is kept signed for exactly that reason,
+# and the purpose of this step is to locate which link in the chain is wrong and by how much.
+#
+# Lithium is handled separately: it is the metal whose sorption signal is not swamped by
+# precipitation, so it is the single adjustable parameter, though Step 7 shows the surface is
+# near saturation and the constant is consequently not determined.
 
 # %%
 banner("STEP 8  Predict sorption from literature constants; split sorption from mineralisation")
@@ -741,8 +800,10 @@ print(f"  (a) the borrowed constant: the usable points give an apparent log K of
       f"i.e. {gap:.1f} log units weaker than the analogy;")
 f_area = (split[split.batch=="pH6"].measured_removed_mM/split[split.batch=="pH6"].predicted_sorbed_mM)
 print(f"  (b) reactive area smaller than BET: with the analogy constant, a reactive fraction of "
-      f"{f_area.min():.2f} to {f_area.max():.2f} of the BET area reproduces the pH 6 batch "
-      f"(Belova's 70 % case is the same move, in the same direction);")
+      f"{f_area.min():.2f} to {f_area.max():.2f} of the BET area reproduces the pH 6 batch, "
+      f"which is a {1/f_area.max():.0f}- to {1/f_area.min():.0f}-fold reduction. Belova's 70 % case is the same")
+print(f"      move in the same direction but only a 1.4-fold reduction, so this is a much larger")
+print(f"      correction than a reactive-area argument has previously been asked to carry;")
 print("  (c) these batches are not at equilibrium: removal is still rising at day 6 (Figure 1),")
 print("      so the day-6 coverage is a lower bound on the equilibrium coverage.")
 print("None of these can be separated with two pH values and one concentration; the isotherm and")
@@ -755,9 +816,10 @@ print("removal is mineralisation even at the ceiling, and far more once Ca, Mg a
 
 # lithium: the single adjustable parameter, from the usable points (Step 5b), with the honest width
 fl = fits[(fits.metal=="Li")&(fits.model=="CCM")].iloc[0]
-print(f"\nLithium (fitted, conditional on the borrowed site parameters):")
-print(f"  usable points (n = {int(fl.n_points)}): log K(>CO3Li0) = {fl.logK:+.2f};  internal spread {fl.spread_pbp:.2f};")
-print(f"  propagated interval at +/-3 % ICP precision: about {fl.logK-fl.propagated:+.1f} to {fl.logK+fl.propagated:+.1f}.")
+ul = ppdf[(ppdf.metal=="Li")&ppdf.usable]
+print(f"\nLithium: NOT DETERMINED (Table 1). The weighted fit over {int(fl.n_points)} usable points returns")
+print(f"  {fl.logK:+.2f} with an internal spread of {fl.spread_pbp:.2f}, but the propagated interval runs")
+print(f"  {ul.logK_lo.min():+.1f} to {ul.logK_hi.max():+.1f}, so no central value is reported.")
 # how much a better ICP precision would help: recompute the propagated half-width at 1 %
 _saved = ICP_REL; ICP_REL = 0.01; w1 = []
 for r in data[(data.metal=="Li")&(data.day>0)].itertuples():
@@ -765,8 +827,9 @@ for r in data[(data.metal=="Li")&(data.day>0)].itertuples():
     if len(o) == 6: w1.append(0.5*(o[5][1]-o[5][0]))
 ICP_REL = _saved
 print(f"  at +/-1 % ICP precision the propagated half-width would fall to about {np.nanmean(w1):.1f} log units.")
-print("  Lithium is site-limited (Step 2): the value is an order of magnitude, not a constant, until")
-print("  an isotherm at lower Li concentration puts the surface below saturation.")
+print("  Lithium is site-limited (Step 2): the surface is 71 % full at 2.3 % removal, so the")
+print("  mass-action inversion is insensitive. An isotherm at lower Li concentration, which puts the")
+print("  surface below saturation, is what would turn this into a constant.")
 
 fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.2, 3.8), constrained_layout=True)
 bcol = {"pH6": COL["Co"], "pH2": COL["pH2"]}
@@ -810,8 +873,12 @@ sw = r0.copy(); sw["Ca_ppm"], sw["Mg_ppm"] = r0.Mg_ppm, r0.Ca_ppm
 for lab, rr in [("as recorded", r0), ("Ca and Mg swapped", sw)]:
     out = logK_point(rr, True)
     print(f"  Co pH6 day 6, {lab:18}: log K = {out[0]:+.2f}   (Ca {rr.Ca_ppm:.2f}, Mg {rr.Mg_ppm:.2f} mg/L)")
-print("The constant moves by the difference shown; if the raw run confirms the values, the difference")
-print("is real incongruent dissolution and should be reported as such.")
+print("\nThe two are identical. The reason is worth stating, because it is reassuring rather than")
+print(f"suspicious: log K for >CO3Ca+ ({LOGK_SURF['CO3Ca']:+.1f}) and >CO3Mg+ ({LOGK_SURF['CO3Mg']:+.1f}) differ by only")
+print(f"{abs(LOGK_SURF['CO3Ca']-LOGK_SURF['CO3Mg']):.1f} log units, so exchanging the two cations conserves the total competitor")
+print("occupancy of the carbonate site and the site balance barely notices. The ICP anomaly therefore")
+print("still needs checking against the raw run for the DISSOLUTION story - congruent dissolution of")
+print("dolomite should give Ca/Mg near 1 - but it does not threaten Table 1.")
 
 # %% [markdown]
 # ## Independent check — one point set up for Visual MINTEQ
