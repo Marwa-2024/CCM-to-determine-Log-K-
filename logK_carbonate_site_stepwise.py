@@ -1228,7 +1228,7 @@ try:
     print("\n" + "-"*78)
     print("PHREEQC vs this notebook - three points, same log beta values, different everything else")
     print("-"*78)
-    print(f"  {'point':22} {'quantity':22} {'notebook':>12} {'PHREEQC':>12}   {'difference':>12}")
+    print(f"  {'point':22} {'quantity':26} {'notebook':>12} {'PHREEQC':>12}   {'difference':>12}")
     for metal, batch in [("Co","pH6"), ("Co","pH2"), ("Li","pH6")]:
         rr = eq[(eq.metal==metal)&(eq.batch==batch)].iloc[0]
         sn = speciate(rr.pH, totals_for(rr), metal)
@@ -1238,12 +1238,12 @@ try:
                 (f"free {metal} fraction (%)", 100*sn["frac_free"], 100*sp_["frac_free"], "{:+.1f}"),
                 (f"log a({metal})", np.log10(sn["aMe"]), np.log10(sp_["a_Me"]), "{:+.2f}"),
                 ("log a(CO3-2)", np.log10(sn["aCO3"]), np.log10(sp_["a_CO3"]), "{:+.2f}"),
-                ("log a(Ca2+)  [competitor]", np.log10(sn["aCa"]), np.log10(sp_["a_Ca"]), "{:+.2f}"),
-                ("log a(Mg2+)  [competitor]", np.log10(sn["aMg"]), np.log10(sp_["a_Mg"]), "{:+.2f}")]
+                ("log a(Ca2+) [competitor]", np.log10(sn["aCa"]), np.log10(sp_["a_Ca"]), "{:+.2f}"),
+                ("log a(Mg2+) [competitor]", np.log10(sn["aMg"]), np.log10(sp_["a_Mg"]), "{:+.2f}")]
         if metal == "Co":
             rows.append(("SI sphaerocobaltite", sn["SI"]["CoCO3 (sphaerocobaltite)"], sp_["SI"], "{:+.2f}"))
         for i, (name, a_, b_, fmt) in enumerate(rows):
-            print(f"  {tag if i==0 else '':22} {name:22} {a_:12.3f} {b_:12.3f}   "
+            print(f"  {tag if i==0 else '':22} {name:26} {a_:12.3f} {b_:12.3f}   "
                   + fmt.format(b_-a_).rjust(12))
     print("\nReading. Every quantity the constants are actually computed from agrees to well inside the")
     print("Davies vs B-dot floor established just above: the free-metal activity, the carbonate activity,")
