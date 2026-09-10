@@ -678,8 +678,16 @@ savefig(fig, "FigS1_surface_speciation")
 
 # %%
 banner("STEP 7  Table 1 and the literature comparison")
+# The rule that decides between quoting a value and declining to: it is a judgment call, so it
+# is named, applied uniformly, and printed. 1.5 log units is a factor of ~30 either way, at which
+# point a central value carries no useful information about the system.
+REPORT_THRESHOLD = 1.5
 print("Table 1  Carbonate-site constants, 25 C, I = 0.68 M NaCl")
 print("=" * 88)
+print(f"Reporting rule (applied uniformly): a central value is quoted only if the uncertainty is")
+print(f"below {REPORT_THRESHOLD:.1f} log units, a factor of {10**REPORT_THRESHOLD:.0f} either way. Above that the interval is")
+print("reported instead, because a central value with a wider interval than that gets quoted")
+print("without its interval. The line is a judgment call, so it is stated rather than left implicit.")
 rxn = {"Co": ">CO3H0 + Co2+ = >CO3Co+ + H+", "Li": ">CO3H0 + Li+  = >CO3Li0 + H+"}
 for metal in ["Co","Li"]:
     c = fits[(fits.metal==metal)&(fits.model=="CCM")].iloc[0]
@@ -689,7 +697,7 @@ for metal in ["Co","Li"]:
     lo, hi = u.logK_lo.min(), u.logK_hi.max()
     days = ", ".join(f"{b.replace('pH','pH ')} day {d}" for b, d in zip(u.batch, u.day))
     print(f"\n  {rxn[metal]}")
-    if unc > 1.5:
+    if unc > REPORT_THRESHOLD:
         # the propagated interval spans orders of magnitude: report a bound, not a value
         print(f"     log K   NOT DETERMINED.  Propagated interval {lo:+.1f} to {hi:+.1f} "
               f"({hi-lo:.1f} log units, i.e. {hi-lo:.0f} orders of magnitude).")
@@ -698,6 +706,7 @@ for metal in ["Co","Li"]:
         print(f"     a central value quoted from this data set would be used without its interval.")
     else:
         print(f"     apparent log K = {c.logK:+.2f} (CCM) / {n.logK:+.2f} (NEM),  +/- {unc:.2f}")
+        print(f"     (+/-{unc:.2f} is a factor of {10**unc:.0f} either way - just inside the {REPORT_THRESHOLD:.1f} rule, not a precise number)")
     print(f"     basis: {int(c.n_points)} usable point(s) - {days}")
 
 # What kind of number each one is, stated explicitly.
@@ -767,7 +776,7 @@ print("(4) alkalinity is set by fixed pCO2 rather than measured DIC.")
 # near saturation and the constant is consequently not determined.
 
 # %%
-banner("STEP 8  Predict sorption from literature constants; split sorption from mineralisation")
+banner("STEP 8  Run the model forward from literature constants and locate the discrepancy")
 LOGK_CO_PRED = LOGK_SURF["CO3Ca"] + (4.23 - 3.22)
 print(f"Cobalt constant from the aqueous-surface analogy: log K(>CO3Co+) = {LOGK_CO_PRED:+.2f}")
 
@@ -806,8 +815,47 @@ print(f"      move in the same direction but only a 1.4-fold reduction, so this 
 print(f"      correction than a reactive-area argument has previously been asked to carry;")
 print("  (c) these batches are not at equilibrium: removal is still rising at day 6 (Figure 1),")
 print("      so the day-6 coverage is a lower bound on the equilibrium coverage.")
-print("None of these can be separated with two pH values and one concentration; the isotherm and")
-print("pH-edge experiment described in the Discussion is what separates them.")
+# ---- Which candidate does the TIME TREND favour? ----
+d6 = split[split.batch == "pH6"].sort_values("day")
+print("\nTIME TREND - this discriminates among the three. Candidates (a) and (b) are time-invariant")
+print("scalings: a constant that is too strong, or a reactive area below BET, depresses the measured")
+print("coverage by the SAME factor at every sampling, so the ratio would sit flat. Candidate (c) is")
+print("not: if the system is still approaching equilibrium the measured coverage climbs while the")
+print("prediction stays put, and the ratio closes. In the pH 6 batch:")
+print(f"  predicted sorption (mmol/L): {'  '.join(f'{v:.3f}' for v in d6.predicted_sorbed_mM)}"
+      f"   -> flat to {100*(d6.predicted_sorbed_mM.max()-d6.predicted_sorbed_mM.min())/d6.predicted_sorbed_mM.mean():.0f} % of its mean")
+print(f"  measured removal   (mmol/L): {'  '.join(f'{v:.3f}' for v in d6.measured_removed_mM)}"
+      f"   -> grows {d6.measured_removed_mM.iloc[-1]/d6.measured_removed_mM.iloc[0]:.1f}-fold over 4 days")
+print(f"  ratio pred/meas            : {'  '.join(f'{v:.2f}' for v in d6.pred_over_meas)}"
+      f"   -> closes monotonically")
+print("\nThat is the signature of (c), not of (a) or (b). The prediction is not moving; the")
+print("measurement is climbing toward it.")
+
+# two crude extrapolations of when the ratio would reach 1
+sl, ic = np.polyfit(d6.day, d6.measured_removed_mM, 1)
+t_lin = (d6.predicted_sorbed_mM.mean() - ic)/sl
+a_r, b_r = np.polyfit(d6.day, np.log10(d6.pred_over_meas), 1)
+t_log = -b_r/a_r
+print(f"\nWhen would they meet? Two crude extrapolations, deliberately crude because three points")
+print(f"cannot define a kinetic law:")
+print(f"  linear growth of measured coverage to the predicted level : day {t_lin:.0f}  ({t_lin/7:.1f} weeks)")
+print(f"  log-linear decay of the ratio to unity                    : day {t_log:.0f}  ({t_log/7:.1f} weeks)")
+print(f"  -> weeks, not days. The six-day experiment may simply have stopped too early.")
+print("  (Caution: the measured curve is still slightly accelerating rather than levelling off,")
+print("   which no simple approach-to-equilibrium law does, so both numbers are indicative only.")
+print("   Rising pH, 7.40 to 8.09 over the same interval, is raising the affinity as time passes.)")
+print("\nThe pH 2 batch ratio runs the other way (9.4, 23, 148) because its measured removal collapses")
+print("into analytical noise; those three points are excluded on that basis and carry no trend.")
+
+print("\nTHE EXPERIMENT THIS IMPLIES. Extend one pH 6 cobalt batch to a month, sampling weekly, and")
+print("watch the ratio:")
+print("  - if it converges on 1, the analogy constant of -0.79 was right and the six-day run stopped")
+print("    too early. That validates the borrowed constant and dates the kinetics.")
+print("  - if it plateaus near 3, equilibrium is reached and the residual gap belongs to the constant")
+print("    or to the reactive area, which the isotherm and pH-edge design then separates.")
+print("Either outcome is informative, and it is one bottle and four samplings.")
+
+print("\nThe isotherm and pH-edge experiment in the Discussion remains what separates (a) from (b).")
 print(f"\nAbsolute ceiling if EVERY carbonate site held Co at 45.6 m2/L: {ceiling_mM:.3f} mmol/L "
       f"({100*ceiling_mM/(80.513/MM['Co']):.0f} % of the 80.5 mg/L added).")
 print(f"At the manuscript's 0.84 m2/g the ceiling is {SITE_DENS['CO3']*0.84*DOLOMITE_GL*1e3:.2f} mmol/L "
@@ -831,7 +879,7 @@ print("  Lithium is site-limited (Step 2): the surface is 71 % full at 2.3 % rem
 print("  mass-action inversion is insensitive. An isotherm at lower Li concentration, which puts the")
 print("  surface below saturation, is what would turn this into a constant.")
 
-fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.2, 3.8), constrained_layout=True)
+fig, (ax, bx, cx) = plt.subplots(1, 3, figsize=(13.4, 3.8), constrained_layout=True)
 bcol = {"pH6": COL["Co"], "pH2": COL["pH2"]}
 for batch in ["pH6","pH2"]:
     d = split[split.batch==batch]; lab = batch.replace("pH","pH ")
@@ -844,7 +892,20 @@ bx.text(2.05, 0.15, "supersaturated", fontsize=8.5, color=COL["grey"])
 ax.set_xlabel("time (days)"); ax.set_ylabel("Co removed or sorbed (% of initial)")
 bx.set_xlabel("time (days)"); bx.set_ylabel("saturation index, sphaerocobaltite CoCO$_3$")
 ax.set_xticks([2,4,6]); bx.set_xticks([2,4,6]); ax.set_ylim(-1, 30); bx.set_ylim(-7.5, 1.5)
-ax.legend(loc="center left", fontsize=8); bx.legend(loc="lower right"); panel(ax, "a"); panel(bx, "b")
+# panel (c): the ratio closes with time - the signature of incomplete equilibration
+cx.axhline(1, color=COL["grey"], lw=1.2)
+cx.text(2.1, 1.06, "prediction = measurement", fontsize=8.5, color=COL["grey"])
+cx.plot(d6.day, d6.pred_over_meas, "o-", color=COL["Co"], ms=6.5, label="pH 6 batch, measured")
+tt = np.linspace(2, max(t_lin, t_log)*1.05, 60)
+cx.plot(tt, 10**(a_r*tt + b_r), ":", color=COL["Co"], lw=1.3,
+        label=f"log-linear extrapolation → 1 at day {t_log:.0f}")
+cx.axvline(t_lin, color=COL["model"], ls="--", lw=1.2,
+           label=f"linear-growth extrapolation → day {t_lin:.0f}")
+cx.set_yscale("log"); cx.set_xlabel("time (days)")
+cx.set_ylabel("predicted sorption / measured removal")
+cx.set_ylim(0.7, 12); cx.legend(loc="upper right", fontsize=8)
+ax.legend(loc="center left", fontsize=8); bx.legend(loc="lower right")
+panel(ax, "a"); panel(bx, "b"); panel(cx, "c")
 savefig(fig, "Fig8_Co_sorption_vs_removal_SI")
 print("Read the two curves together with the SI: predicted sorption sits ABOVE measured removal at")
 print("every point, so in this coarse, low-uptake data set precipitation is not needed to explain the")
