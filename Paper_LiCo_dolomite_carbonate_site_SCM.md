@@ -11,7 +11,7 @@
 
 ## Abstract
 
-Dolomite has been shown to recover Li⁺ and Co²⁺ from petroleum produced water, with Li⁺ removal governed mainly by sorption and Co²⁺ removal by coupled sorption and carbonate mineralization (Elshebli et al., 2025). Here the single-ion batch data (dolomite 60 g L⁻¹, 40 g L⁻¹ NaCl, 25 °C, six days) are interpreted with the three-site constant capacitance surface complexation model of Pokrovsky et al. (1999), in which metal cations bind the carbonate site, >CO₃H⁰ + Meᶻ⁺ ⇌ >CO₃Me⁽ᶻ⁻¹⁾⁺ + H⁺. A capacity test applied before any fitting shows that the high-recovery runs reported previously (≈70 mg L⁻¹ Co removed on 0.84 m² g⁻¹ dolomite) correspond to 1.7 to 2.4 times the crystallographic carbonate-site density and therefore cannot be adsorption, consistent with the zabuyelite and sphaerocobaltite detected by XRD. The present low-uptake data set lies inside the monolayer bound (Co 16 %, Li 72 % of carbonate sites), but the cobalt "pH 6" equilibrium point is supersaturated with sphaerocobaltite (SI = +0.93). Aqueous speciation at the measured equilibrium pH (7.05 to 8.26, not the nominal 2 and 6) shows 67 to 69 % of dissolved cobalt as free Co²⁺ and 27 % as CoCl⁺, and 90 % of lithium as free Li⁺. Solving the carbonate-site mass balance with the measured Ca and Mg as competitors, and closing the constant capacitance electrostatic loop (C = 138 F m⁻²), gives point-by-point constants that are flat in pH for lithium and a fitted log K(>CO₃Li⁰) = −2.42 ± 0.30 (electrostatic) and −2.40 (non-electrostatic), conditional on the borrowed site parameters. For cobalt, a fitted value would be a lumped parameter; instead the constant is taken from the aqueous–surface analogy of Van Cappellen et al. (1993) and Pokrovsky and Schott (2002), log K(>CO₃Co⁺) = −0.79, and used to predict the sorbable fraction. Sorption cannot account for more than 41 % of the cobalt removed in the best previously reported run even if every carbonate site were occupied, which quantifies the coupled sorption–mineralization mechanism proposed earlier. The experimental design required for a genuinely transferable constant is specified.
+Dolomite has been shown to recover Li⁺ and Co²⁺ from petroleum produced water, with Li⁺ removal governed mainly by sorption and Co²⁺ removal by coupled sorption and carbonate mineralization (Elshebli et al., 2025). Here the single-ion batch data (dolomite 60 g L⁻¹, 40 g L⁻¹ NaCl, 25 °C, six days) are interpreted with the three-site constant capacitance surface complexation model of Pokrovsky et al. (1999), in which metal cations bind the carbonate site, >CO₃H⁰ + Meᶻ⁺ ⇌ >CO₃Me⁽ᶻ⁻¹⁾⁺ + H⁺. A capacity test applied before any fitting shows that the high-recovery runs reported previously (≈70 mg L⁻¹ Co removed on 0.84 m² g⁻¹ dolomite) correspond to 1.7 to 2.4 times the crystallographic carbonate-site density and therefore cannot be adsorption, consistent with the zabuyelite and sphaerocobaltite detected by XRD. The present low-uptake data set lies inside the monolayer bound (Co 16 %, Li 72 % of carbonate sites), but the cobalt "pH 6" equilibrium point is supersaturated with sphaerocobaltite (SI = +0.93). Aqueous speciation at the measured equilibrium pH (7.05 to 8.26, not the nominal 2 and 6) shows 67 to 69 % of dissolved cobalt as free Co²⁺ and 27 % as CoCl⁺, and 90 % of lithium as free Li⁺. Solving the carbonate-site mass balance with the measured Ca and Mg as competitors, and closing the constant capacitance electrostatic loop (C = 138 F m⁻²), gives point-by-point constants that are flat in pH for lithium, log K(>CO₃Li⁰) = −2.31 (electrostatic) and −2.35 (non-electrostatic) over five usable points with an internal spread of 0.2 log units. Lithium is site-limited, however: the carbonate-site inventory can hold at most 3.2 % of the 20 mmol L⁻¹ present and the measured removal is 71 % of that ceiling, so at ±3 % analytical precision the propagated interval on the constant spans several log units and the value is an order of magnitude rather than a constant. Cobalt has two usable points (apparent log K = −2.18); its only well-measured point is supersaturated with sphaerocobaltite and is excluded. The constant taken from the aqueous–surface analogy of Van Cappellen et al. (1993) and Pokrovsky and Schott (2002), log K(>CO₃Co⁺) = −0.79, over-predicts the observed cobalt uptake by a factor of 3.5 to 7.4, a discrepancy attributable to the borrowed constant, to a reactive area of 13 to 29 % of the BET area, or to incomplete equilibration, which the present design cannot separate. Sorption cannot account for more than 41 % of the cobalt removed in the best previously reported run even if every carbonate site were occupied, which quantifies the coupled sorption–mineralization mechanism proposed earlier. The experimental design required for a genuinely transferable constant is specified.
 
 **Keywords:** dolomite; surface complexation; constant capacitance model; lithium; cobalt; produced water; sphaerocobaltite; zabuyelite
 
@@ -106,23 +106,18 @@ The surface reactions and their intrinsic constants (Table 3) are those of Pokro
 
 These are the two unknowns. Lithium forms a neutral surface species and therefore carries no Boltzmann term; cobalt forms a +1 species and does.
 
-**Table 3.** Surface reactions and intrinsic constants (25 °C, I = 0) used as fixed parameters.
+**Table 3.** Surface reactions and intrinsic constants (25 °C, I = 0) used as fixed parameters, transcribed from Table 3 of Pokrovsky et al. (1999a); calcite and magnesite columns are given for provenance.
 
-| Reaction | log K_int | Source |
-|---|---|---|
-| >CO₃H⁰ ⇌ >CO₃⁻ + H⁺ | −4.8 | Pokrovsky et al. (1999a) |
-| >CO₃H⁰ + Ca²⁺ ⇌ >CO₃Ca⁺ + H⁺ | −1.8 | Pokrovsky et al. (1999a) |
-| >CO₃H⁰ + Mg²⁺ ⇌ >CO₃Mg⁺ + H⁺ | −2.0 | Pokrovsky et al. (1999a) |
-| >CaOH⁰ + H⁺ ⇌ >CaOH₂⁺ | 11.5 | Pokrovsky et al. (1999a) |
-| >CaOH⁰ ⇌ >CaO⁻ + H⁺ | −12.0 | Pokrovsky et al. (1999a) |
-| >CaOH⁰ + CO₃²⁻ + 2H⁺ ⇌ >CaHCO₃⁰ + H₂O | −4.0 | Pokrovsky et al. (1999a) |
-| >CaOH⁰ + CO₃²⁻ + H⁺ ⇌ >CaCO₃⁻ + H₂O | 16.6 | Pokrovsky et al. (1999a) |
-| >MgOH⁰ + H⁺ ⇌ >MgOH₂⁺ | 10.6 | Pokrovsky et al. (1999a) |
-| >MgOH⁰ ⇌ >MgO⁻ + H⁺ | −12.0 | Pokrovsky et al. (1999a) |
-| >MgOH⁰ + CO₃²⁻ + 2H⁺ ⇌ >MgHCO₃⁰ + H₂O | −3.5 | Pokrovsky et al. (1999a) |
-| >MgOH⁰ + CO₃²⁻ + H⁺ ⇌ >MgCO₃⁻ + H₂O | 15.4 | Pokrovsky et al. (1999a) |
-| Site densities (Ca : Mg : CO₃) | 7 : 7 : 14 µmol m⁻² | Pokrovsky et al. (1999a) |
-| Capacitance C = √I / α, α = 0.006 | 138 F m⁻² at I = 0.684 M | Pokrovsky & Schott (2002); Belova et al. (2014) |
+| Reaction | Calcite | Magnesite | Dolomite, Ca site | Dolomite, Mg site |
+|---|---|---|---|---|
+| >CO₃H⁰ ⇌ >CO₃⁻ + H⁺ | −5.1 | −4.65 ± 0.15 | −4.8 ± 0.2 | −4.8 ± 0.2 |
+| >CO₃H⁰ + Me²⁺ ⇌ >CO₃Me⁺ + H⁺ | −1.7 | −2.2 ± 0.15 | −1.8 ± 0.2 | −2.0 ± 0.2 |
+| >MeOH⁰ ⇌ >MeO⁻ + H⁺ | −12 | −12 ± 1 | −12 ± 2 | −12 ± 2 |
+| >MeOH⁰ + H⁺ ⇌ >MeOH₂⁺ | 11.5 | 10.6 ± 0.15 | 11.5 ± 0.2 | 10.6 ± 0.2 |
+| >MeOH⁰ + CO₃²⁻ + 2H⁺ ⇌ >MeHCO₃⁰ + H₂O | −3.5 | −2.4 ± 0.5 | −4.0 ± 0.5 | −3.5 ± 0.5 |
+| >MeOH⁰ + CO₃²⁻ + H⁺ ⇌ >MeCO₃⁻ + H₂O | 17.1 | 14.4 ± 0.15 | 16.6 ± 0.2 | 15.4 ± 0.2 |
+| Site densities, Ca : Mg : CO₃ | | | 7 : 7 : 14 µmol m⁻² (assumed 1 : 1 : 2, "eight sites per nm²", §3.3) | |
+| Capacitance C = √I / α, α = 0.006 | | | 138 F m⁻² at I = 0.684 M (Pokrovsky & Schott, 2002; Belova et al., 2014) | |
 
 The apparent and intrinsic constants are related through the Boltzmann factor (Pokrovsky et al., 1999a, Eq. 2; Gustafsson, 2014, Eq. 4.4),
 
@@ -152,11 +147,11 @@ The measured coverage at each point is
 
 Γ = (C₀ − C_eq) V / (m · SSA)  (mol m⁻²),   (12)
 
-with V = 0.1 L, m = 6 g and SSA = 0.76 m² g⁻¹. Taking the ICP-OES precision as ±3 % on both C₀ and C_eq, the uncertainty of the difference is σ_Γ = √[(0.03 C₀)² + (0.03 C_eq)²] V/(m·SSA), which is large relative to Γ when removal is small; such points were down-weighted, not discarded. No solid-free blanks were available, so wall losses could not be subtracted.
+with V = 0.1 L, m = 6 g and SSA = 0.76 m² g⁻¹. Taking the ICP-OES precision as ±3 % on both C₀ and C_eq, the uncertainty of the difference is σ_Γ = √[(0.03 C₀)² + (0.03 C_eq)²] V/(m·SSA), which is large relative to Γ when removal is small; such points were down-weighted, not discarded. The same σ_Γ was propagated through the inversion of Eq. 13 by recomputing log K at Γ ± σ_Γ, which gives an asymmetric interval on each point-by-point constant. No solid-free blanks were available, so wall losses could not be subtracted.
 
 ### 2.6 Capacity and saturation criteria
 
-Two tests precede any fitting. The capacity test compares Γ with the crystallographic site density: Γ/N_s > 1 is not reachable by adsorption. The saturation test requires SI < 0 for the metal carbonate at the point being fitted (Belova et al., 2014).
+Two tests precede any fitting. The capacity test compares Γ with the crystallographic site density: Γ/N_s > 1 is not reachable by adsorption. The saturation test requires SI < 0 for the metal carbonate at the point being fitted (Belova et al., 2014). A point was used in the fit only if it passed both tests and its relative coverage error was below 300 %; every exclusion is listed with its reason.
 
 ### 2.7 Parameter estimation
 
@@ -168,7 +163,7 @@ with [>CO₃Co⁺] = Γ·S and [>CO₃H⁰] from Eq. 9, giving one constant per 
 
 WSOS/DF = Σᵢ [ (Γ_pred,ᵢ − Γ_meas,ᵢ) / σ_Γ,ᵢ ]² / (N − p),   (14)
 
-was minimized (Westall, 1982; Herbelin & Westall, 1999), as in the FITEQL treatment of Belova et al. (2014) with a dummy adsorbed component. The diagnostic of Step 6 is the plot of point-by-point log K against pH and against Γ: a constant independent of both is a transferable constant, drift with pH signals a wrong surface species or a missing coulombic term, and drift with loading signals surface precipitation.
+was minimized over all usable sampling days, not only day 6, so that the fit has degrees of freedom (Westall, 1982; Herbelin & Westall, 1999), as in the FITEQL treatment of Belova et al. (2014) with a dummy adsorbed component. The reported uncertainty is the largest of the least-squares standard error, the standard deviation of the usable point-by-point values, and the mean propagated half-width. The diagnostic of Step 6 is the plot of point-by-point log K against pH and against Γ: a constant independent of both is a transferable constant, drift with pH signals a wrong surface species or a missing coulombic term, and drift with loading signals surface precipitation.
 
 ### 2.8 Prediction mode and the mechanism split
 
@@ -177,6 +172,10 @@ For cobalt the constant was taken from the linear free-energy analogy between su
 log K(>CO₃Co⁺) ≈ log K(>CO₃Ca⁺) + [log β(CoCO₃⁰) − log β(CaCO₃⁰)] = −1.8 + (4.23 − 3.22) = −0.79,   (15)
 
 and the model was run forward with all constants fixed to predict the sorbable cobalt at each time point. The difference between measured removal and predicted sorption, read together with SI(CoCO₃), is the mineralized fraction. Lithium, whose removal the earlier study attributed to sorption, was treated as the single adjustable parameter.
+
+### 2.9 Verification of the speciation
+
+The Davies equation is generally quoted as reliable to about 0.5 M and the brine is at 0.65 M. Two checks were made. First, the free-ion activities at one point (cobalt, pH 6 batch, day 6) were recomputed with the extended Debye–Hückel (B-dot) form used by EQ3/6 (Wolery, 1992); the two models differ by a factor of 0.80 in the free Co²⁺ activity, i.e. 0.10 log units in any constant, which is the floor on the accuracy of the result at this ionic strength whichever code computes it. Second, the notebook prints the complete Visual MINTEQ input for that point (components, totals, fixed pH and pCO₂, activity model) together with the values it produces, so that the hand-coded speciation can be compared line by line with an independent program (Gustafsson, 2014).
 
 All calculations were performed in Python 3 (NumPy, SciPy, pandas, Matplotlib); the notebook reproduces every table and figure.
 
@@ -203,48 +202,65 @@ At the measured equilibrium pH, 67 to 69 % of dissolved cobalt is free Co²⁺, 
 
 ### 3.3 Coverage and site occupancy
 
-Cobalt coverage at day 6 is 2.28 µmol m⁻² in the pH 6 batch (relative error 54 %) and 0.04 µmol m⁻² in the pH 2 batch (relative error > 1000 %, i.e. within noise). Lithium coverage is 9 to 10 µmol m⁻² in both batches (relative error ≈ 200 % at ±3 % ICP precision). At the equilibrium points the carbonate site is dominated by >CO₃⁻ (74 to 77 % in the cobalt batches, 21 to 25 % in the lithium batches), with >CO₃Ca⁺ at 0.1 to 8.7 %, >CO₃Mg⁺ at 0.1 to 18 %, and the metal complex at 16 % (Co, pH 6) and 64 to 72 % (Li). The surface potential is −0.1 to +8 mV and the Boltzmann factor 0.73 to 1.0.
+Cobalt coverage at day 6 is 2.28 µmol m⁻² in the pH 6 batch (relative error 54 %) and 0.04 µmol m⁻² in the pH 2 batch (relative error > 1000 %, i.e. within noise). Lithium coverage is 9 to 10 µmol m⁻² in both batches (relative error ≈ 200 % at ±3 % ICP precision). Lithium is present at 20 mmol L⁻¹ and the carbonate-site inventory is 0.64 mmol L⁻¹, so the surface can hold at most 3.2 % of the lithium whatever the constant; the measured removal of 2.3 % is 71 % of that ceiling, and the site balance is close to saturation (free >CO₃H⁰ at 0.007 % of sites). At the equilibrium points the carbonate site is dominated by >CO₃⁻ (74 to 77 % in the cobalt batches, 21 to 25 % in the lithium batches), with >CO₃Ca⁺ at 0.1 to 8.7 %, >CO₃Mg⁺ at 0.1 to 18 %, and the metal complex at 16 % (Co, pH 6) and 64 to 72 % (Li). The surface potential is −0.1 to +8 mV and the Boltzmann factor 0.73 to 1.0.
 
 ### 3.4 Stability constants
 
-**Table 5.** Point-by-point log K on the carbonate site (constant capacitance model).
+**Table 5.** Point-by-point log K on the carbonate site (constant capacitance model). The interval is the constant recomputed at Γ ∓ σ_Γ. Points failing the capacity, saturation or noise criteria are marked and excluded from the fit.
 
-| Metal | Batch | Day | pH | Γ (µmol m⁻²) | log K (CCM) | log K (NEM) | Note |
-|---|---|---|---|---|---|---|---|
-| Co | pH 6 | 2 | 7.40 | 0.97 | −2.34 | −2.37 | pre-equilibrium |
-| Co | pH 6 | 4 | 7.48 | 1.53 | −2.05 | −2.13 | pre-equilibrium |
-| Co | pH 6 | 6 | 8.09 | 2.28 | −1.89 | −1.89 | SI(CoCO₃) = +0.93 |
-| Co | pH 2 | 2 | 4.12 | 0.32 | −1.94 | −2.10 | within noise |
-| Co | pH 2 | 4 | 5.66 | 0.27 | −2.63 | −2.76 | within noise |
-| Co | pH 2 | 6 | 7.11 | 0.04 | −3.47 | −3.59 | within noise |
-| Li | pH 6 | 2 | 7.65 | 11.9 | −1.97 | −2.05 | |
-| Li | pH 6 | 4 | 7.92 | 5.4 | −2.95 | −2.97 | |
-| Li | pH 6 | 6 | 8.26 | 10.0 | −2.37 | −2.38 | equilibrium |
-| Li | pH 2 | 2 | 4.26 | 6.9 | −2.23 | −2.26 | |
-| Li | pH 2 | 4 | 5.73 | 7.8 | −2.51 | −2.55 | |
-| Li | pH 2 | 6 | 7.05 | 9.0 | −2.37 | −2.41 | equilibrium |
+| Metal | Batch | Day | pH | Γ (µmol m⁻²) | rel. error (%) | SI(MeCO₃) | log K (CCM) | interval | log K (NEM) | used | reason for exclusion |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Co | pH 6 | 2 | 7.40 | 0.97 | 129 | −0.42 | −2.34 | −5.41 to −1.88 | −2.37 | yes | |
+| Co | pH 6 | 4 | 7.48 | 1.53 | 81 | −0.27 | −2.05 | −2.86 to −1.69 | −2.13 | yes | |
+| Co | pH 6 | 6 | 8.09 | 2.28 | 54 | +0.93 | −1.89 | −2.31 to −1.62 | −1.89 | no | SI(CoCO₃) > 0 |
+| Co | pH 2 | 2 | 4.12 | 0.32 | 399 | −6.96 | −1.94 | −4.95 to −1.18 | −2.10 | no | within noise |
+| Co | pH 2 | 4 | 5.66 | 0.27 | 474 | −3.88 | −2.63 | −5.64 to −1.80 | −2.76 | no | within noise |
+| Co | pH 2 | 6 | 7.11 | 0.04 | 2970 | −0.98 | −3.47 | −6.48 to −1.92 | −3.59 | no | within noise |
+| Li | pH 6 | 2 | 7.65 | 11.9 | 154 | −7.6 | −1.97 | −5.85 to +0.29 | −2.05 | yes | |
+| Li | pH 6 | 4 | 7.92 | 5.4 | 342 | −7.1 | −2.95 | −6.17 to +0.28 | −2.97 | no | within noise |
+| Li | pH 6 | 6 | 8.26 | 10.0 | 183 | −6.4 | −2.37 | −5.93 to +0.23 | −2.38 | yes | |
+| Li | pH 2 | 2 | 4.26 | 6.9 | 269 | −14.4 | −2.23 | −5.53 to +0.79 | −2.26 | yes | |
+| Li | pH 2 | 4 | 5.73 | 7.8 | 235 | −11.5 | −2.51 | −5.88 to +0.40 | −2.55 | yes | |
+| Li | pH 2 | 6 | 7.05 | 9.0 | 205 | −8.8 | −2.37 | −5.83 to +0.39 | −2.41 | yes | |
 
-**Table 6.** Reported constants (25 °C, I = 0.68 M NaCl).
+**Table 6.** Reported constants (25 °C, I = 0.68 M NaCl), fitted on the usable points of Table 5.
 
-| Reaction | Electrostatic (CCM) | Non-electrostatic | Basis |
-|---|---|---|---|
-| >CO₃H⁰ + Li⁺ ⇌ >CO₃Li⁰ + H⁺ | −2.42 ± 0.30 (all six points); −2.37 (day 6) | −2.40 | fitted, conditional on Table 3 site parameters |
-| >CO₃H⁰ + Co²⁺ ⇌ >CO₃Co⁺ + H⁺ | −0.79 | −0.79 | predicted from Eq. 15 |
-| >CO₃H⁰ + Co²⁺ ⇌ >CO₃Co⁺ + H⁺ (apparent, this data) | −2.06 ± 0.79 | −2.13 | lumped; not an intrinsic constant |
+| Reaction | n | Electrostatic (CCM) | Non-electrostatic | Internal spread | Propagated interval (±3 % ICP) | Basis |
+|---|---|---|---|---|---|---|
+| >CO₃H⁰ + Li⁺ ⇌ >CO₃Li⁰ + H⁺ | 5 | −2.31 | −2.35 | 0.21 | ≈ −5.4 to +0.8 | fitted; site-limited; order of magnitude only |
+| >CO₃H⁰ + Co²⁺ ⇌ >CO₃Co⁺ + H⁺ (apparent) | 2 | −2.18 | −2.24 | 0.21 | ≈ −3.4 to −1.0 | apparent; not an intrinsic constant |
+| >CO₃H⁰ + Co²⁺ ⇌ >CO₃Co⁺ + H⁺ (analogy) | – | −0.79 | −0.79 | – | – | predicted from Eq. 15 |
 
-The lithium point-by-point values are flat in pH (slope 0.00 per pH unit across the equilibrium points, spread 0.30 log units across all six points), and the electrostatic and non-electrostatic values agree to 0.02 log units, as expected at C = 138 F m⁻². The cobalt values drift with pH (slope +1.6 per pH unit), driven by the pH 2 batch whose uptake is within analytical noise, and the only cobalt point with a measurable coverage is supersaturated with sphaerocobaltite. A fitted cobalt constant is therefore reported only as an apparent value.
+The lithium point-by-point values are flat in pH (slope 0.00 per pH unit across the equilibrium points) and internally consistent to 0.2 log units across five samples, and the electrostatic and non-electrostatic values agree to 0.04 log units, as expected at C = 138 F m⁻². That consistency is not accuracy: because the surface is near saturation with lithium, the inversion of Eq. 13 is insensitive, and propagating the ±3 % analytical error gives an interval of several log units. At ±1 % analytical precision the propagated half-width would fall to about 1.7 log units, but the site limitation remains; an isotherm at lower lithium concentration is what constrains the constant. Cobalt has two usable points, both pre-equilibrium and undersaturated, giving an apparent value of −2.18 that is reported only as such.
 
 ### 3.5 Prediction and mechanism split
 
-With the constants of Table 3 and log K(>CO₃Co⁺) = −0.79, the forward model predicts that sorption alone would remove 21 to 27 % of the added cobalt at the measured equilibrium chemistry, whereas 0.1 to 7.6 % was removed. In this coarse, low-surface-area system the observed removal is therefore *below* what the literature analogy allows for sorption, and no mineralization is required to explain it; the apparent constant of −2.06 is 1.3 log units weaker than the analogy, comparable to the >CO₃Ca⁺ and >CO₃Mg⁺ values of −1.8 and −2.0. For the high-recovery runs of Elshebli et al. (2025), the absolute sorption ceiling at 50.4 m² L⁻¹ is 14 µmol m⁻² × 50.4 m² L⁻¹ = 0.71 mmol L⁻¹, against 1.19 mmol L⁻¹ of cobalt removed: at least 41 % of that removal is mineralization even if every carbonate site held cobalt, and a much larger share once protons, calcium and magnesium occupy their share of sites.
+With the constants of Table 3 and log K(>CO₃Co⁺) = −0.79, the forward model predicts that sorption alone would remove 24 to 27 % of the added cobalt in the pH 6 batch and 10 to 21 % in the pH 2 batch, whereas 3.2 to 7.6 % and 0.1 to 1.1 % were removed (Table 7). The signed residual (measured minus predicted) is negative at every point: the model puts 3.5 to 7.4 times more cobalt on the surface than left solution in the pH 6 batch, and far more where the measured removal is within noise. In this coarse, low-uptake system precipitation is therefore not required to explain the removal; the sorption prediction itself is too high by more than a factor of three. Three corrections could each close the gap and cannot be separated with two pH values and one concentration: (a) the borrowed constant, the usable points giving an apparent value 1.4 log units weaker than the analogy; (b) a reactive area of 13 to 29 % of the BET area, the same adjustment Belova et al. (2014) explored; (c) incomplete equilibration, since removal is still rising at day 6 (Figure 1), so the day-6 coverage is a lower bound. The saturation index of sphaerocobaltite crosses zero between day 4 and day 6 in the pH 6 batch, marking where precipitation would begin to add to sorption.
+
+**Table 7.** Cobalt: measured removal against the sorption predicted with the analogy constant.
+
+| Batch | Day | pH | SI(CoCO₃) | Measured removed (mmol L⁻¹) | Measured (%) | Predicted sorbed (mmol L⁻¹) | Predicted (%) | Residual, measured − predicted (mmol L⁻¹) | Predicted / measured |
+|---|---|---|---|---|---|---|---|---|---|
+| pH 6 | 2 | 7.40 | −0.42 | 0.044 | 3.2 | 0.329 | 24.1 | −0.285 | 7.4 |
+| pH 6 | 4 | 7.48 | −0.27 | 0.070 | 5.1 | 0.326 | 23.9 | −0.257 | 4.7 |
+| pH 6 | 6 | 8.09 | +0.93 | 0.104 | 7.6 | 0.363 | 26.6 | −0.259 | 3.5 |
+| pH 2 | 2 | 4.12 | −6.96 | 0.015 | 1.1 | 0.136 | 9.9 | −0.121 | 9.4 |
+| pH 2 | 4 | 5.66 | −3.88 | 0.012 | 0.9 | 0.281 | 20.5 | −0.268 | 23 |
+| pH 2 | 6 | 7.11 | −0.98 | 0.002 | 0.1 | 0.290 | 21.2 | −0.288 | 148 |
+
+For the high-recovery runs of Elshebli et al. (2025), the absolute sorption ceiling at 50.4 m² L⁻¹ is 14 µmol m⁻² × 50.4 m² L⁻¹ = 0.71 mmol L⁻¹, against 1.19 mmol L⁻¹ of cobalt removed: at least 41 % of that removal is mineralization even if every carbonate site held cobalt, and a much larger share once protons, calcium and magnesium occupy their share of sites. The same arithmetic applies to lithium: the reported 8.5 % recovery is 2.4 times the carbonate-site ceiling (3.5 % at 0.84 m² g⁻¹), so the conclusion that lithium recovery is sorption-dominated needs to be revisited for the fine-particle runs, where zabuyelite reached 8 % of the solid.
+
+### 3.6 A data check
+
+The calcium and magnesium released by the same dolomite in the same brine are opposite by two orders of magnitude between the two pH 6 batches (Ca 0.13, Mg 12.9 mg L⁻¹ in the cobalt batch; Ca 49.9, Mg 0.87 mg L⁻¹ in the lithium batch). Congruent dissolution gives a molar Ca/Mg ratio near unity; the recorded values are 0.006 and 35. Because these ions are the competitors in Eq. 9, the raw ICP run should be checked before the values are relied on. The sensitivity is, however, small: swapping Ca and Mg in the cobalt pH 6 day-6 point leaves the point-by-point constant unchanged at −1.89, because the two competitor constants (−1.8 and −2.0) are nearly equal and both species are minor at these concentrations. If the raw run confirms the values, the pattern is real incongruent dissolution and should be reported as such.
 
 ---
 
 ## 4. Discussion
 
-The capacity test settles the question left open in the earlier study. Removal of 70 mg L⁻¹ of cobalt or 8.5 % of 138 mg L⁻¹ of lithium on 50 m² L⁻¹ of dolomite is one to three monolayers beyond what any surface complexation model can hold, so those recoveries are dominated by precipitation of sphaerocobaltite and zabuyelite, as the XRD already indicated. A constant fitted to such data would change with pH, temperature, loading and duration and would not be an interfacial property. The present single-ion data set is different: its uptake is small enough to sit inside the monolayer bound, and for lithium the point-by-point constant is independent of pH and of the electrostatic model, which is the behaviour of a transferable constant. Its uncertainty is nevertheless large because lithium uptake (2 to 3 %) is within about one standard deviation of the ICP measurement, and the value is conditional on the borrowed site density and competitor constants; Belova et al. (2014) reported ±0.45 to ±0.66 log units for nickel on calcite under far better controlled conditions.
+The capacity test settles the question left open in the earlier study. Removal of 70 mg L⁻¹ of cobalt or 8.5 % of 138 mg L⁻¹ of lithium on 50 m² L⁻¹ of dolomite is one to three monolayers beyond what any surface complexation model can hold, so those recoveries are dominated by precipitation of sphaerocobaltite and zabuyelite, as the XRD already indicated. A constant fitted to such data would change with pH, temperature, loading and duration and would not be an interfacial property. The present single-ion data set is different: its uptake is small enough to sit inside the monolayer bound, and for lithium the point-by-point constant is independent of pH and of the electrostatic model, which is the behaviour a transferable constant should show. But lithium is site-limited rather than affinity-limited. At 20 mmol L⁻¹ against 0.64 mmol L⁻¹ of sites the surface is 71 % full, so the mass-action inversion is pinned and returns nearly the same value whatever it is fed; the internal consistency of 0.2 log units across five samples is a statement about the samples, not about the constant, and the propagated interval of several log units is the honest width. The constant is also conditional on the borrowed site density and competitor constants; Belova et al. (2014) reported ±0.45 to ±0.66 log units for nickel on calcite under far better controlled conditions.
 
-For cobalt the analogy of Eq. 15 predicts a constant about one log unit stronger than that of calcium, consistent with the higher stability of CoCO₃⁰ over CaCO₃⁰. The observed uptake on the coarse dolomite is weaker than this prediction. Three explanations are open and cannot be separated with the present design: a reactive area smaller than the BET area (Belova et al., 2014, found that assuming 70 % of the BET area raised the fitted constant), a slower approach to equilibrium on the coarse solid, or competition by calcium and magnesium at the concentrations released by dissolution (up to 88 and 51 mg L⁻¹). The saturation history shows that the cobalt pH 6 batch crossed sphaerocobaltite saturation between day 4 and day 6, so the day 6 point is at the onset of precipitation and the earlier points, still undersaturated, give the cleaner estimate of sorption.
+For cobalt the analogy of Eq. 15 predicts a constant about one log unit stronger than that of calcium, consistent with the higher stability of CoCO₃⁰ over CaCO₃⁰. The observed uptake on the coarse dolomite is weaker than this prediction by a factor of 3.5 to 7.4, which is diagnostic rather than a nuisance: it says that at least one link in the chain from constant to coverage is off by more than half an order of magnitude. The candidates are the borrowed constant itself (the usable points sit 1.4 log units below it, close to the calcium and magnesium values of −1.8 and −2.0), a reactive area of 13 to 29 % of the BET area (Belova et al., 2014, found that assuming 70 % of the BET area raised the fitted constant, the same move in the same direction), and incomplete equilibration on the coarse solid. Calcium and magnesium competition does not resolve it: the two competitor constants are nearly equal and the swap test of §3.6 moves the constant by less than 0.01. The present design cannot separate these three; an isotherm at fixed pH does. The saturation history shows that the cobalt pH 6 batch crossed sphaerocobaltite saturation between day 4 and day 6, so the day 6 point is at the onset of precipitation and the earlier points, still undersaturated, give the cleaner estimate of sorption.
 
 Three features of the experimental design limit what can be fitted irrespective of precipitation: two initial pH values rather than an edge, so the proton stoichiometry is not constrained; pH that drifts during the run, so each point is not an equilibrium at a defined pH; and a single initial concentration, so there is no isotherm and site density cannot be separated from binding constant even in principle. A genuinely transferable constant requires pre-equilibrating the dolomite with the brine until the pH is stable, filtering and using the solution without storage, adding metal at concentrations kept undersaturated with respect to CoCO₃ and Li₂CO₃ (micrograms per litre for cobalt), holding pH at six or more values across the uptake edge, varying the initial concentration at three or four levels at each pH, limiting contact to 24 h to stay in the fast adsorption regime, and running solid-free blanks at every condition (Belova et al., 2014).
 
@@ -254,10 +270,11 @@ Three features of the experimental design limit what can be fitted irrespective 
 
 1. The carbonate-site surface complexation model of Pokrovsky et al. (1999a), with metal cations on >CO₃⁻ and anions on >MeOH sites, is the appropriate framework for lithium and cobalt on dolomite; all reactions, equations and parameters are stated and sourced above.
 2. A capacity test must precede any fitting. The high-recovery runs of Elshebli et al. (2025) exceed the carbonate-site density by 1.7 to 2.4 times and are dominated by mineralization; at least 41 % of the best cobalt recovery is precipitation even at the sorption ceiling.
-3. For the present low-uptake data set, lithium behaves as a sorbing ion with a pH-independent constant, log K(>CO₃Li⁰) = −2.42 ± 0.30 (electrostatic) and −2.40 (non-electrostatic), conditional on the borrowed site parameters.
-4. Cobalt cannot be fitted reliably from these data because the measurable point is supersaturated with sphaerocobaltite; its constant is taken from the aqueous–surface analogy, log K(>CO₃Co⁺) = −0.79, and the apparent value from the data (−2.06) is reported only as a lumped parameter.
+3. For the present low-uptake data set, lithium behaves as a sorbing ion with a pH-independent constant, log K(>CO₃Li⁰) ≈ −2.3 (electrostatic and non-electrostatic agree to 0.04), but it is site-limited: the surface holds at most 3.2 % of the lithium present and is 71 % full, so the propagated interval spans several log units and the value is an order of magnitude, conditional on the borrowed site parameters. The reported 8.5 % lithium recovery on fine dolomite is 2.4 times the sorption ceiling, so the earlier attribution of lithium recovery to sorption needs to be revisited for those runs.
+4. Cobalt has two usable points; its best-measured point is supersaturated with sphaerocobaltite and is excluded. The apparent value from the usable points (−2.18) is reported only as such. The aqueous–surface analogy, log K(>CO₃Co⁺) = −0.79, over-predicts the observed uptake 3.5 to 7.4 times; the borrowed constant, a reactive area of 13 to 29 % of BET, and incomplete equilibration are the candidate causes and are not separable with two pH values and one concentration.
 5. The published surface concentration of 0.046 to 0.049 m² L⁻¹ should be corrected to ≈ 50 m² L⁻¹ (m² mL⁻¹ in the original).
-6. The experimental design for a transferable constant is specified and is a matter of weeks rather than months.
+6. The hand-coded speciation is set up for line-by-line comparison with Visual MINTEQ at one point, and the activity-model floor at this ionic strength is 0.10 log units. The Ca/Mg release pattern in the two pH 6 batches is inconsistent with congruent dissolution and should be checked against the raw ICP run, although it does not change the constants.
+7. The experimental design for a transferable constant is specified and is a matter of weeks rather than months.
 
 ---
 
