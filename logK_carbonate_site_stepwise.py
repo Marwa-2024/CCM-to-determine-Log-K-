@@ -290,14 +290,35 @@ for r in data.itertuples():
 # because incongruent dolomite dissolution can in principle reach calcite saturation, and then
 # dropped from the reported table on the strength of the answer rather than by assumption.
 spec = pd.DataFrame(spec_rows)
-_cal_lo, _cal_hi = spec.SI_calcite.min(), spec.SI_calcite.max()
+_cal = spec[["metal","batch","day","pH","SI_calcite"]].copy()
 spec = spec.drop(columns=["SI_calcite"])
 print(spec.to_string(index=False, float_format=lambda x: f"{x:.3g}"))
-print(f"\nCalcite: SI runs {_cal_lo:+.2f} to {_cal_hi:+.2f} across every point, undersaturated throughout,")
-print("so no calcite forms and it is excluded from the tables and figures below. The solid is")
-print("dolomite; the calcite work cited later (Belova et al., 2014; Zachara et al., 1991;")
-print("Van Cappellen et al., 1993) is used as an ANALOGUE for constants dolomite has no")
-print("published value for, never as a claim about the phases present here.")
+
+# Calcite is not a phase of this SOLID - the sample is dolomite. But dolomite dissolving
+# incongruently releases Ca and CO3, so calcite as a PRODUCT is a separate question, and the
+# check is reported rather than waved away.
+print("\nCALCITE. The solid is dolomite, so calcite is not a starting phase and it is dropped from")
+print("the table above and from every figure. Whether it could FORM is a different question, and")
+print("the answer is not uniform across the batches:")
+_cal = _cal.sort_values("SI_calcite", ascending=False)
+for r in _cal.itertuples():
+    flag = "  <- at saturation" if r.SI_calcite > -0.15 else ("  <- approaching" if r.SI_calcite > -1.5 else "")
+    print(f"    {r.metal} {r.batch} day {r.day}  pH {r.pH:.2f}   SI calcite {r.SI_calcite:+.2f}{flag}")
+_li6 = _cal[(_cal.metal=="Li")&(_cal.batch=="pH6")].sort_values("day")
+_comax = _cal[_cal.metal=="Co"].SI_calcite.max()
+print(f"\n  Every COBALT point is undersaturated by {abs(_comax):.1f} log units or more, so calcite plays no")
+print(f"  part in the cobalt result and the bound in Table 1 is untouched by this.")
+print(f"  The LITHIUM pH 6 batch is different: SI climbs {', '.join(f'{v:+.2f}' for v in _li6.SI_calcite)} over days")
+print(f"  {', '.join(str(int(d)) for d in _li6.day)} and reaches {_li6.SI_calcite.iloc[-1]:+.2f} at day 6 - at saturation, not away from it, and")
+print(f"  inside the {0.10:.2f} log unit activity-model floor established in the cross-check, so the model")
+print(f"  cannot tell whether calcite is saturated there. Secondary calcite therefore cannot be")
+print(f"  excluded for that batch on this evidence. It would consume Ca rather than Li, so it does")
+print(f"  not create or destroy lithium uptake, and lithium's constant is not determined here for")
+print(f"  independent reasons - but it is the likely ceiling the anomalous Ca (49.9 mg/L against")
+print(f"  0.87 Mg) was heading for, and it should be checked by XRD on the recovered solid.")
+print("\n  The calcite work cited later (Belova et al., 2014; Zachara et al., 1991; Van Cappellen")
+print("  et al., 1993) is used as an ANALOGUE for constants dolomite has no published value for,")
+print("  never as a claim about the phases present here.")
 print("\nMetal distribution at the four equilibrium points (fraction of total dissolved):")
 for r in eq.itertuples():
     s = speciate(r.pH, totals_for(r), r.metal)
