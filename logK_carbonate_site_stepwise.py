@@ -696,8 +696,23 @@ for metal in ["Co","Li"]:
     u = ppdf[(ppdf.metal==metal)&ppdf.usable]
     lo, hi = u.logK_lo.min(), u.logK_hi.max()
     days = ", ".join(f"{b.replace('pH','pH ')} day {d}" for b, d in zip(u.batch, u.day))
+    # Is every usable point pre-equilibrium? If uptake is still rising at the last sampling and
+    # no usable point reaches it, the measured coverage is a LOWER BOUND on the equilibrium
+    # coverage. log K rises monotonically with coverage (verified below), so the fitted value is
+    # then a lower bound on the constant, not a central value with symmetric error bars.
+    last_day = data.day.max()
+    still_rising = (data[(data.metal==metal)&(data.batch=="pH6")]
+                    .sort_values("day")["removal_%"].diff().iloc[-1] > 0)
+    pre_eq = (u.day.max() < last_day) and still_rising
     print(f"\n  {rxn[metal]}")
-    if unc > REPORT_THRESHOLD:
+    if pre_eq:
+        print(f"     log K  >=  {c.logK:+.2f}      (LOWER BOUND, not a central value)")
+        print(f"     Every usable point is pre-equilibrium and uptake is still rising at day {last_day},")
+        print(f"     so the measured coverage is a lower bound on the equilibrium coverage. log K")
+        print(f"     increases monotonically with coverage, so the fitted value bounds the constant")
+        print(f"     from below. The +/-{unc:.2f} is the RANDOM component from +/-3 % ICP precision alone;")
+        print(f"     it carries no information about the systematic offset from incomplete reaction.")
+    elif unc > REPORT_THRESHOLD:
         # the propagated interval spans orders of magnitude: report a bound, not a value
         print(f"     log K   NOT DETERMINED.  Propagated interval {lo:+.1f} to {hi:+.1f} "
               f"({hi-lo:.1f} log units, i.e. {hi-lo:.0f} orders of magnitude).")
@@ -709,13 +724,28 @@ for metal in ["Co","Li"]:
         print(f"     (+/-{unc:.2f} is a factor of {10**unc:.0f} either way - just inside the {REPORT_THRESHOLD:.1f} rule, not a precise number)")
     print(f"     basis: {int(c.n_points)} usable point(s) - {days}")
 
+# The bound rests on log K rising with coverage. Verify it rather than assert it.
+print("\n  Check that log K increases monotonically with coverage (Co pH 6 day 4, uptake scaled):")
+_r0 = data[(data.metal=="Co")&(data.batch=="pH6")&(data.day==4)].iloc[0]
+_row = []
+for _f in [0.5, 0.75, 1.0, 1.5, 2.0, 3.0]:
+    _rr = _r0.copy(); _rr["Me_ppm"] = _r0.C0_ppm - _f*(_r0.C0_ppm - _r0.Me_ppm)
+    _row.append((_f, logK_point(_rr, True)[0]))
+print("     uptake x " + "  ".join(f"{f:<5g}" for f, _ in _row))
+print("     log K    " + "  ".join(f"{k:+.2f}" for _, k in _row))
+print("     Monotonic, so a lower bound on coverage is a lower bound on log K.")
+
 # What kind of number each one is, stated explicitly.
 uco = ppdf[(ppdf.metal=="Co")&ppdf.usable]
-print(f"\n  COBALT is a KINETIC SNAPSHOT, not an equilibrium constant. Both usable points are")
-print(f"  pre-equilibrium (day {sorted(uco.day.unique())[0]} and day {sorted(uco.day.unique())[-1]} of the pH 6 batch);")
-print(f"  every day-6 point is excluded - pH 6 day 6 for supersaturation (SI +0.93), the three pH 2")
-print(f"  points for being within analytical noise. Removal is still rising at day 6 (Figure 1), so the")
-print(f"  system had not finished reacting when the value was measured.")
+print(f"\n  COBALT is BOUNDED FROM BELOW, not measured. Both usable points are pre-equilibrium")
+print(f"  (day {sorted(uco.day.unique())[0]} and day {sorted(uco.day.unique())[-1]} of the pH 6 batch); every day-6 point is excluded - pH 6 day 6 for")
+print(f"  supersaturation (SI +0.93), the three pH 2 points for analytical noise. Removal is still")
+print(f"  rising at day 6 (Figure 1), so the system had not finished reacting.")
+print(f"\n  This reconciles Table 1 with Step 8. The data bound the constant from below at "
+      f"{fits[(fits.metal=='Co')&(fits.model=='CCM')].logK.iloc[0]:+.2f};")
+print(f"  the aqueous-surface analogy predicts {LOGK_SURF['CO3Ca'] + (4.23 - 3.22):+.2f}, which lies ABOVE that bound and is therefore")
+print(f"  NOT excluded by these data. A two-sided interval would have excluded it and would have")
+print(f"  contradicted the time-trend result in Step 8. The extended run tests whether the gap closes.")
 print(f"\n  LITHIUM is SITE-LIMITED, which is a different failure. See the contrast below.")
 
 # ---- the two metals fail for different reasons: state it as a result ----
@@ -730,7 +760,7 @@ for metal in ["Co","Li"]:
           f"= {meas:.1f} %,")
     print(f"      i.e. {100*meas/ceil_pct:.0f} % of the ceiling.")
 print("  Cobalt sits comfortably inside the monolayer bound; its limits are analytical noise and")
-print("  incomplete equilibration, both fixed by longer runs and better precision.")
+print("  incomplete equilibration, so its constant is bounded from below rather than measured.")
 print("  Lithium was dosed above the surface's capacity: 20 mmol/L against 0.64 mmol/L of sites, so")
 print("  2.3 % removal already fills 71 % of the surface and the mass-action inversion goes insensitive.")
 print("  The fix is a lower lithium concentration, not a longer run. Each metal points to a different")
@@ -842,18 +872,36 @@ print(f"  linear growth of measured coverage to the predicted level : day {t_lin
 print(f"  log-linear decay of the ratio to unity                    : day {t_log:.0f}  ({t_log/7:.1f} weeks)")
 print(f"  -> weeks, not days. The six-day experiment may simply have stopped too early.")
 print("  (Caution: the measured curve is still slightly accelerating rather than levelling off,")
-print("   which no simple approach-to-equilibrium law does, so both numbers are indicative only.")
-print("   Rising pH, 7.40 to 8.09 over the same interval, is raising the affinity as time passes.)")
+print("   which no simple approach-to-equilibrium law does, so both numbers are indicative only.)")
+
+# --- the time axis is confounded with pH; close it rather than merely note it ---
+rise_meas = 100*(d6.measured_removed_mM.iloc[-1]/d6.measured_removed_mM.iloc[0] - 1)
+rise_pred = 100*(d6.predicted_sorbed_mM.iloc[-1]/d6.predicted_sorbed_mM.iloc[0] - 1)
+print(f"\nIS IT TIME, OR IS IT pH? The two axes are confounded: pH runs {d6.pH.iloc[0]:.2f}, {d6.pH.iloc[1]:.2f}, {d6.pH.iloc[-1]:.2f} across the")
+print("same three samplings, so rising removal could be an approach to equilibrium OR the affinity")
+print("increasing as the solution buffers upward. The model settles it, because the predicted")
+print("sorption is computed at each point's own measured pH assuming equilibrium: the prediction IS")
+print("the pH effect, with time removed.")
+print(f"  measured removal rose  {rise_meas:+.0f} %  from day 2 to day 6")
+print(f"  model prediction rose  {rise_pred:+.0f} %  over the same pH change, at equilibrium")
+print(f"  -> pH accounts for at most {100*rise_pred/rise_meas:.0f} % of the observed rise; the remaining ~{100-100*rise_pred/rise_meas:.0f} % is time.")
+print("Unless the model's pH sensitivity is wrong by an order of magnitude, pH cannot produce the")
+print("rise, and candidate (c) survives the confound rather than merely being flagged for it.")
 print("\nThe pH 2 batch ratio runs the other way (9.4, 23, 148) because its measured removal collapses")
 print("into analytical noise; those three points are excluded on that basis and carry no trend.")
 
-print("\nTHE EXPERIMENT THIS IMPLIES. Extend one pH 6 cobalt batch to a month, sampling weekly, and")
-print("watch the ratio:")
+print("\nTHE EXPERIMENT THIS IMPLIES. Extend one pH 6 cobalt batch to a month AT FIXED pH - by buffer")
+print("or by periodic adjustment - because a run that lets pH drift reproduces exactly the same")
+print("time/pH ambiguity at longer timescale. Sample at days 7, 10, 14, 21 and 28 rather than")
+print(f"strictly weekly, so the day-{t_log:.0f} extrapolation is bracketed instead of stepped over. Then watch")
+print("the ratio:")
 print("  - if it converges on 1, the analogy constant of -0.79 was right and the six-day run stopped")
 print("    too early. That validates the borrowed constant and dates the kinetics.")
 print("  - if it plateaus near 3, equilibrium is reached and the residual gap belongs to the constant")
 print("    or to the reactive area, which the isotherm and pH-edge design then separates.")
-print("Either outcome is informative, and it is one bottle and four samplings.")
+print("Either outcome is informative, and it is one bottle and five samplings. Track the solid by")
+print("XRD as well: the SI crosses zero between day 4 and day 6, so a longer run enters the regime")
+print("where sphaerocobaltite begins to contribute and the sorption-only reading would break down.")
 
 print("\nThe isotherm and pH-edge experiment in the Discussion remains what separates (a) from (b).")
 print(f"\nAbsolute ceiling if EVERY carbonate site held Co at 45.6 m2/L: {ceiling_mM:.3f} mmol/L "
