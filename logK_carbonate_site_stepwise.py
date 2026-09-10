@@ -602,6 +602,28 @@ savefig(fig, "Fig1_kinetics")
 # The model curve is the forward prediction with the fitted log K, using each batch's
 # initial metal and its measured day-6 Ca and Mg. The position of the edge carries the
 # proton stoichiometry.
+#
+# **Why the cobalt curve turns over near pH 8.6.** The surface reaction releases a proton, so
+# raising the pH should drive it right, and up to pH 8.6 it does. Above that the decline is
+# entirely on the *aqueous* side, not the surface side. Alkalinity is set by a fixed pCO₂, so
+# carbonate activity rises as the square of the inverse proton activity, and CoCO₃⁰ (log β = 4.23)
+# takes the cobalt out of the free-ion pool that the surface reaction draws on:
+#
+# | pH | free Co²⁺ | CoCO₃⁰ | Co(OH)₂⁰ | predicted removal | SI(CoCO₃) |
+# |---|---|---|---|---|---|
+# | 8.0 | 68 % | 0.8 % | 0.0 % | 4.2 % | +0.76 |
+# | 8.6 | 58 % | 11 % | 0.4 % | 5.2 % | +1.89 |
+# | 9.0 | 34 % | 41 % | 1.7 % | 4.0 % | +2.46 |
+# | 10.0 | 0.7 % | 93 % | 3.8 % | 0.2 % | +2.82 |
+#
+# So the peak is the point where aqueous carbonate complexation starts to remove free Co²⁺ faster
+# than the pH gains add surface affinity. Hydrolysis contributes almost nothing (3.8 % even at
+# pH 10). Two things follow, and both are reasons **not to read the descending limb as a
+# prediction**: it depends entirely on the fixed-pCO₂ assumption, extrapolated far outside the
+# measured range (a closed bottle holds DIC roughly constant instead, and the curve would keep
+# rising); and sphaerocobaltite is supersaturated from pH 7.6 upward, so the whole turnover sits
+# inside the region where a sorption-only model has already stopped applying. The supersaturated
+# range is therefore shaded and the curve faded through it.
 
 # %%
 def forward_removal(metal, pH, C0_ppm, Ca_ppm, Mg_ppm, logK, electrostatic=True):
@@ -619,10 +641,24 @@ best = {m: float(fits[(fits.metal==m)&(fits.model=="CCM")].logK.iloc[0]) for m i
 fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.9), constrained_layout=True)
 grid = np.linspace(3, 10, 141)
 for ax, metal, letter in zip(axes, ["Co","Li"], "ab"):
+    # Shade the pH range where the metal carbonate is supersaturated. The sorption-only model
+    # keeps producing numbers there, but they are not predictions: precipitation is not in it.
+    e0 = eq[(eq.metal==metal)&(eq.batch=="pH6")].iloc[0]
+    _phase = "CoCO3 (sphaerocobaltite)" if metal == "Co" else "Li2CO3"
+    _si = np.array([speciate(p, totals_for(e0), metal)["SI"][_phase] for p in grid])
+    if np.any(_si > 0):
+        p_sat = grid[np.argmax(_si > 0)]
+        ax.axvspan(p_sat, grid[-1], color=COL["grey"], alpha=0.13, lw=0, zorder=0)
+        ax.text(p_sat + 0.08, 0.965, f"SI({_phase.split()[0]}) > 0\nmodel not valid", fontsize=7.4,
+                color=COL["grey"], va="top", ha="left", transform=ax.get_xaxis_transform())
+    else:
+        p_sat = grid[-1]
     for batch, ls, lab in [("pH6","-","model, pH 6 batch chemistry"),("pH2","--","model, pH 2 batch chemistry")]:
         e = eq[(eq.metal==metal)&(eq.batch==batch)].iloc[0]
-        curve = [forward_removal(metal, p, e.C0_ppm, e.Ca_ppm, e.Mg_ppm, best[metal]) for p in grid]
-        ax.plot(grid, curve, ls, color=COL["model"], label=lab)
+        curve = np.array([forward_removal(metal, p, e.C0_ppm, e.Ca_ppm, e.Mg_ppm, best[metal]) for p in grid])
+        keep = grid <= p_sat
+        ax.plot(grid[keep], curve[keep], ls, color=COL["model"], label=lab)
+        ax.plot(grid[~keep], curve[~keep], ls, color=COL["model"], alpha=0.3, lw=1.1)
     d = data[(data.metal==metal)&(data.day>0)]
     ax.plot(d[d.day==6].pH, d[d.day==6]["removal_%"], MK[metal], color=COL[metal], ms=7.5, ls="none",
             label="measured, day 6", zorder=3)
