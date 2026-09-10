@@ -539,7 +539,7 @@ bx.axhline(SITE_DENS["CO3"]*1e6, color=COL["grey"], ls=":", lw=1.2, label="carbo
 ax.set_xlabel("time (days)"); ax.set_ylabel("removal (% of initial)")
 bx.set_xlabel("time (days)"); bx.set_ylabel("surface coverage Γ (µmol m$^{-2}$)")
 ax.set_xticks([0,2,4,6]); bx.set_xticks([0,2,4,6]); bx.set_ylim(0, 15.5)
-ax.legend(loc="upper left"); bx.legend(loc="upper left")
+ax.legend(loc="upper left"); bx.legend(loc="upper left", frameon=True, framealpha=0.92, edgecolor="none")
 panel(ax, "a"); panel(bx, "b")
 savefig(fig, "Fig1_kinetics")
 
@@ -578,9 +578,8 @@ for ax, metal, letter in zip(axes, ["Co","Li"], "ab"):
         C0 = data[data.metal=="Li"].C0_ppm.iloc[0]/MM["Li"]/1e3
         ax.axhline(100*S_T["CO3"]/C0, color=COL["grey"], ls=":", lw=1.2, label="site ceiling (all carbonate sites)")
     ax.set_xlabel("pH"); ax.set_ylabel(f"{metal} removal (% of initial)")
-    ax.text(0.98, 0.04 if metal=="Co" else 0.96, f"apparent log K = {best[metal]:+.2f}", transform=ax.transAxes,
-            ha="right", va="bottom" if metal=="Co" else "top", fontsize=9, color=COL["grey"])
-    ax.legend(loc="upper left" if metal=="Co" else "lower right"); panel(ax, letter)
+    ax.legend(loc="upper left" if metal=="Co" else "lower right",
+              title=f"apparent log K = {best[metal]:+.2f}", title_fontsize=8.5); panel(ax, letter)
 savefig(fig, "Fig2_adsorption_edges")
 
 # %% [markdown]
