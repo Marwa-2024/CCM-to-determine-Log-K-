@@ -715,12 +715,15 @@ for metal in ["Co","Li"]:
     pre_eq = (u.day.max() < last_day) and still_rising
     print(f"\n  {rxn[metal]}")
     if pre_eq:
-        print(f"     log K  >=  {c.logK:+.2f}      (LOWER BOUND, not a central value)")
+        print(f"     log K  >=  {n.logK:+.2f}  (NEM)   {c.logK:+.2f}  (CCM)      LOWER BOUND, not a central value")
         print(f"     Every usable point is pre-equilibrium and uptake is still rising at day {last_day},")
         print(f"     so the measured coverage is a lower bound on the equilibrium coverage. log K")
         print(f"     increases monotonically with coverage, so the fitted value bounds the constant")
         print(f"     from below. The +/-{unc:.2f} is the RANDOM component from +/-3 % ICP precision alone;")
         print(f"     it carries no information about the systematic offset from incomplete reaction.")
+        print(f"     The non-electrostatic value is quoted first because Belova et al. (2014) argue the")
+        print(f"     NEM constant is a thermodynamic quantity while the CCM value is model-dependent;")
+        print(f"     here the two differ by {abs(c.logK-n.logK):.2f}, so nothing turns on the choice.")
     elif unc > REPORT_THRESHOLD:
         # the propagated interval spans orders of magnitude: report a bound, not a value
         print(f"     log K   NOT DETERMINED.  Propagated interval {lo:+.1f} to {hi:+.1f} "
@@ -732,6 +735,16 @@ for metal in ["Co","Li"]:
         print(f"     apparent log K = {c.logK:+.2f} (CCM) / {n.logK:+.2f} (NEM),  +/- {unc:.2f}")
         print(f"     (+/-{unc:.2f} is a factor of {10**unc:.0f} either way - just inside the {REPORT_THRESHOLD:.1f} rule, not a precise number)")
     print(f"     basis: {int(c.n_points)} usable point(s) - {days}")
+    # exchange constant: cancels the site-density convention, so it transfers between studies
+    # that assumed different densities. This is what the literature actually compares.
+    kex_c, kex_n = c.logK - LOGK_SURF["CO3Ca"], n.logK - LOGK_SURF["CO3Ca"]
+    rel = ">=" if pre_eq else ("~" if unc > REPORT_THRESHOLD else "=")
+    print(f"     exchange constant  log K_ex = log K({metal}) - log K(Ca) {rel} {kex_n:+.2f} (NEM) / "
+          f"{kex_c:+.2f} (CCM)")
+    print(f"       (log K(>CO3Ca+) = {LOGK_SURF['CO3Ca']} on dolomite. K_ex cancels the site-density")
+    print(f"       convention, so it is the quantity that transfers between studies; the formation")
+    print(f"       constant does not. Belova et al. (2014) report log K_ex = +0.58 for Ni on calcite")
+    print(f"       and Zachara et al. (1991) +0.51 for the same system.)")
 
 # The bound rests on log K rising with coverage. Verify it rather than assert it.
 print("\n  Check that log K increases monotonically with coverage (Co pH 6 day 4, uptake scaled):")
@@ -756,7 +769,7 @@ for _a in (0.004, 0.006):
     _ka[_a] = {m: np.mean([logK_point(r, True)[0]
                            for r in _rows[_rows.metal==m].itertuples()])
                for m in ["Co","Li"]}
-    _src = "Pokrovsky et al. 1999, sect. 3.3" if _a == 0.004 else "later carbonate work"
+    _src = "Pokrovsky et al. 1999, sect. 3.3" if _a == 0.004 else "Belova et al. 2014 (52.7 F/m2 at I = 0.1)"
     print(f"     alpha {_a:.3f}  ->  C {np.sqrt(I_BATCH)/_a:4.0f} F/m2   Co {_ka[_a]['Co']:+.3f}   "
           f"Li {_ka[_a]['Li']:+.3f}   ({_src})")
 globals()["C_CAP"] = _C0
@@ -820,6 +833,19 @@ print("Belova's 70 % case raises log K, but closing this gap needs 13 to 29 % of
 print("reduction (Step 8b); (2) >CO3Ca/>CO3Mg fractions follow the measured Ca and Mg")
 print("point by point (done here) rather than being fixed; (3) no blank correction was available;")
 print("(4) alkalinity is set by fixed pCO2 rather than measured DIC.")
+print("\nTwo of those have published precedent and should be stated as limitations rather than")
+print("passed over, because a reader who knows the Belova paper will look for them:")
+print("  BLANKS. Belova et al. (2014) ran solid-free blanks at every condition. Item (3) is not a")
+print("  minor omission but a missing piece of the standard procedure, and it matters most where")
+print("  the measured removal is small - which is every point in this data set.")
+print("  PHASE PURITY. Belova's central finding was that trace surface impurities - clay and")
+print("  polysaccharide, well under 1 % by mass - raised the fitted constant by about 0.7 log units")
+print("  against pure calcite. This dolomite carries calcite cement and quartz, and the source")
+print("  manuscript gives two different numbers for it: 98 % dolomite in the methods, against 94 %")
+print("  dolomite with 4 % quartz and 2 % ankerite in the XRD. Those must be reconciled before the")
+print("  constant is quoted, because on Belova's evidence a few percent of a non-dolomite surface is")
+print("  enough to move the answer by more than the gap being argued about here. The honest framing")
+print("  is that this constant belongs to the Arbuckle powder as used, not to dolomite as a mineral.")
 
 # %% [markdown]
 # ## Step 8 — run the model forward from literature constants and locate the discrepancy
@@ -896,6 +922,18 @@ print(f"  ratio pred/meas            : {'  '.join(f'{v:.2f}' for v in d6.pred_ov
       f"   -> closes monotonically")
 print("\nThat is the signature of (c), not of (a) or (b). The prediction is not moving; the")
 print("measurement is climbing toward it.")
+print("\nBUT (c) IS TWO MECHANISMS, AND THIS TEST CANNOT SEPARATE THEM. The ratio closes for any")
+print("process that keeps removing cobalt after the fast step, and there are two:")
+print("  (c1) a slow approach to SORPTION equilibrium - the reading assumed so far;")
+print("  (c2) recrystallisation of the carbonate surface, which buries the cobalt in newly formed")
+print("       lattice. Belova et al. (2014) saw exactly this two-stage shape on calcite - fast")
+print("       adsorption, then a slower stage they attributed to incorporation - and capped their")
+print("       experiments at 24 h DELIBERATELY, to stay inside the adsorption regime.")
+print("Both are time-dependent, so the flat-versus-closing argument above cannot tell them apart,")
+print("and neither can XRD: incorporation into the existing lattice produces no new phase. If (c2)")
+print("is what is happening, a month-long run converges on the prediction for the wrong reason and")
+print("the number that comes out is not a sorption constant at all. The experiment below therefore")
+print("carries a step that does separate them.")
 
 # two crude extrapolations of when the ratio would reach 1
 sl, ic = np.polyfit(d6.day, d6.measured_removed_mM, 1)
@@ -990,9 +1028,32 @@ print("  - if it converges on 1, the analogy constant of -0.79 was right and the
 print("    too early. That validates the borrowed constant and dates the kinetics.")
 print("  - if it plateaus near 3, equilibrium is reached and the residual gap belongs to the constant")
 print("    or to the reactive area, which the isotherm and pH-edge design then separates.")
-print("Either outcome is informative, and it is one bottle and five samplings. Run XRD on the final")
-print("solid regardless - not to interpret the ratio, which the pH choice and the measured DIC")
-print("have already made unambiguous, but to confirm that nothing precipitated after all.")
+
+print("\nTWO MORE DESIGN POINTS, BOTH FROM PUBLISHED PRACTICE.")
+print("  PRE-EQUILIBRATE THE SOLID. Belova et al. (2014) equilibrated the mineral with the solution")
+print("  for about a week, filtered at 0.2 um and used the filtrate without storage, so that only")
+print("  the metal was added to an already-equilibrated suspension. In these batches the dolomite")
+print("  and the metal went in together, so dissolution and uptake ran at the same time. That single")
+print("  difference is the root of the pH drift, of the Ca/Mg pattern that does not look congruent,")
+print("  and of the carbonate accumulation the pH target above is working around. Pre-equilibration")
+print("  removes the cause rather than managing the symptom, and it is the published standard.")
+print("\n  END WITH A DESORPTION STEP - this is the one that decides what the run measured. Filter the")
+print("  solid at day 28, resuspend it in fresh metal-free brine at the same pH, and measure how much")
+print("  cobalt returns to solution.")
+print("    - Substantially reversible -> the cobalt was held as a surface complex, (c1) holds, and")
+print("      the converging ratio means what it appears to mean: a sorption constant.")
+print("    - Poorly reversible -> the cobalt has been incorporated, (c2) holds, and the month-long")
+print("      uptake is not a sorption equilibrium. The constant is then not extractable from a long")
+print("      run at all, and the 24 h cap of Belova et al. (2014) is the right design instead.")
+print("  Zachara et al. (1991) found the strongly hydrated divalents - Zn, Co, Ni - the MOST")
+print("  desorbable on calcite, reading it as evidence that they stay hydrated in a surface complex")
+print("  until recrystallisation takes them in. Cobalt is therefore the favourable case for this")
+print("  test: if anything is reversible, it should be.")
+print("  Cost: one filtration and one more ICP run. It converts an ambiguous convergence into a")
+print("  decisive one, which no amount of extra sampling can do.")
+print("\nRun XRD on the final solid as well, to confirm that nothing precipitated - but note that XRD")
+print("is not the check on (c2). Incorporation into the existing lattice makes no new phase, so only")
+print("the desorption step can see it.")
 
 print("\nThe isotherm and pH-edge experiment in the Discussion remains what separates (a) from (b).")
 print(f"\nAbsolute ceiling if EVERY carbonate site held Co at 45.6 m2/L: {ceiling_mM:.3f} mmol/L "
