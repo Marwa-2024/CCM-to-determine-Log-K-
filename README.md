@@ -4,6 +4,25 @@ Two self-contained Python scripts that determine the intrinsic surface complexat
 constants (log K) for lithium and cobalt binding on dolomite, using the constant
 capacitance three-site model of Pokrovsky, Schott & Thomas (1999).
 
+## Start here: the stepwise notebook and the paper
+
+* **`LogK_LiCo_dolomite_carbonate_site_STEPWISE.ipynb`** — the complete procedure in one
+  executed notebook (outputs embedded): capacity check → aqueous speciation and saturation
+  indices at the *measured* equilibrium pH → surface coverage with propagated error → carbonate
+  site balance with Ca/Mg competition → constant capacitance electrostatic loop (and the
+  non-electrostatic case) → point-by-point log K → global WSOS/DF fit → the flat-line
+  diagnostic → kinetics, adsorption edge, isotherm, K_d and surface speciation figures →
+  prediction from literature constants and the sorption/mineralisation split. Source:
+  `logK_carbonate_site_stepwise.py` (cell-marked; the notebook is generated from it).
+* **`Paper_LiCo_dolomite_carbonate_site_SCM.md` / `.docx`** — publication-style write-up with
+  every reaction, equation, parameter table, data table, result and APA reference.
+
+Headline: the high-recovery runs in Elshebli et al. (2025) exceed the carbonate-site density
+by 1.7 to 2.4 times, so they are mineralisation, not adsorption. In the low-uptake single-ion
+data set, lithium gives a pH-independent log K(>CO3Li0) = −2.42 ± 0.30; cobalt cannot be
+fitted (its measurable point is supersaturated with sphaerocobaltite) and is predicted from
+the aqueous–surface analogy, log K(>CO3Co+) = −0.79.
+
 ## Notebooks (all data embedded, no external files)
 
 * **`FITEQL_LiCo_dolomite_Colab.ipynb`** — Google Colab notebook. Open it at
