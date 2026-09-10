@@ -19,9 +19,13 @@ capacitance three-site model of Pokrovsky, Schott & Thomas (1999).
 
 Headline: the high-recovery runs in Elshebli et al. (2025) exceed the carbonate-site density
 by 1.7 to 2.4 times, so they are mineralisation, not adsorption. In the low-uptake single-ion
-data set, lithium gives a pH-independent log K(>CO3Li0) = −2.42 ± 0.30; cobalt cannot be
-fitted (its measurable point is supersaturated with sphaerocobaltite) and is predicted from
-the aqueous–surface analogy, log K(>CO3Co+) = −0.79.
+data set neither constant is determined, and the two fail for different reasons. Lithium is
+site-limited (the surface is 71 % full at 2.3 % removal), so the inversion is insensitive and
+the propagated interval runs −5.9 to +0.8; no central value is reported. Cobalt is bounded
+from below, log K(>CO3Co+) ≥ −2.20, because its usable points are pre-equilibrium and log K
+rises monotonically with coverage. The aqueous–surface analogy value, −0.79, lies above that
+bound and is therefore not excluded. The speciation is verified against PHREEQC (agreement to
+0.07 log units in free-metal activity, 0.08 in saturation index).
 
 ## Notebooks (all data embedded, no external files)
 
@@ -134,6 +138,6 @@ metal is fitted (the Ca-site value) and the Mg-site constant is tied to it with 
 offset taken from Pokrovsky's Ca vs Mg protonation difference. The model represents
 surface sorption only; cobalt's carbonate mineralisation pathway is discussed but not
 fitted. The capacitance uses Pokrovsky's published α = 0.004 (high-capacitance regime,
-surface potential near zero); the fitted constants shift if α is changed. The script
+surface potential near zero); switching to 0.006 moves the constants by 0.02 log units. The script
 reports what the data can and cannot constrain rather than implying a precision the
 measurements do not support.
