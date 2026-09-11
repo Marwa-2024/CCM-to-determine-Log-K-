@@ -26,18 +26,42 @@ pd.set_option("display.width", 130); pd.set_option("display.precision", 4)
 
 def banner(t): print("\n" + "="*88 + f"\n{t}\n" + "="*88)
 
-# publication figure style: one palette, readable fonts, 300 dpi PNG + vector PDF in ./figures
+# --- publication figure style -------------------------------------------------------------
+# White ground, no gridlines, all four spines, ticks drawn inward: the journal convention for
+# geochemistry figures (GCA, Applied Geochemistry, ES&T). 300 dpi PNG plus vector PDF.
 import os
 os.makedirs("figures", exist_ok=True)
-plt.rcParams.update({"font.size": 10, "axes.labelsize": 10.5, "axes.titlesize": 10.5,
-    "legend.fontsize": 8.5, "legend.frameon": False, "xtick.labelsize": 9.5, "ytick.labelsize": 9.5,
-    "axes.spines.top": False, "axes.spines.right": False, "figure.dpi": 110,
-    "savefig.dpi": 300, "savefig.bbox": "tight", "axes.grid": True, "grid.alpha": 0.22,
-    "lines.linewidth": 1.6, "axes.titlelocation": "left", "axes.titleweight": "bold"})
-# one palette for every figure: cobalt blue, lithium rust, model green, excluded grey
+plt.rcParams.update({
+    # type
+    "font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans", "Arial", "Helvetica"],
+    "font.size": 9, "axes.labelsize": 9.5, "axes.titlesize": 9.5,
+    "xtick.labelsize": 9, "ytick.labelsize": 9, "legend.fontsize": 8,
+    # white ground, no grid
+    "figure.facecolor": "white", "axes.facecolor": "white", "savefig.facecolor": "white",
+    "axes.grid": False,
+    # full box, ticks inward on all four sides
+    "axes.spines.top": True, "axes.spines.right": True,
+    "axes.linewidth": 0.8, "axes.edgecolor": "black",
+    "xtick.direction": "in", "ytick.direction": "in",
+    "xtick.top": True, "ytick.right": True,
+    "xtick.major.size": 4.0, "ytick.major.size": 4.0,
+    "xtick.minor.size": 2.2, "ytick.minor.size": 2.2,
+    "xtick.major.width": 0.8, "ytick.major.width": 0.8,
+    "xtick.minor.visible": True, "ytick.minor.visible": True,
+    # marks and legend
+    "lines.linewidth": 1.4, "lines.markersize": 5.5,
+    "legend.frameon": False, "legend.handlelength": 1.8, "legend.labelspacing": 0.35,
+    # output
+    "figure.dpi": 110, "savefig.dpi": 300, "savefig.bbox": "tight", "savefig.pad_inches": 0.02,
+    "pdf.fonttype": 42, "ps.fonttype": 42,          # embed as TrueType, not outlines
+})
+# One palette for every figure: cobalt blue, lithium rust, model green, excluded grey.
 COL = {"Co": "#1f5f8b", "Li": "#c8542a", "model": "#3a7d5d", "grey": "#8a8a8a", "pH2": "#7a5c99"}
 MK  = {"Co": "o", "Li": "s"}
-def panel(ax, letter): ax.set_title(f"({letter})", loc="left", fontsize=10, pad=6)
+
+def panel(ax, letter):
+    """Panel letter outside the axes, journal style: (a), (b), ... bold, above the top-left."""
+    ax.set_title(f"({letter})", loc="left", fontsize=10, fontweight="bold", pad=5)
 def savefig(fig, name):
     """300 dpi PNG and vector PDF into ./figures; captions live in the paper, not in the figure."""
     fig.savefig(f"figures/{name}.png"); fig.savefig(f"figures/{name}.pdf"); plt.show()
@@ -307,15 +331,15 @@ for r in _cal.itertuples():
 _li6 = _cal[(_cal.metal=="Li")&(_cal.batch=="pH6")].sort_values("day")
 _comax = _cal[_cal.metal=="Co"].SI_calcite.max()
 print(f"\n  Every COBALT point is undersaturated by {abs(_comax):.1f} log units or more, so calcite plays no")
-print(f"  part in the cobalt result and the bound in Table 1 is untouched by this.")
+print("  part in the cobalt result and the bound in Table 1 is untouched by this.")
 print(f"  The LITHIUM pH 6 batch is different: SI climbs {', '.join(f'{v:+.2f}' for v in _li6.SI_calcite)} over days")
 print(f"  {', '.join(str(int(d)) for d in _li6.day)} and reaches {_li6.SI_calcite.iloc[-1]:+.2f} at day 6 - at saturation, not away from it, and")
 print(f"  inside the {0.10:.2f} log unit activity-model floor established in the cross-check, so the model")
-print(f"  cannot tell whether calcite is saturated there. Secondary calcite therefore cannot be")
-print(f"  excluded for that batch on this evidence. It would consume Ca rather than Li, so it does")
-print(f"  not create or destroy lithium uptake, and lithium's constant is not determined here for")
-print(f"  independent reasons - but it is the likely ceiling the anomalous Ca (49.9 mg/L against")
-print(f"  0.87 Mg) was heading for, and it should be checked by XRD on the recovered solid.")
+print("  cannot tell whether calcite is saturated there. Secondary calcite therefore cannot be")
+print("  excluded for that batch on this evidence. It would consume Ca rather than Li, so it does")
+print("  not create or destroy lithium uptake, and lithium's constant is not determined here for")
+print("  independent reasons - but it is the likely ceiling the anomalous Ca (49.9 mg/L against")
+print("  0.87 Mg) was heading for, and it should be checked by XRD on the recovered solid.")
 print("\n  The calcite work cited later (Belova et al., 2014; Zachara et al., 1991; Van Cappellen")
 print("  et al., 1993) is used as an ANALOGUE for constants dolomite has no published value for,")
 print("  never as a claim about the phases present here.")
@@ -336,12 +360,15 @@ print("above CoCO3 saturation and is not usable for a pure adsorption constant."
 
 # %%
 banner("STEP 2  Surface coverage and its uncertainty")
-ICP_REL = 0.03
-def coverage(C0_ppm, Ceq_ppm, metal):
-    dC = (C0_ppm - Ceq_ppm)/MM[metal]/1e3                      # mol/L removed
-    G  = dC*V_L/(M_G*SSA)                                         # mol/m2  (= dC/S_AREA)
-    sdC = np.hypot(ICP_REL*C0_ppm, ICP_REL*Ceq_ppm)/MM[metal]/1e3
-    return G, sdC*V_L/(M_G*SSA)
+ICP_REL = 0.03                      # relative precision of the ICP-OES, on each concentration
+
+def coverage(C0_ppm, Ceq_ppm, metal, icp_rel=None):
+    """Surface coverage by difference, and its propagated error.  Returns (Gamma, sigma) in mol/m2."""
+    rel = ICP_REL if icp_rel is None else icp_rel
+    dC  = (C0_ppm - Ceq_ppm)/MM[metal]/1e3                     # mol/L removed
+    sdC = np.hypot(rel*C0_ppm, rel*Ceq_ppm)/MM[metal]/1e3      # error of the difference
+    per_area = V_L/(M_G*SSA)                                   # L per m2  (= 1/S_AREA)
+    return dC*per_area, sdC*per_area
 cov_rows = []
 for r in data[data.day>0].itertuples():
     G, sG = coverage(r.C0_ppm, r.Me_ppm, r.metal)
@@ -376,7 +403,7 @@ print("  Elshebli et al. (2025) is 2.4x the ceiling and cannot be sorption alone
 
 # %%
 banner("STEP 3 + 4  Site balance and the electrostatic loop")
-def surface(s, metal, Gamma_known=None, logK_Me=None, electrostatic=True):
+def surface(s, metal, Gamma_known=None, logK_Me=None, electrostatic=True, C_cap=None):
     """Solve the three site balances and the CCM loop at one data point.
     Either the metal coverage is KNOWN (point-by-point mode, Gamma_known in mol/m2) or a
     trial log K is given (forward mode). Returns all surface concentrations (mol/L), psi, sigma."""
@@ -410,7 +437,8 @@ def surface(s, metal, Gamma_known=None, logK_Me=None, electrostatic=True):
                           - sp["CO3m"]-sp["CaO"]-sp["MgO"]-sp["CaCO3"]-sp["MgCO3"])
         return sp, sigma
     if electrostatic:
-        psi = brentq(lambda p: p - state(p)[1]/C_CAP, -0.5, 0.5, xtol=1e-7)   # 0.1 mV -> 1e-4; use tighter
+        C = C_CAP if C_cap is None else C_cap
+        psi = brentq(lambda p: p - state(p)[1]/C, -0.5, 0.5, xtol=1e-7)        # 0.1 mV resolves to 1e-4 V
     else:
         psi = 0.0
     sp, sigma = state(psi)
@@ -445,27 +473,34 @@ print("the electrostatic and non-electrostatic constants will nearly agree (Belo
 
 # %%
 banner("STEP 5a  Point-by-point log K")
-def logK_point(row, electrostatic=True):
+def logK_point(row, electrostatic=True, C_cap=None, icp_rel=None):
+    """Invert the mass action law at one measured point.
+
+    Always returns the same six fields, so no caller has to branch on the shape of the result:
+        logK, psi, speciation, Gamma, sigma_Gamma, (logK_lo, logK_hi)
+    A point with no measurable uptake (Gamma <= 0) returns NaN in every numeric field.
+    """
     s = speciate(row.pH, totals_for(row), row.metal)
-    G, sG = coverage(row.C0_ppm, row.Me_ppm, row.metal)
-    if G <= 0: return np.nan, np.nan, s, G, sG
+    G, sG = coverage(row.C0_ppm, row.Me_ppm, row.metal, icp_rel=icp_rel)
+    if G <= 0:
+        return np.nan, np.nan, s, G, sG, (np.nan, np.nan)
+
     def lk_at(Gx):
-        st = surface(s, row.metal, Gamma_known=Gx, electrostatic=electrostatic)
+        st = surface(s, row.metal, Gamma_known=Gx, electrostatic=electrostatic, C_cap=C_cap)
         sp = st["sp"]
-        return np.log10(sp["CO3Me"]*s["aH"]/(sp["CO3H0"]*s["aMe"]) * np.exp(st["dZ"]*FRT*st["psi"])), st["psi"]
+        return np.log10(sp["CO3Me"]*s["aH"]/(sp["CO3H0"]*s["aMe"])
+                        * np.exp(st["dZ"]*FRT*st["psi"])), st["psi"]
+
     lk, psi = lk_at(G)
-    # propagate the coverage error through the mass-action inversion (asymmetric in log K)
+    # propagate the coverage error through the inversion; it is asymmetric in log K
     Gmax = 0.999*S_T["CO3"]/S_AREA
-    lo = lk_at(max(G - sG, 1e-3*G))[0]; hi = lk_at(min(G + sG, Gmax))[0]
+    lo = lk_at(max(G - sG, 1e-3*G))[0]
+    hi = lk_at(min(G + sG, Gmax))[0]
     return lk, psi, s, G, sG, (lo, hi)
 pp = []
 for r in data[data.day>0].itertuples():
-    out = logK_point(r, True)
-    if len(out) == 5:      # G <= 0
-        lk_ccm, psi, s, G, sG = out; lo = hi = np.nan
-    else:
-        lk_ccm, psi, s, G, sG, (lo, hi) = out
-    out2 = logK_point(r, False); lk_nem = out2[0]
+    lk_ccm, psi, s, G, sG, (lo, hi) = logK_point(r, electrostatic=True)
+    lk_nem = logK_point(r, electrostatic=False)[0]
     SI_mc = s["SI"]["CoCO3 (sphaerocobaltite)"] if r.metal=="Co" else s["SI"]["Li2CO3"]
     rel = 100*sG/G if G>0 else np.inf
     reason = ("SI(MeCO3) > 0: at or above saturation" if SI_mc > 0 else
@@ -763,7 +798,7 @@ banner("STEP 7  Table 1 and the literature comparison")
 REPORT_THRESHOLD = 1.5
 print("Table 1  Carbonate-site constants, 25 C, I = 0.68 M NaCl")
 print("=" * 88)
-print(f"Reporting rule (applied uniformly): a central value is quoted only if the uncertainty is")
+print("Reporting rule (applied uniformly): a central value is quoted only if the uncertainty is")
 print(f"below {REPORT_THRESHOLD:.1f} log units, a factor of {10**REPORT_THRESHOLD:.0f} either way. Above that the interval is")
 print("reported instead, because a central value with a wider interval than that gets quoted")
 print("without its interval. The line is a judgment call, so it is stated rather than left implicit.")
@@ -787,12 +822,12 @@ for metal in ["Co","Li"]:
     if pre_eq:
         print(f"     log K  >=  {n.logK:+.2f}  (NEM)   {c.logK:+.2f}  (CCM)      LOWER BOUND, not a central value")
         print(f"     Every usable point is pre-equilibrium and uptake is still rising at day {last_day},")
-        print(f"     so the measured coverage is a lower bound on the equilibrium coverage. log K")
-        print(f"     increases monotonically with coverage, so the fitted value bounds the constant")
+        print("     so the measured coverage is a lower bound on the equilibrium coverage. log K")
+        print("     increases monotonically with coverage, so the fitted value bounds the constant")
         print(f"     from below. The +/-{unc:.2f} is the RANDOM component from +/-3 % ICP precision alone;")
-        print(f"     it carries no information about the systematic offset from incomplete reaction.")
-        print(f"     The non-electrostatic value is quoted first because Belova et al. (2014) argue the")
-        print(f"     NEM constant is a thermodynamic quantity while the CCM value is model-dependent;")
+        print("     it carries no information about the systematic offset from incomplete reaction.")
+        print("     The non-electrostatic value is quoted first because Belova et al. (2014) argue the")
+        print("     NEM constant is a thermodynamic quantity while the CCM value is model-dependent;")
         print(f"     here the two differ by {abs(c.logK-n.logK):.2f}, so nothing turns on the choice.")
     elif unc > REPORT_THRESHOLD:
         # the propagated interval spans orders of magnitude: report a bound, not a value
@@ -800,7 +835,7 @@ for metal in ["Co","Li"]:
               f"({hi-lo:.1f} log units, i.e. {hi-lo:.0f} orders of magnitude).")
         print(f"     The weighted fit returns {c.logK:+.2f} (CCM) / {n.logK:+.2f} (NEM) with an internal")
         print(f"     spread of {c.spread_pbp:.2f}, but that consistency is insensitivity, not precision:")
-        print(f"     a central value quoted from this data set would be used without its interval.")
+        print("     a central value quoted from this data set would be used without its interval.")
     else:
         print(f"     apparent log K = {c.logK:+.2f} (CCM) / {n.logK:+.2f} (NEM),  +/- {unc:.2f}")
         print(f"     (+/-{unc:.2f} is a factor of {10**unc:.0f} either way - just inside the {REPORT_THRESHOLD:.1f} rule, not a precise number)")
@@ -812,9 +847,9 @@ for metal in ["Co","Li"]:
     print(f"     exchange constant  log K_ex = log K({metal}) - log K(Ca) {rel} {kex_n:+.2f} (NEM) / "
           f"{kex_c:+.2f} (CCM)")
     print(f"       (log K(>CO3Ca+) = {LOGK_SURF['CO3Ca']} on dolomite. K_ex cancels the site-density")
-    print(f"       convention, so it is the quantity that transfers between studies; the formation")
-    print(f"       constant does not. Belova et al. (2014) report log K_ex = +0.58 for Ni on calcite")
-    print(f"       and Zachara et al. (1991) +0.51 for the same system.)")
+    print("       convention, so it is the quantity that transfers between studies; the formation")
+    print("       constant does not. Belova et al. (2014) report log K_ex = +0.58 for Ni on calcite")
+    print("       and Zachara et al. (1991) +0.51 for the same system.)")
 
 # The bound rests on log K rising with coverage. Verify it rather than assert it.
 print("\n  Check that log K increases monotonically with coverage (Co pH 6 day 4, uptake scaled):")
@@ -829,36 +864,35 @@ print("     Monotonic, so a lower bound on coverage is a lower bound on log K.")
 
 # The EDL parameter alpha is the one number in Table 3's neighbourhood that is not fixed by the
 # source paper's own table, so its influence is measured rather than argued about.
-print(f"\n  Sensitivity to the EDL parameter alpha (C = sqrt(I)/alpha):")
-_alpha0, _C0 = ALPHA, C_CAP
-_ka = {}
-for _a in (0.004, 0.006):
-    globals()["C_CAP"] = np.sqrt(I_BATCH)/_a
-    _use = ppdf[ppdf.usable][["metal","batch","day"]]
-    _rows = data.merge(_use, on=["metal","batch","day"])
-    _ka[_a] = {m: np.mean([logK_point(r, True)[0]
-                           for r in _rows[_rows.metal==m].itertuples()])
-               for m in ["Co","Li"]}
-    _src = "Pokrovsky et al. 1999, sect. 3.3" if _a == 0.004 else "Belova et al. 2014 (52.7 F/m2 at I = 0.1)"
-    print(f"     alpha {_a:.3f}  ->  C {np.sqrt(I_BATCH)/_a:4.0f} F/m2   Co {_ka[_a]['Co']:+.3f}   "
-          f"Li {_ka[_a]['Li']:+.3f}   ({_src})")
-globals()["C_CAP"] = _C0
-_dmax = max(abs(_ka[0.006][m]-_ka[0.004][m]) for m in ["Co","Li"])
+print("\n  Sensitivity to the EDL parameter alpha (C = sqrt(I)/alpha):")
+usable_rows = data.merge(ppdf.loc[ppdf.usable, ["metal", "batch", "day"]],
+                         on=["metal", "batch", "day"])
+ALPHA_SOURCE = {0.004: "Pokrovsky et al. 1999, sect. 3.3",
+                0.006: "Belova et al. 2014 (52.7 F/m2 at I = 0.1)"}
+alpha_scan = {}
+for a in ALPHA_SOURCE:
+    C_a = np.sqrt(I_BATCH)/a
+    alpha_scan[a] = {m: np.mean([logK_point(r, C_cap=C_a)[0]
+                                 for r in usable_rows[usable_rows.metal == m].itertuples()])
+                     for m in ["Co", "Li"]}
+    print(f"     alpha {a:.3f}  ->  C {C_a:4.0f} F/m2   Co {alpha_scan[a]['Co']:+.3f}   "
+          f"Li {alpha_scan[a]['Li']:+.3f}   ({ALPHA_SOURCE[a]})")
+_dmax = max(abs(alpha_scan[0.006][m] - alpha_scan[0.004][m]) for m in ["Co", "Li"])
 print(f"     The two differ by at most {_dmax:.3f} log units, far inside every other uncertainty here,")
-print(f"     so the source paper's value ({_alpha0}) is used and the choice changes nothing.")
+print(f"     so the source paper's value ({ALPHA}) is used and the choice changes nothing.")
 
 # What kind of number each one is, stated explicitly.
 uco = ppdf[(ppdf.metal=="Co")&ppdf.usable]
-print(f"\n  COBALT is BOUNDED FROM BELOW, not measured. Both usable points are pre-equilibrium")
+print("\n  COBALT is BOUNDED FROM BELOW, not measured. Both usable points are pre-equilibrium")
 print(f"  (day {sorted(uco.day.unique())[0]} and day {sorted(uco.day.unique())[-1]} of the pH 6 batch); every day-6 point is excluded - pH 6 day 6 for")
-print(f"  supersaturation (SI +0.93), the three pH 2 points for analytical noise. Removal is still")
-print(f"  rising at day 6 (Figure 1), so the system had not finished reacting.")
-print(f"\n  This reconciles Table 1 with Step 8. The data bound the constant from below at "
+print("  supersaturation (SI +0.93), the three pH 2 points for analytical noise. Removal is still")
+print("  rising at day 6 (Figure 1), so the system had not finished reacting.")
+print("\n  This reconciles Table 1 with Step 8. The data bound the constant from below at "
       f"{fits[(fits.metal=='Co')&(fits.model=='CCM')].logK.iloc[0]:+.2f};")
 print(f"  the aqueous-surface analogy predicts {LOGK_SURF['CO3Ca'] + (4.23 - 3.22):+.2f}, which lies ABOVE that bound and is therefore")
-print(f"  NOT excluded by these data. A two-sided interval would have excluded it and would have")
-print(f"  contradicted the time-trend result in Step 8. The extended run tests whether the gap closes.")
-print(f"\n  LITHIUM is SITE-LIMITED, which is a different failure. See the contrast below.")
+print("  NOT excluded by these data. A two-sided interval would have excluded it and would have")
+print("  contradicted the time-trend result in Step 8. The extended run tests whether the gap closes.")
+print("\n  LITHIUM is SITE-LIMITED, which is a different failure. See the contrast below.")
 
 # ---- the two metals fail for different reasons: state it as a result ----
 print("\n" + "-"*88)
@@ -880,12 +914,12 @@ print("  experiment.")
 lb_CaCO3, lb_CoCO3 = 3.22, 4.23
 expected_Co = LOGK_SURF["CO3Ca"] + (lb_CoCO3 - lb_CaCO3)
 got_Co = float(fits[(fits.metal=="Co")&(fits.model=="CCM")].logK.iloc[0])
-print(f"\nPokrovsky / Van Cappellen aqueous-surface analogy for Co:")
+print("\nPokrovsky / Van Cappellen aqueous-surface analogy for Co:")
 print(f"  expected log K(>CO3Co+) = log K(>CO3Ca+) + [log b(CoCO3) - log b(CaCO3)] = {LOGK_SURF['CO3Ca']} + ({lb_CoCO3} - {lb_CaCO3}) = {expected_Co:+.2f}")
 print(f"  bound from these data   : log K(>CO3Co+) >= {got_Co:+.2f}")
 print(f"  The analogy value sits {expected_Co-got_Co:+.2f} log units ABOVE the bound, so it is ADMISSIBLE:")
-print(f"  nothing in this data set excludes it. That is the whole content of a one-sided result -")
-print(f"  it says how weak the binding cannot be, not how strong it is. Two explanations for the")
+print("  nothing in this data set excludes it. That is the whole content of a one-sided result -")
+print("  it says how weak the binding cannot be, not how strong it is. Two explanations for the")
 print("  gap that would normally be offered are ruled out by this data set itself:")
 print("    - Ca/Mg competition: the swap test (Data check) moves the constant by less than 0.01,")
 print("      because the two competitor constants differ by only 0.2 log units;")
@@ -970,16 +1004,24 @@ gap = LOGK_CO_PRED - u.logK_CCM.mean() if len(u) else np.nan
 print(f"  (a) the borrowed constant: the usable points give an apparent log K of {u.logK_CCM.mean():+.2f}, "
       f"i.e. {gap:.1f} log units weaker than the analogy;")
 f_area = (split[split.batch=="pH6"].measured_removed_mM/split[split.batch=="pH6"].predicted_sorbed_mM)
-print(f"  (b) reactive area smaller than BET: with the analogy constant, a reactive fraction of "
+print("  (b) reactive area smaller than BET: with the analogy constant, a reactive fraction of "
       f"{f_area.min():.2f} to {f_area.max():.2f} of the BET area reproduces the pH 6 batch, "
       f"which is a {1/f_area.max():.0f}- to {1/f_area.min():.0f}-fold reduction. Belova's 70 % case is the same")
-print(f"      move in the same direction but only a 1.4-fold reduction, so this is a much larger")
-print(f"      correction than a reactive-area argument has previously been asked to carry;")
+print("      move in the same direction but only a 1.4-fold reduction, so this is a much larger")
+print("      correction than a reactive-area argument has previously been asked to carry;")
 print("  (c) these batches are not at equilibrium: removal is still rising at day 6 (Figure 1),")
-print("      so the day-6 coverage is a lower bound on the equilibrium coverage.")
+print("      so the day-6 coverage is a lower bound on the equilibrium coverage;")
+print("  (d) sodium competes for the surface, which this model does not contain. Brady, Papenguth")
+print(f"      & Kelly (1999) measured metal sorption on dolomite in NaCl and found Ca and Mg uptake")
+print("      DIMINISHED at 0.5 M NaCl, which they read as Na+ associating with the dolomite surface")
+print(f"      and as Ca and Mg sorbing as hydrated, outer-sphere species. This brine is {NACL_M:.2f} M,")
+print("      above their 0.5 M case, and the tableau here carries no >CO3Na0 species at all, so any")
+print("      such occupancy is missing from the site balance and the model over-predicts by exactly")
+print("      that much. It is the one candidate with published support on THIS mineral in THIS")
+print("      electrolyte, and it is also a direct challenge to the inner-sphere assumption.")
 # ---- Which candidate does the TIME TREND favour? ----
 d6 = split[split.batch == "pH6"].sort_values("day")
-print("\nTIME TREND - this discriminates among the three. Candidates (a) and (b) are time-invariant")
+print("\nTIME TREND - this discriminates among them. Candidates (a), (b) and (d) are time-invariant")
 print("scalings: a constant that is too strong, or a reactive area below BET, depresses the measured")
 print("coverage by the SAME factor at every sampling, so the ratio would sit flat. Candidate (c) is")
 print("not: if the system is still approaching equilibrium the measured coverage climbs while the")
@@ -989,9 +1031,12 @@ print(f"  predicted sorption (mmol/L): {'  '.join(f'{v:.3f}' for v in d6.predict
 print(f"  measured removal   (mmol/L): {'  '.join(f'{v:.3f}' for v in d6.measured_removed_mM)}"
       f"   -> grows {d6.measured_removed_mM.iloc[-1]/d6.measured_removed_mM.iloc[0]:.1f}-fold over 4 days")
 print(f"  ratio pred/meas            : {'  '.join(f'{v:.2f}' for v in d6.pred_over_meas)}"
-      f"   -> closes monotonically")
-print("\nThat is the signature of (c), not of (a) or (b). The prediction is not moving; the")
-print("measurement is climbing toward it.")
+      "   -> closes monotonically")
+print("\nThat is the signature of (c), not of (a), (b) or (d). The prediction is not moving; the")
+print("measurement is climbing toward it. Note what this does and does not settle: a time-invariant")
+print("scaling cannot produce a closing ratio, so none of (a), (b) or (d) can be the WHOLE story -")
+print("but any of them could still contribute a constant factor underneath the kinetics, and sodium")
+print("competition (d) is the most likely of the three to be doing so at this ionic strength.")
 print("\nBUT (c) IS TWO MECHANISMS, AND THIS TEST CANNOT SEPARATE THEM. The ratio closes for any")
 print("process that keeps removing cobalt after the fast step, and there are two:")
 print("  (c1) a slow approach to SORPTION equilibrium - the reading assumed so far;")
@@ -1010,11 +1055,11 @@ sl, ic = np.polyfit(d6.day, d6.measured_removed_mM, 1)
 t_lin = (d6.predicted_sorbed_mM.mean() - ic)/sl
 a_r, b_r = np.polyfit(d6.day, np.log10(d6.pred_over_meas), 1)
 t_log = -b_r/a_r
-print(f"\nWhen would they meet? Two crude extrapolations, deliberately crude because three points")
-print(f"cannot define a kinetic law:")
+print("\nWhen would they meet? Two crude extrapolations, deliberately crude because three points")
+print("cannot define a kinetic law:")
 print(f"  linear growth of measured coverage to the predicted level : day {t_lin:.0f}  ({t_lin/7:.1f} weeks)")
 print(f"  log-linear decay of the ratio to unity                    : day {t_log:.0f}  ({t_log/7:.1f} weeks)")
-print(f"  -> weeks, not days. The six-day experiment may simply have stopped too early.")
+print("  -> weeks, not days. The six-day experiment may simply have stopped too early.")
 print("  (Caution: the measured curve is still slightly accelerating rather than levelling off,")
 print("   which no simple approach-to-equilibrium law does, so both numbers are indicative only.)")
 
@@ -1056,36 +1101,36 @@ print(f"  At the full {CO_DOSE:.0f} mg/L dose, SI(CoCO3) = 0 at pH {pH_sat:.2f}.
 
 # How much headroom does a given target actually buy? SI shifts by log10 of any factor on
 # carbonate, so the margin converts directly into "how far DIC could rise before saturation".
-print(f"\n  target pH   SI at dose   SI at day-6 depletion   DIC could rise by   predicted sorption")
+print("\n  target pH   SI at dose   SI at day-6 depletion   DIC could rise by   predicted sorption")
 for q in (7.35, PH_RUN, 7.15):
     si_d, si_x = SI_Co_at(q, CO_DOSE), SI_Co_at(q, row6.Me_ppm)
     rem_q = forward_removal("Co", q, CO_DOSE, row6.Ca_ppm, row6.Mg_ppm, LOGK_CO_PRED)
     tag = "  <- target" if abs(q-PH_RUN) < 1e-9 else ""
     print(f"     {q:.2f}       {si_d:+.2f}            {si_x:+.2f}                 {10**(-si_d):4.1f}x            {rem_q:4.1f} %{tag}")
-print(f"\n  Cobalt leaving solution lowers the SI, but it is not the only term that moves. Dolomite")
-print(f"  keeps dissolving for a month, and the carbonate it releases pushes the SI back UP. This")
+print("\n  Cobalt leaving solution lowers the SI, but it is not the only term that moves. Dolomite")
+print("  keeps dissolving for a month, and the carbonate it releases pushes the SI back UP. This")
 print(f"  calculation cannot see that: it fixes carbonate from pCO2 = 10^{np.log10(PCO2):.1f}, so the alkalinity that")
-print(f"  accumulates in an open batch enters nowhere. Over six days the accumulation was modest;")
-print(f"  over thirty days it may outrun the cobalt depletion. Add to that the drift between")
-print(f"  adjustments if pH is held by periodic titration on a mineral that buffers upward, and a")
-print(f"  quarter of a pH unit of headroom does not last. Hence two changes:")
+print("  accumulates in an open batch enters nowhere. Over six days the accumulation was modest;")
+print("  over thirty days it may outrun the cobalt depletion. Add to that the drift between")
+print("  adjustments if pH is held by periodic titration on a mineral that buffers upward, and a")
+print("  quarter of a pH unit of headroom does not last. Hence two changes:")
 print(f"    1. Target pH {PH_RUN:.2f} (working window 7.15 to 7.20) rather than 7.35. The table above shows")
 print(f"       this roughly doubles the carbonate headroom - DIC would have to rise {10**(-SI_Co_at(PH_RUN, CO_DOSE)):.1f}-fold rather")
 print(f"       than {10**(-SI_Co_at(7.35, CO_DOSE)):.1f}-fold to reach saturation - while predicted sorption falls only from")
 print(f"       {forward_removal('Co', 7.35, CO_DOSE, row6.Ca_ppm, row6.Mg_ppm, LOGK_CO_PRED):.1f} % to {forward_removal('Co', PH_RUN, CO_DOSE, row6.Ca_ppm, row6.Mg_ppm, LOGK_CO_PRED):.1f} % - essentially no loss at all. The")
-print(f"       cobalt adsorption edge on this surface lies above pH 7.6 (Figure 2a): below it the")
-print(f"       predicted coverage is nearly pH-independent, because Ca and Mg competition weakens")
-print(f"       with falling pH in step with the carbonate site's own deprotonation. The margin is")
-print(f"       therefore bought for free, and 7.15 would be defensible too.")
-print(f"    2. Measure alkalinity or DIC at EVERY sampling and recompute the SI from the measured")
-print(f"       value rather than from assumed atmospheric equilibrium. Then the approach to")
-print(f"       saturation is observed rather than assumed, and if the run does drift upward it is")
-print(f"       visible in the same data set that carries the kinetics.")
+print("       cobalt adsorption edge on this surface lies above pH 7.6 (Figure 2a): below it the")
+print("       predicted coverage is nearly pH-independent, because Ca and Mg competition weakens")
+print("       with falling pH in step with the carbonate site's own deprotonation. The margin is")
+print("       therefore bought for free, and 7.15 would be defensible too.")
+print("    2. Measure alkalinity or DIC at EVERY sampling and recompute the SI from the measured")
+print("       value rather than from assumed atmospheric equilibrium. Then the approach to")
+print("       saturation is observed rather than assumed, and if the run does drift upward it is")
+print("       visible in the same data set that carries the kinetics.")
 print(f"\n  The signal survives the lower target: the day-2 point sat at pH {d2.pH:.2f} with SI {SI_Co_at(d2.pH, d2.Me_ppm):+.2f} and gave")
 print(f"  {rem_d2:.1f} % removal, well above the +/-3 % ICP precision, and the predicted sorption at pH {PH_RUN:.2f}")
-print(f"  is larger still. Diluting the cobalt would also drop the SI, but a tenfold cut pushes")
-print(f"  removal into the same analytical noise that already cost the pH 2 batch. Lower the pH,")
-print(f"  not the dose.")
+print("  is larger still. Diluting the cobalt would also drop the SI, but a tenfold cut pushes")
+print("  removal into the same analytical noise that already cost the pH 2 batch. Lower the pH,")
+print("  not the dose.")
 
 print("\nTHE EXPERIMENT THIS IMPLIES. Extend one cobalt batch to a month AT FIXED pH - by buffer or")
 print(f"by periodic adjustment - held at pH {PH_RUN:.2f} rather than allowed to drift to {row6.pH:.2f}. Fixing pH removes")
@@ -1139,11 +1184,10 @@ print(f"\nLithium: NOT DETERMINED (Table 1). The weighted fit over {int(fl.n_poi
 print(f"  {fl.logK:+.2f} with an internal spread of {fl.spread_pbp:.2f}, but the propagated interval runs")
 print(f"  {ul.logK_lo.min():+.1f} to {ul.logK_hi.max():+.1f}, so no central value is reported.")
 # how much a better ICP precision would help: recompute the propagated half-width at 1 %
-_saved = ICP_REL; ICP_REL = 0.01; w1 = []
-for r in data[(data.metal=="Li")&(data.day>0)].itertuples():
-    o = logK_point(r, True)
-    if len(o) == 6: w1.append(0.5*(o[5][1]-o[5][0]))
-ICP_REL = _saved
+w1 = []
+for r in data[(data.metal == "Li") & (data.day > 0)].itertuples():
+    lo_, hi_ = logK_point(r, icp_rel=0.01)[5]
+    w1.append(0.5*(hi_ - lo_))
 print(f"  at +/-1 % ICP precision the propagated half-width would fall to about {np.nanmean(w1):.1f} log units.")
 print("  Lithium is site-limited (Step 2): the surface is 71 % full at 2.3 % removal, so the")
 print("  mass-action inversion is insensitive. An isotherm at lower Li concentration, which puts the")
@@ -1324,7 +1368,7 @@ PHREEQC_SP = {"Co": ["Co+2","CoCl+","CoCl2","CoCO3","CoHCO3+","CoOH+","Co(OH)2"]
 
 def phreeqc_point(pp, metal, pH, me_ppm, ca_ppm, mg_ppm):
     ion = f"{metal}+2" if Z_ION[metal] == 2 else f"{metal}+"
-    pp.ip.run_string(f"""
+    pp.ip.run_string("""
 SOLUTION 1
     temp 25
     pH {pH}
@@ -1581,7 +1625,7 @@ _rows = [
 ]
 for nm, v, u in _rows:
     print(f"  {nm:46} {v:12.4g}   {u}")
-print(f"\n  Fixed intrinsic constants (Pokrovsky et al. 1999, Table 3, dolomite columns):")
+print("\n  Fixed intrinsic constants (Pokrovsky et al. 1999, Table 3, dolomite columns):")
 _names = {"CO3_deprot":"[3c] >CO3H0 = >CO3- + H+", "CO3Ca":"[6]  >CO3H0 + Ca2+ = >CO3Ca+ + H+",
           "CO3Mg":"[7]  >CO3H0 + Mg2+ = >CO3Mg+ + H+", "CaOH2":"[2a] >CaOH0 + H+ = >CaOH2+",
           "MgOH2":"[2b] >MgOH0 + H+ = >MgOH2+", "CaO":"[3a] >CaOH0 = >CaO- + H+",
@@ -1591,7 +1635,7 @@ _names = {"CO3_deprot":"[3c] >CO3H0 = >CO3- + H+", "CO3Ca":"[6]  >CO3H0 + Ca2+ =
           "MgCO3":"[9]  >MgOH0 + CO3-2 + H+ = >MgCO3- + H2O"}
 for k, lab in _names.items():
     print(f"     {lab:48} log K(int) = {LOGK_SURF[k]:+7.2f} +/- {LOGK_UNC[k]:.2f}")
-print(f"\n  Adjustable constants (Goldberg fitted 2 to 3; this work fits 1 per metal):")
+print("\n  Adjustable constants (Goldberg fitted 2 to 3; this work fits 1 per metal):")
 for m, lab in [("Li","[4]  >CO3H0 + Li+  = >CO3Li0 + H+"), ("Co","[5]  >CO3H0 + Co2+ = >CO3Co+ + H+")]:
     _v = float(fits[(fits.metal==m)&(fits.model=="CCM")].logK.iloc[0])
     print(f"     {lab:48} log K(int) = {_v:+7.2f}   (see Table 1 for how it must be read)")
