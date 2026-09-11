@@ -14,6 +14,12 @@ capacitance three-site model of Pokrovsky, Schott & Thomas (1999).
   diagnostic → kinetics, adsorption edge, isotherm, K_d and surface speciation figures →
   prediction from literature constants and the sorption/mineralisation split. Source:
   `logK_carbonate_site_stepwise.py` (cell-marked; the notebook is generated from it).
+* **`Goldberg1985_Procedure_Dolomite.ipynb`** — the constant capacitance procedure of Goldberg
+  (1985) transcribed step for step onto this system: the four assumptions, every reaction, every
+  mass and charge balance, the intrinsic/conditional conversion with ΔZ per reaction, a Table 1
+  in his own layout, and a statement of where the mimic is exact and where it is not. Runs
+  standalone; the physics cells are copied verbatim from the main notebook so the two cannot
+  drift apart. Also available as `Goldberg1985_procedure_applied_to_dolomite.md` / `.docx`.
 * **`Paper_LiCo_dolomite_carbonate_site_SCM.md` / `.docx`** — publication-style write-up with
   every reaction, equation, parameter table, data table, result and APA reference.
 
