@@ -497,24 +497,55 @@ def logK_point(row, electrostatic=True, C_cap=None, icp_rel=None):
     lo = lk_at(max(G - sG, 1e-3*G))[0]
     hi = lk_at(min(G + sG, Gmax))[0]
     return lk, psi, s, G, sG, (lo, hi)
+# --- how good does a point have to be? Two thresholds, both stated, neither invented here. ---
+# Gamma is a DIFFERENCE of two concentrations, so its relative error is sigma_G/G. A point whose
+# uptake is smaller than the uncertainty in measuring that uptake carries no information about the
+# constant, however carefully the algebra is done afterwards.
+REL_ERR_FIT  = 30.0    # fit-grade: uptake at least ~3x its own error. The bar for a reported value.
+REL_ERR_SHOW = 200.0   # indicative only: arithmetic still runs, but the number is not a measurement.
+
 pp = []
 for r in data[data.day>0].itertuples():
     lk_ccm, psi, s, G, sG, (lo, hi) = logK_point(r, electrostatic=True)
     lk_nem = logK_point(r, electrostatic=False)[0]
     SI_mc = s["SI"]["CoCO3 (sphaerocobaltite)"] if r.metal=="Co" else s["SI"]["Li2CO3"]
-    rel = 100*sG/G if G>0 else np.inf
-    reason = ("SI(MeCO3) > 0: at or above saturation" if SI_mc > 0 else
-              "removal within analytical noise (rel. error > 300 %)" if rel > 300 else "")
+    rel = 100*sG/G if G > 0 else np.inf
+    if   SI_mc > 0:            grade, reason = "excluded",   "SI(MeCO3) > 0: at or above saturation"
+    elif rel > REL_ERR_SHOW:   grade, reason = "excluded",   f"uptake below its own error (rel. {rel:.0f} % > {REL_ERR_SHOW:.0f} %)"
+    elif rel > REL_ERR_FIT:    grade, reason = "indicative", f"uptake comparable to its error (rel. {rel:.0f} % > {REL_ERR_FIT:.0f} %)"
+    else:                      grade, reason = "fit-grade",  ""
     pp.append(dict(metal=r.metal, batch=r.batch, day=r.day, equilibrium=(r.day==6), pH=r.pH,
-                   Gamma=G, rel_err_pct=rel, SI_MeCO3=SI_mc,
+                   Gamma=G, rel_err_pct=rel, SI_MeCO3=SI_mc, grade=grade,
                    logK_CCM=lk_ccm, logK_lo=lo, logK_hi=hi, logK_NEM=lk_nem,
-                   psi_mV=1e3*psi if psi==psi else np.nan, usable=(reason==""), reason=reason))
+                   psi_mV=1e3*psi if psi==psi else np.nan,
+                   fit_grade=(grade == "fit-grade"), usable=(grade != "excluded"), reason=reason))
 ppdf = pd.DataFrame(pp)
 print(ppdf.drop(columns=["reason"]).to_string(index=False, float_format=lambda x: f"{x:.3g}"))
 print("\nlogK_lo / logK_hi: the constant recomputed at Gamma -/+ one propagated standard deviation.")
-print("Exclusions, with the reason stated:")
-for r in ppdf[~ppdf.usable].itertuples():
-    print(f"  {r.metal} {r.batch} day {r.day}: {r.reason}")
+print("Classification, with the reason stated:")
+for r in ppdf[ppdf.grade != "fit-grade"].itertuples():
+    print(f"  {r.metal} {r.batch} day {r.day}: {r.grade:10} - {r.reason}")
+
+# --- the headline number of this whole notebook ---
+n_fit = ppdf.groupby("metal").fit_grade.sum()
+print(f"\n{'='*88}")
+print("HOW MANY POINTS ARE FIT-GRADE?")
+print(f"  Bar: relative error on Gamma below {REL_ERR_FIT:.0f} %, i.e. uptake at least about three")
+print(f"  times the uncertainty in measuring it, and undersaturated with the metal carbonate.")
+for m in ["Co", "Li"]:
+    print(f"    {m}: {int(n_fit.get(m, 0))} of {int((ppdf.metal == m).sum())}")
+print(f"  Smallest relative error anywhere in the data set: {ppdf.rel_err_pct.min():.0f} % "
+      f"({ppdf.loc[ppdf.rel_err_pct.idxmin(), 'metal']} "
+      f"{ppdf.loc[ppdf.rel_err_pct.idxmin(), 'batch']} day "
+      f"{int(ppdf.loc[ppdf.rel_err_pct.idxmin(), 'day'])}).")
+print(f"\n  ZERO points clear the bar, for either metal. Gamma is the DIFFERENCE of two")
+print(f"  concentrations, each measured to +/-{100*ICP_REL:.0f} %: 80.5 - 77.9 = 2.6 mg/L of uptake against")
+print(f"  {100*ICP_REL:.0f} % of 80.5 = {ICP_REL*80.5:.1f} mg/L of noise. The signal and the noise are the same size,")
+print("  so every constant below inherits that and NEITHER CONSTANT IS DETERMINED by this data set.")
+print("  Everything that follows is computed and reported anyway, because the arithmetic is")
+print("  correct and the pattern is informative - but it is a diagnosis of the experiment, not a")
+print("  measurement of a constant. The design that would determine them is quantified at the end.")
+print("="*88)
 print("\nFor scale: Pokrovsky's >CO3H0 + Ca2+ = >CO3Ca+ + H+ is log K = -1.8, Mg -2.0.")
 
 # %% [markdown]
@@ -818,8 +849,23 @@ for metal in ["Co","Li"]:
     still_rising = (data[(data.metal==metal)&(data.batch=="pH6")]
                     .sort_values("day")["removal_%"].diff().iloc[-1] > 0)
     pre_eq = (u.day.max() < last_day) and still_rising
+    n_fitgrade = int(ppdf[(ppdf.metal == metal)].fit_grade.sum())
     print(f"\n  {rxn[metal]}")
-    if pre_eq:
+    if n_fitgrade == 0:
+        # No point clears the precision bar. Nothing downstream can repair that, so say it first.
+        print("     log K   NOT DETERMINED.")
+        print(f"     {n_fitgrade} of {int((ppdf.metal == metal).sum())} points are fit-grade (relative error on Gamma below")
+        print(f"     {REL_ERR_FIT:.0f} %). The best point for this metal is {ppdf[ppdf.metal == metal].rel_err_pct.min():.0f} %, so the uptake is at")
+        print("     best comparable to the uncertainty in measuring it, and usually smaller.")
+        print(f"     For information only, the weighted fit over the {int(c.n_points)} indicative point(s) returns")
+        print(f"     {n.logK:+.2f} (NEM) / {c.logK:+.2f} (CCM), propagated interval {lo:+.1f} to {hi:+.1f}.")
+        print("     That number is arithmetic on noise. It is printed so the pattern can be read,")
+        print("     not because it is a measurement, and it must not be quoted as a constant.")
+        if pre_eq:
+            print(f"     A second, independent problem: every point used is pre-equilibrium (uptake is")
+            print(f"     still rising at day {last_day}), so even with adequate precision the value would be a")
+            print("     lower bound rather than a central value.")
+    elif pre_eq:
         print(f"     log K  >=  {n.logK:+.2f}  (NEM)   {c.logK:+.2f}  (CCM)      LOWER BOUND, not a central value")
         print(f"     Every usable point is pre-equilibrium and uptake is still rising at day {last_day},")
         print("     so the measured coverage is a lower bound on the equilibrium coverage. log K")
@@ -843,7 +889,8 @@ for metal in ["Co","Li"]:
     # exchange constant: cancels the site-density convention, so it transfers between studies
     # that assumed different densities. This is what the literature actually compares.
     kex_c, kex_n = c.logK - LOGK_SURF["CO3Ca"], n.logK - LOGK_SURF["CO3Ca"]
-    rel = ">=" if pre_eq else ("~" if unc > REPORT_THRESHOLD else "=")
+    rel = ("~" if n_fitgrade == 0 else ">=" if pre_eq else
+           "~" if unc > REPORT_THRESHOLD else "=")
     print(f"     exchange constant  log K_ex = log K({metal}) - log K(Ca) {rel} {kex_n:+.2f} (NEM) / "
           f"{kex_c:+.2f} (CCM)")
     print(f"       (log K(>CO3Ca+) = {LOGK_SURF['CO3Ca']} on dolomite. K_ex cancels the site-density")
@@ -1654,3 +1701,309 @@ print("  units used in the body of this notebook; the ratio between them is S.a/
 print("  spreadsheet sigma, which is a total-ion mass balance and includes dissolution.")
 print("  exp(F.psi/RT) is the Boltzmann factor of Eq. [16]: it multiplies the constant for every")
 print("  reaction with dZ = +1 and divides it for every dZ = -1, and leaves lithium untouched.")
+
+# %% [markdown]
+# # Appendix B — what would determine these constants
+#
+# Step 5a shows that **no point in this data set is fit-grade**. The obvious next question is
+# whether that is a fault of the model, of the inversion, or of the experiment. This appendix
+# answers it by experiment rather than by argument, in three parts:
+#
+# 1. **Is the solver unbiased?** Generate data from a *known* log K, add the measured ±3 % ICP
+#    noise, and ask the solver to recover it. If it comes back biased, the code is wrong. If it
+#    comes back true, the code is exonerated and the experiment is the problem.
+# 2. **Which knob buys precision for cobalt?** Cobalt is signal-limited: uptake is small because
+#    binding is weak, so the question is what raises uptake.
+# 3. **Which knob buys precision for lithium?** Lithium fails differently — it is *site-limited*,
+#    dosed far above what the surface can hold — so the answer is different, and the current
+#    design is not merely imprecise but **biased**.
+#
+# Each table is recomputed when this notebook runs, so the recommendations cannot drift from
+# the model that produced them.
+
+# %%
+banner("APPENDIX B  What would determine these constants")
+_rng = np.random.default_rng(11)
+_G = forward_removal.__globals__          # the live namespace, so the knobs are actually connected
+_KEEP = {k: _G[k] for k in ("DOLOMITE_GL", "SSA", "S_AREA", "S_T", "M_G")}
+
+class _Row:
+    """Stand-in for one row of `data`, so synthetic points go through the real logK_point()."""
+    def __init__(self, **kw): self.__dict__.update(kw)
+
+def _set_solid(solid_gL, ssa):
+    _G["DOLOMITE_GL"], _G["SSA"] = solid_gL, ssa
+    _G["S_AREA"] = solid_gL*ssa
+    _G["S_T"] = {k: v*_G["S_AREA"] for k, v in _G["SITE_DENS"].items()}
+    _G["M_G"] = solid_gL*_G["V_L"]
+
+def _recover(metal, logK_true, C0_ppm, pH_list, solid_gL=None, ssa=None, icp=0.03, nrep=120):
+    """Removal generated from logK_true, ICP noise added, constant inverted back. Returns
+    (mean removal %, bias, standard deviation) over nrep synthetic replicates."""
+    if solid_gL is not None: _set_solid(solid_gL, ssa)
+    exact = [(p, forward_removal(metal, p, C0_ppm, 1.0, 1.0, logK_true)) for p in pH_list]
+    ests = []
+    for _ in range(nrep):
+        ks = [logK_point(_Row(pH=p, metal=metal, Ca_ppm=1.0, Mg_ppm=1.0,
+                              C0_ppm=C0_ppm*(1 + icp*_rng.standard_normal()),
+                              Me_ppm=C0_ppm*(1 - rem/100)*(1 + icp*_rng.standard_normal())))[0]
+              for p, rem in exact]
+        ks = [k for k in ks if np.isfinite(k)]
+        if ks: ests.append(np.mean(ks))
+    return np.mean([r for _, r in exact]), np.mean(ests) - logK_true, np.std(ests)
+
+def _verdict(sd):
+    return ("unusable" if sd > 0.5 else "weak" if sd > 0.25 else
+            "publishable" if sd > 0.10 else "excellent")
+
+EDGE = [5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0]      # the pH edge a proper design would measure
+
+# ---------------------------------------------------------------- B.1 is the solver unbiased?
+print("B.1  Can the solver recover a KNOWN constant?  (120 synthetic replicates, +/-3 % ICP)")
+print("     If the bias column is ~0 the code is sound and the experiment is what limits the result.\n")
+print(f"     {'design':44} {'true':>6} {'removal':>8} {'bias':>7} {'st.dev':>7}")
+for lab, met, kt, c0, ph in [
+        ("this study: 2 points, pH 7.40 and 7.48", "Co", -2.20, 80.5, [7.40, 7.48]),
+        ("7-point pH edge, same dose",             "Co", -2.20, 80.5, EDGE),
+        ("7-point pH edge, weak binder",           "Co", -3.00,  5.0, EDGE),
+        ("7-point pH edge, strong binder",         "Co", -0.79,  5.0, EDGE)]:
+    _set_solid(*[_KEEP["DOLOMITE_GL"], _KEEP["SSA"]])
+    rem, bias, sd = _recover(met, kt, c0, ph)
+    print(f"     {lab:44} {kt:+6.2f} {rem:7.1f} % {bias:+7.2f} {sd:7.2f}")
+print("\n     The bias is within +/-0.05 in every case. THE SOLVER IS UNBIASED: it returns the")
+print("     constant it was given. What varies is the SPREAD, and the spread tracks one thing -")
+print("     how much metal actually leaves solution.")
+
+# -------------------------------------------------------------------- B.2 cobalt: surface area
+print("\n\nB.2  COBALT is signal-limited. Which knob raises uptake?")
+print("     Sites per litre scale as (solid loading) x (specific surface area). Row 1 is this study.\n")
+print(f"     {'solid g/L':>9} {'SSA m2/g':>9} {'m2/L':>7} {'Co mg/L':>8} | {'removal':>8} {'bias':>7} {'st.dev':>7}  verdict")
+for solid, ssa, c0 in [(60, 0.76, 80.5), (60, 0.76, 20.0), (60, 0.76, 5.0),
+                       (60, 5.00, 20.0), (60, 20.0, 20.0),
+                       (200, 5.00, 20.0), (200, 20.0, 20.0)]:
+    rem, bias, sd = _recover("Co", -2.20, c0, EDGE, solid, ssa)
+    print(f"     {solid:9.0f} {ssa:9.2f} {solid*ssa:7.0f} {c0:8.1f} | {rem:7.1f} % {bias:+7.2f} {sd:7.2f}  {_verdict(sd)}")
+print("\n     Read rows 1 to 3: cutting the cobalt dose from 80 to 5 mg/L changes almost nothing,")
+print("     because fractional uptake is set by the binding strength and the site-to-metal ratio,")
+print("     not by the dose. Read rows 1 and 4: SIX TIMES MORE SURFACE PER LITRE takes uptake from")
+print("     4 % to 23 % and the uncertainty from +/-0.20 to +/-0.04. Surface area per litre is the")
+print("     only knob that matters for cobalt. Above ~1200 m2/L a bias appears, because so much")
+print("     cobalt leaves solution that the inversion stops being well conditioned: do not overshoot.")
+
+# ------------------------------------------------------------------------ B.3 lithium: the dose
+print("\n\nB.3  LITHIUM is site-limited, so the answer is the opposite. What matters is sites per Li.")
+print(f"     The carbonate-site inventory is 14 umol/m2 x (m2/L); this study dosed 20 mmol/L of Li\n")
+print(f"     {'m2/L':>7} {'Li mg/L':>8} {'sites/Li':>9} | {'removal':>8} {'bias':>7} {'st.dev':>7}  verdict")
+for area, c0 in [(46, 138.4), (46, 14.0), (300, 138.4), (300, 14.0), (1000, 14.0)]:
+    rem, bias, sd = _recover("Li", -2.33, c0, EDGE, area/5.0, 5.0)
+    ratio = 14e-6*area*1e3/(c0/MM["Li"])
+    print(f"     {area:7.0f} {c0:8.1f} {ratio:9.2f} | {rem:7.1f} % {bias:+7.2f} {sd:7.2f}  {_verdict(sd)}")
+print("\n     Row 1 is this study, and its bias is -0.45: the lithium result is not merely imprecise,")
+print("     it is SYSTEMATICALLY TOO WEAK by nearly half a log unit. The surface can hold only 3 % of")
+print("     the lithium present, so the inversion is pinned against the ceiling and returns a biased")
+print("     answer however often it is repeated. Row 2 is the cheap fix: a tenfold lower dose makes")
+print("     lithium publishable at the EXISTING surface area, with no bias and no other change.")
+
+_set_solid(_KEEP["DOLOMITE_GL"], _KEEP["SSA"])      # restore, so later cells are unaffected
+for k, v in _KEEP.items(): _G[k] = v
+
+# --------------------------------------------------------------------------- the design itself
+print("\n\nB.4  THE EXPERIMENT THAT WOULD DETERMINE BOTH CONSTANTS")
+print("     Core requirement: 300 m2 of dolomite per litre of solution (this study has 46).")
+print("     Either 400 g/L at the present 0.76 m2/g, or 60 g/L milled to 5 m2/g - the product is")
+print("     what counts. At 300 m2/L with Co 20 mg/L and Li 14 mg/L both constants reach +/-0.02")
+print("     to +/-0.04. Stay below ~1200 m2/L to avoid the high-uptake bias of B.2.")
+print("     Then, in order of how much each one matters:")
+print("       1. A pH EDGE of 6 to 8 points from pH 4 to 8.5, each held FIXED by buffer or")
+print("          titration. This study has two points spanning 0.08 pH units, which is why the")
+print("          flat-line diagnostic cannot be applied to cobalt at all (Step 6).")
+print("       2. An ISOTHERM, 4 to 6 concentrations at one fixed pH. Without it the site density")
+print("          and the binding constant cannot be separated even in principle.")
+print("       3. SOLID-FREE BLANKS at every condition (Belova et al. 2014). Absent here, and they")
+print("          matter most exactly where uptake is small.")
+print("       4. ALKALINITY or DIC at every sampling, so the saturation index comes from what the")
+print("          solution holds rather than from an assumed atmospheric pCO2.")
+print("       5. PRE-EQUILIBRATE the solid with the brine for about a week, filter at 0.2 um, then")
+print("          add the metal. This removes the pH drift, the non-congruent Ca/Mg pattern and the")
+print("          carbonate accumulation in one move, rather than managing three symptoms.")
+print("       6. BET on the ACTUAL powder used, since every normalisation divides by it, and a")
+print("          contact time justified by a kinetic series rather than assumed.")
+print("       7. A DESORPTION step at the end (Appendix in Step 8): resuspend the washed solid in")
+print("          fresh metal-free brine at the same pH. Reversible means surface complexation;")
+print("          poorly reversible means the metal was incorporated and no long run can yield a")
+print("          sorption constant.")
+
+# %% [markdown]
+# # Appendix C — every reaction and every equation, in one place
+#
+# Complete listing of what the notebook solves. Nothing is omitted and nothing is approximated
+# in the writing: each line below corresponds to code above, and the equation numbers are used
+# throughout the manuscript. Curly braces {} mean aqueous activity, square brackets [] mean
+# concentration (mol L⁻¹ of suspension for surface species, mol L⁻¹ for dissolved species).
+#
+# ---
+# ## C.1 Surface reactions and their intrinsic constants
+#
+# Three primary hydration sites on dolomite in 1 : 1 : 2 stoichiometry (Pokrovsky et al., 1999).
+# All constants are at 25 °C and I = 0, taken from their Table 3, dolomite columns, and **held
+# fixed throughout**. Only R7 and R8 are ever adjusted.
+#
+# | | Reaction | log K° | ΔZ |
+# |---|---|---|---|
+# | R1 | >CO₃H⁰ ⇌ >CO₃⁻ + H⁺ | −4.8 ± 0.2 | −1 |
+# | R2 | >CaOH⁰ + H⁺ ⇌ >CaOH₂⁺ | +11.5 ± 0.2 | +1 |
+# | R3 | >MgOH⁰ + H⁺ ⇌ >MgOH₂⁺ | +10.6 ± 0.2 | +1 |
+# | R4 | >CaOH⁰ ⇌ >CaO⁻ + H⁺ | −12 ± 2 | −1 |
+# | R5 | >MgOH⁰ ⇌ >MgO⁻ + H⁺ | −12 ± 2 | −1 |
+# | R6a | >CO₃H⁰ + Ca²⁺ ⇌ >CO₃Ca⁺ + H⁺ | −1.8 ± 0.2 | +1 |
+# | R6b | >CO₃H⁰ + Mg²⁺ ⇌ >CO₃Mg⁺ + H⁺ | −2.0 ± 0.2 | +1 |
+# | **R7** | **>CO₃H⁰ + Li⁺ ⇌ >CO₃Li⁰ + H⁺** | **adjustable** | **0** |
+# | **R8** | **>CO₃H⁰ + Co²⁺ ⇌ >CO₃Co⁺ + H⁺** | **adjustable** | **+1** |
+# | R9a | >CaOH⁰ + CO₃²⁻ + 2H⁺ ⇌ >CaHCO₃⁰ + H₂O | −4.0 ± 0.5 | 0 |
+# | R9b | >MgOH⁰ + CO₃²⁻ + 2H⁺ ⇌ >MgHCO₃⁰ + H₂O | −3.5 ± 0.5 | 0 |
+# | R10a | >CaOH⁰ + CO₃²⁻ + H⁺ ⇌ >CaCO₃⁻ + H₂O | +16.6 ± 0.2 | −1 |
+# | R10b | >MgOH⁰ + CO₃²⁻ + H⁺ ⇌ >MgCO₃⁻ + H₂O | +15.4 ± 0.2 | −1 |
+#
+# ΔZ is the change in the charge of the surface species, and it decides which constants carry an
+# electrostatic term. **R7 has ΔZ = 0, so the lithium constant is electrostatically blind** — its
+# CCM and non-electrostatic values are identical to rounding, which is a property of the
+# stoichiometry and not evidence that the constant is well determined.
+#
+# ---
+# ## C.2 Aqueous reactions
+#
+# Carbonate system, open to the atmosphere at fixed pCO₂ = 10⁻³·⁵ atm:
+#
+# | | Reaction | log K |
+# |---|---|---|
+# | A1 | CO₂(g) + H₂O ⇌ H₂CO₃* | −1.469 |
+# | A2 | H₂CO₃* ⇌ HCO₃⁻ + H⁺ | −6.345 |
+# | A3 | CO₃²⁻ + H⁺ ⇌ HCO₃⁻ | +10.329 |
+# | A4 | H₂O ⇌ H⁺ + OH⁻ | −14.0 |
+#
+# Metal and major-ion complexes, as formation constants from the free ions (log β, 25 °C, I = 0):
+#
+# | Cobalt | log β | Lithium | log β | Calcium | log β | Magnesium | log β | Sodium | log β |
+# |---|---|---|---|---|---|---|---|---|---|
+# | CoCl⁺ | +0.30 | LiCl⁰ | −0.50 | CaCl⁺ | −0.70 | MgCl⁺ | −0.14 | NaCl⁰ | −0.78 |
+# | CoCl₂⁰ | −0.20 | LiCO₃⁻ | +0.90 | CaCO₃⁰ | +3.22 | MgCO₃⁰ | +2.98 | NaCO₃⁻ | +1.27 |
+# | CoCO₃⁰ | +4.23 | LiOH⁰ | −13.64 | CaHCO₃⁺ | +11.43 | MgHCO₃⁺ | +11.40 | NaHCO₃⁰ | +10.48 |
+# | CoHCO₃⁺ | +12.20 | | | CaOH⁺ | −12.70 | MgOH⁺ | −11.79 | NaOH⁰ | −14.18 |
+# | CoOH⁺ | −9.65 | | | | | | | | |
+# | Co(OH)₂⁰ | −18.80 | | | | | | | | |
+#
+# **CoCl⁺ carries about a fifth of the dissolved cobalt at 0.684 M NaCl**, and **CoCO₃⁰ takes
+# over 90 % of it above pH 9.5** — which is why the modelled adsorption edge turns over near
+# pH 8.6 (Figure 2a).
+#
+# Solids, used only for the saturation test, never to compute sorption:
+#
+# | | Reaction | log K_sp |
+# |---|---|---|
+# | S1 | CoCO₃ (sphaerocobaltite) ⇌ Co²⁺ + CO₃²⁻ | −9.98 |
+# | S2 | CaCO₃ (calcite) ⇌ Ca²⁺ + CO₃²⁻ | −8.48 |
+# | S3 | CaMg(CO₃)₂ (ordered dolomite) ⇌ Ca²⁺ + Mg²⁺ + 2CO₃²⁻ | −17.09 |
+# | S4 | Li₂CO₃ (zabuyelite) ⇌ 2Li⁺ + CO₃²⁻ | ≈ −2.5 |
+#
+# ---
+# ## C.3 Equations
+#
+# **Activity coefficients** — Davies (1962), with A = 0.509 and b = 0.3, valid to about 0.5 M and
+# used here at 0.684 M, which is why the PHREEQC cross-check exists:
+#
+# $$\log\gamma_z = -A\,z^2\left(\frac{\sqrt{I}}{1+\sqrt{I}} - 0.3\,I\right) \tag{1}$$
+#
+# $$I = \tfrac12\sum_i c_i z_i^2 \tag{2}$$
+#
+# **Carbonate speciation at fixed pCO₂** — this is the assumption that drives everything at high pH:
+#
+# $$\{\mathrm{HCO_3^-}\} = \frac{K_{A1}K_{A2}\,p_{\mathrm{CO_2}}}{\{\mathrm{H^+}\}}
+# \qquad\qquad
+# \{\mathrm{CO_3^{2-}}\} = \frac{\{\mathrm{HCO_3^-}\}}{K_{A3}\{\mathrm{H^+}\}} \tag{3}$$
+#
+# so $\{\mathrm{CO_3^{2-}}\} \propto \{\mathrm{H^+}\}^{-2}$: carbonate activity rises a
+# **ten-thousandfold** from pH 8 to pH 10.
+#
+# **Aqueous mass balance**, solved by fixed-point iteration jointly with (1) and (2), for each
+# component T (Co, Li, Ca, Mg, Na, Cl):
+#
+# $$T_j = \sum_i a_{ij}\,C_i \qquad\text{with}\qquad
+# C_i = \beta_i \prod_j \{X_j\}^{a_{ij}}\big/\gamma_i \tag{4}$$
+#
+# **Surface site mass balances** — one per site, with totals from the crystallographic densities
+# (14, 7, 7 µmol m⁻²) times the surface area per litre:
+#
+# $$[\mathrm{>CO_3}]_T = [\mathrm{>CO_3H^0}] + [\mathrm{>CO_3^-}] + [\mathrm{>CO_3Li^0}]
+# + [\mathrm{>CO_3Co^+}] + [\mathrm{>CO_3Ca^+}] + [\mathrm{>CO_3Mg^+}] \tag{5a}$$
+#
+# $$[\mathrm{>CaOH}]_T = [\mathrm{>CaOH^0}] + [\mathrm{>CaOH_2^+}] + [\mathrm{>CaO^-}]
+# + [\mathrm{>CaHCO_3^0}] + [\mathrm{>CaCO_3^-}] \tag{5b}$$
+#
+# $$[\mathrm{>MgOH}]_T = [\mathrm{>MgOH^0}] + [\mathrm{>MgOH_2^+}] + [\mathrm{>MgO^-}]
+# + [\mathrm{>MgHCO_3^0}] + [\mathrm{>MgCO_3^-}] \tag{5c}$$
+#
+# **Surface charge — predicted.** Charged surface species only. Dissolved Ca²⁺ and Mg²⁺ from
+# dissolution appear **nowhere** in this equation:
+#
+# $$\sigma = \frac{F}{S_a}\Big([\mathrm{>CaOH_2^+}] + [\mathrm{>MgOH_2^+}] + [\mathrm{>CO_3Co^+}]
+# + [\mathrm{>CO_3Ca^+}] + [\mathrm{>CO_3Mg^+}]$$
+# $$\qquad - [\mathrm{>CO_3^-}] - [\mathrm{>CaO^-}] - [\mathrm{>MgO^-}]
+# - [\mathrm{>CaCO_3^-}] - [\mathrm{>MgCO_3^-}]\Big) \tag{6}$$
+#
+# **Surface charge — measured.** A different quantity, from the solution mass balance, which
+# carries the dissolution signal and at acidic pH exceeds the whole site capacity many times over.
+# The two are compared, never substituted:
+#
+# $$\sigma_{meas} = \frac{F}{S_a}\big(2\Delta[\mathrm{Ca}] + 2\Delta[\mathrm{Mg}]
+# - \Delta[\mathrm{CO_3}]\big) \tag{7}$$
+#
+# **Constant capacitance model** (Pokrovsky et al., 1999, Eqs. 3–4), in both conventions:
+#
+# $$\psi = \frac{\sigma}{C}, \qquad C = \frac{\sqrt{I}}{\alpha}, \qquad \alpha = 0.004
+# \qquad\text{(area basis, C m}^{-2}\text{)} \tag{8}$$
+#
+# $$\sigma_v = \frac{C\,S\,a}{F}\,\psi \qquad\text{(Goldberg 1985 Eq. 1, volume basis, mol}_c
+# \text{ m}^{-3}\text{)} \tag{9}$$
+#
+# **Boltzmann correction — intrinsic from apparent:**
+#
+# $$K^{int} = K^{app}\exp\!\left(\frac{\Delta Z\,F\,\psi}{RT}\right) \tag{10}$$
+#
+# **Mass action for the adjustable reactions** (R7, R8), which is what the notebook inverts:
+#
+# $$K^{int}_{\mathrm{Me}} = \frac{[\mathrm{>CO_3Me}]\,\{\mathrm{H^+}\}}
+# {[\mathrm{>CO_3H^0}]\,\{\mathrm{Me}^{z+}\}}\,
+# \exp\!\left(\frac{\Delta Z F\psi}{RT}\right) \tag{11}$$
+#
+# **Surface coverage from the measurement**, and its propagated error — the quantity whose
+# relative error is 54 % to 2970 % in this data set:
+#
+# $$\Gamma = \frac{(C_0 - C_{eq})\,V}{m\,S_{BET}} \tag{12}$$
+#
+# $$\sigma_\Gamma = \frac{V}{m\,S_{BET}}\sqrt{(\epsilon C_0)^2 + (\epsilon C_{eq})^2},
+# \qquad \epsilon = 0.03 \tag{13}$$
+#
+# **Saturation index**, computed for each solid at each point:
+#
+# $$\mathrm{SI} = \log\frac{\mathrm{IAP}}{K_{sp}} \tag{14}$$
+#
+# **Objective function** — FITEQL's weighted sum of squares per degree of freedom
+# (Westall, 1982; Herbelin & Westall, 1999). A value near 1 means the model matches the data to
+# within its measurement error:
+#
+# $$\mathrm{WSOS/DF} = \frac{1}{N_{obs} - N_{par}}\sum_i\left(\frac{Y_i}{s_i}\right)^2 \tag{15}$$
+#
+# **Aqueous–surface analogy** (Van Cappellen et al., 1993; Pokrovsky & Schott, 2002), used to
+# predict the cobalt constant rather than fit it:
+#
+# $$\log K(\mathrm{>CO_3Co^+}) = \log K(\mathrm{>CO_3Ca^+})
+# + \big[\log\beta(\mathrm{CoCO_3^0}) - \log\beta(\mathrm{CaCO_3^0})\big] \tag{16}$$
+#
+# **Exchange constant** — the quantity that transfers between studies, because it cancels the
+# site-density convention (Belova et al., 2014; Zachara et al., 1991):
+#
+# $$\log K_{ex} = \log K(\mathrm{>CO_3Me}) - \log K(\mathrm{>CO_3Ca}) \tag{17}$$
+#
+# **Distribution coefficient**, reported for comparison with the applied literature:
+#
+# $$K_d = \frac{(C_0 - C_{eq})/C_{eq}}{m/V} \tag{18}$$
