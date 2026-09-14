@@ -223,12 +223,18 @@ print(_pre.to_string(index=False, float_format=lambda x: f"{x:.2f}"))
 _v = _pre.rel_err_pct.replace([np.inf], np.nan).dropna()
 print(f"\n  n = {len(_v)}   min {_v.min():.0f} %   median {_v.median():.0f} %   max {_v.max():.0f} %")
 print(f"  Points with uptake at least 3x its own error (rel. error < 30 %): {(_v < 30).sum()} of {len(_v)}")
-print("\n  Worked example, the best point in the data set (Co pH 6, day 6):")
 _b = _pre.loc[_v.idxmin()]
-print(f"    uptake  = {_b.uptake_mg_L:.1f} mg/L        noise = sqrt((3 % x 80.5)^2 + (3 % x 74.4)^2) = {_b.noise_mg_L:.1f} mg/L")
-print(f"    The signal is smaller than the noise, at the single best point of twelve. Every")
-print("    constant computed later in this notebook inherits that, and no amount of care in the")
-print("    algebra can undo it. Appendix B quantifies what would fix it.")
+_ratio = _b.uptake_mg_L/_b.noise_mg_L
+_worse = int((_pre.uptake_mg_L < _pre.noise_mg_L).sum())
+print(f"\n  Worked example, the BEST point in the data set ({_b.metal} {_b.batch}, day {int(_b.day)}):")
+_row_b = data[(data.metal == _b.metal) & (data.batch == _b.batch) & (data.day == _b.day)].iloc[0]
+print(f"    uptake = {_row_b.C0_ppm:.1f} - {_row_b.Me_ppm:.1f} = {_b.uptake_mg_L:.1f} mg/L")
+print(f"    noise  = sqrt(({100*ICP_REL:.0f} % x {_row_b.C0_ppm:.1f})^2 + ({100*ICP_REL:.0f} % x {_row_b.Me_ppm:.1f})^2) = {_b.noise_mg_L:.1f} mg/L")
+print(f"    signal-to-noise = {_ratio:.1f}. A constant needs about 3; this is the best of twelve points.")
+print(f"    At {_worse} of the {len(_pre)} points the uptake is smaller than the noise outright.")
+print("    Every constant computed later in this notebook inherits this, and no amount of care in")
+print("    the algebra can recover information the measurement never contained. Appendix B")
+print("    quantifies what would fix it.")
 
 banner("CAPACITY CHECK  Can surface complexation account for the removal?")
 def capacity_row(label, dC_mg_L, metal, ssa, load_gL):
