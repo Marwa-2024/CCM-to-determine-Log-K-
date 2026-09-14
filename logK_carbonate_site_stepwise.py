@@ -81,6 +81,7 @@ V_L, M_G   = 0.100, 6.0     # litres of solution, grams of dolomite per bottle
 SSA        = 0.76           # m2/g (BET; 0.76 to 0.84 reported)
 S_AREA     = DOLOMITE_GL*SSA                     # 45.6 m2 per litre
 I_BATCH    = 0.684          # mol/L, 40 g/L NaCl
+ICP_REL    = 0.03           # relative precision of the ICP-OES, on EACH concentration
 NACL_M     = 40.0/58.44
 MM = dict(Li=6.941, Co=58.933, Ca=40.078, Mg=24.305)
 
@@ -205,6 +206,30 @@ print(eq[["metal","batch","pH","Ca_ppm","Mg_ppm","C0_ppm","Me_ppm","removal_%"]]
 # almost certainly m²/mL. Every SCM normalisation divides by this number.
 
 # %%
+banner("PRECISION CHECK  Is the uptake bigger than the error in measuring it?")
+# This is arithmetic on the raw concentrations. No surface model, no speciation, no fitted
+# constant: Gamma is proportional to (C0 - Ceq), so its relative error is fixed the moment the
+# ICP numbers are recorded. Whatever the model does later, it cannot recover information that
+# was never in the measurement, so this belongs before any modelling rather than after it.
+_pre = []
+for r in data[data.day > 0].itertuples():
+    dC = r.C0_ppm - r.Me_ppm
+    sd = np.hypot(ICP_REL*r.C0_ppm, ICP_REL*r.Me_ppm)
+    _pre.append(dict(metal=r.metal, batch=r.batch, day=r.day,
+                     removal_pct=100*dC/r.C0_ppm, uptake_mg_L=dC, noise_mg_L=sd,
+                     rel_err_pct=100*sd/dC if dC > 0 else np.inf))
+_pre = pd.DataFrame(_pre)
+print(_pre.to_string(index=False, float_format=lambda x: f"{x:.2f}"))
+_v = _pre.rel_err_pct.replace([np.inf], np.nan).dropna()
+print(f"\n  n = {len(_v)}   min {_v.min():.0f} %   median {_v.median():.0f} %   max {_v.max():.0f} %")
+print(f"  Points with uptake at least 3x its own error (rel. error < 30 %): {(_v < 30).sum()} of {len(_v)}")
+print("\n  Worked example, the best point in the data set (Co pH 6, day 6):")
+_b = _pre.loc[_v.idxmin()]
+print(f"    uptake  = {_b.uptake_mg_L:.1f} mg/L        noise = sqrt((3 % x 80.5)^2 + (3 % x 74.4)^2) = {_b.noise_mg_L:.1f} mg/L")
+print(f"    The signal is smaller than the noise, at the single best point of twelve. Every")
+print("    constant computed later in this notebook inherits that, and no amount of care in the")
+print("    algebra can undo it. Appendix B quantifies what would fix it.")
+
 banner("CAPACITY CHECK  Can surface complexation account for the removal?")
 def capacity_row(label, dC_mg_L, metal, ssa, load_gL):
     area = ssa*load_gL                                   # m2/L
@@ -360,8 +385,6 @@ print("above CoCO3 saturation and is not usable for a pure adsorption constant."
 
 # %%
 banner("STEP 2  Surface coverage and its uncertainty")
-ICP_REL = 0.03                      # relative precision of the ICP-OES, on each concentration
-
 def coverage(C0_ppm, Ceq_ppm, metal, icp_rel=None):
     """Surface coverage by difference, and its propagated error.  Returns (Gamma, sigma) in mol/m2."""
     rel = ICP_REL if icp_rel is None else icp_rel
