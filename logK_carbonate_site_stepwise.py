@@ -1762,17 +1762,34 @@ EDGE = [5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0]      # the pH edge a proper design wo
 print("B.1  Can the solver recover a KNOWN constant?  (120 synthetic replicates, +/-3 % ICP)")
 print("     If the bias column is ~0 the code is sound and the experiment is what limits the result.\n")
 print(f"     {'design':44} {'true':>6} {'removal':>8} {'bias':>7} {'st.dev':>7}")
+_b1 = []
 for lab, met, kt, c0, ph in [
         ("this study: 2 points, pH 7.40 and 7.48", "Co", -2.20, 80.5, [7.40, 7.48]),
         ("7-point pH edge, same dose",             "Co", -2.20, 80.5, EDGE),
         ("7-point pH edge, weak binder",           "Co", -3.00,  5.0, EDGE),
         ("7-point pH edge, strong binder",         "Co", -0.79,  5.0, EDGE)]:
-    _set_solid(*[_KEEP["DOLOMITE_GL"], _KEEP["SSA"]])
+    _set_solid(_KEEP["DOLOMITE_GL"], _KEEP["SSA"])
     rem, bias, sd = _recover(met, kt, c0, ph)
+    _b1.append((lab, rem, bias, sd))
     print(f"     {lab:44} {kt:+6.2f} {rem:7.1f} % {bias:+7.2f} {sd:7.2f}")
-print("\n     The bias is within +/-0.05 in every case. THE SOLVER IS UNBIASED: it returns the")
-print("     constant it was given. What varies is the SPREAD, and the spread tracks one thing -")
-print("     how much metal actually leaves solution.")
+
+# State what the table actually shows, computed from it, rather than asserting a summary.
+_ok  = [r for r in _b1 if r[1] >= 2.0]           # removal at or above ~2 %
+_bad = [r for r in _b1 if r[1] <  2.0]
+print(f"\n     Wherever removal reaches about 2 % or more, the bias is within "
+      f"+/-{max(abs(b) for _, _, b, _ in _ok):.2f}: the solver")
+print("     returns the constant it was given, so THE CODE IS NOT WHAT LIMITS THIS RESULT. What")
+print("     changes from row to row is the SPREAD, and it tracks one thing only - how much metal")
+print(f"     actually leaves solution ({min(s for *_, s in _ok):.2f} at {max(r for _, r, _, _ in _ok):.0f} % removal, "
+      f"{max(s for *_, s in _ok):.2f} at {min(r for _, r, _, _ in _ok):.0f} %).")
+if _bad:
+    _l, _r, _b, _s = _bad[0]
+    print(f"\n     The exception is worth its own line. At {_r:.1f} % removal the bias is {_b:+.2f} - the")
+    print("     inversion becomes BIASED as well as imprecise once uptake falls to a fraction of a")
+    print("     percent, because Gamma is then dominated by noise that cannot go negative, so the")
+    print("     recovered constant is pushed upward. Below about 1 % uptake the arithmetic stops")
+    print("     being merely uncertain and starts being wrong in a known direction. This data set")
+    print(f"     sits at {data[(data.metal=='Co')&(data.batch=='pH2')]['removal_%'].iloc[1:].mean():.1f} % removal in the pH 2 cobalt batch, inside that regime.")
 
 # -------------------------------------------------------------------- B.2 cobalt: surface area
 print("\n\nB.2  COBALT is signal-limited. Which knob raises uptake?")
