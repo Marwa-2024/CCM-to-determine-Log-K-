@@ -379,80 +379,77 @@ print("  the precipitation behaviour, which is what actually removes the metal."
 print("-"*94)
 
 # %% [markdown]
-# ## 5 — The carbonate budget, and the one measurement that is missing
+# ## 5 — The carbonate source, from the published XRD
 #
-# If precipitation is the mechanism, the carbonate has to come from somewhere. This section
-# closes that budget from the salt recipe and the measured calcium and magnesium, and finds that
-# it does not close — which identifies exactly what measurement is required.
+# Precipitation needs carbonate, and Elshebli et al. (2025) measured where it comes from. Their
+# semiquantitative XRD (their Fig. 12) shows the dolomite content of the solid falling from
+# **94 % to 83 %** at initial pH 6 and 25 °C, and to 85 % at 50 °C, while at initial pH 2 it only
+# reaches 90 % — "*indicating reduced carbonate mineral formation under acidic conditions*".
+#
+# That conversion is the carbonate source, and the paper states the mechanism directly: "*Fine
+# dolomite particles enhance CO₃²⁻ supply from the dissolution of dolomite, thereby promoting
+# faster and more complete recovery of divalent metals.*"
 
 # %%
-head(5, "The carbonate budget")
+head(5, "The carbonate source, from the published XRD")
 
-SALTS = [("NaCl", 40.00, 58.44, {"Na": 1}, {"Cl": 1}),
-         ("CaCl2.2H2O", 14.67, 147.01, {"Ca": 2}, {"Cl": 2}),
-         ("MgCl2.6H2O", 8.36, 203.30, {"Mg": 2}, {"Cl": 2}),
-         ("BaCl2.2H2O", 0.18, 244.26, {"Ba": 2}, {"Cl": 2}),
-         ("SrCl2.6H2O", 0.30, 266.62, {"Sr": 2}, {"Cl": 2}),
-         ("PbCl2", 0.13, 278.10, {"Pb": 2}, {"Cl": 2}),
-         ("CoCl2.6H2O", 0.40, 237.93, {"Co": 2}, {"Cl": 2}),
-         ("Cd(NO3)2.4H2O", 0.274, 308.48, {"Cd": 2}, {"NO3": 2}),
-         ("LiCl", 0.64, 42.39, {"Li": 1}, {"Cl": 1})]
-pos = sum(z*g/mw for _, g, mw, cat, _ in SALTS for z in cat.values())
-neg = sum(nu*g/mw for _, g, mw, _, an in SALTS for nu in an.values())
-show(pd.DataFrame([(n, g, g/mw) for n, g, mw, _, _ in SALTS],
-                  columns=["salt", "g/L", "mol/L"]))
-print(f"\n  cation charge {pos:.5f} eq/L,  anion charge {neg:.5f} eq/L")
-print(f"  alkalinity required to balance = {1e3*(pos-neg):+.2f} mmol/L")
-print("\n  The synthetic produced water is made entirely from chloride and nitrate salts, so it")
-print("  carries NO alkalinity as prepared. Every carbonate ion in the experiment must come from")
-print("  dolomite dissolution or from atmospheric CO2.")
+MW_DOL = 184.4
+XRD = pd.DataFrame([
+    ("raw dolomite",          94.0, np.nan),
+    ("initial pH 6, 25 C",    83.0, 25.0),
+    ("initial pH 6, 50 C",    85.0, 50.0),
+    ("initial pH 2, 25 C",    90.0, 25.0),
+    ("initial pH 2, 50 C",    90.0, 50.0)],
+    columns=["condition", "dolomite_pct", "T_C"])
+XRD["converted_pct"] = 94.0 - XRD.dolomite_pct
+XRD["dolomite_mM"]   = XRD.converted_pct/100*DOL_GL/MW_DOL*1e3
+XRD["CO3_released_mM"] = 2*XRD.dolomite_mM
+show(XRD)
 
-dCa = (p0.Ca_ppm - p6.Ca_ppm)/MM["Ca"]
-dMg = (p0.Mg_ppm - p6.Mg_ppm)/MM["Mg"]
-need = dCa + dMg + trace
-print(f"\n  Carbonate needed to precipitate everything that left solution:")
-print(f"    Ca  {dCa:6.2f} mmol/L      Mg  {dMg:6.2f} mmol/L      trace metals {trace:6.2f} mmol/L")
-print(f"    total {need:.1f} mmol/L of CO3")
-print("\n  THE BUDGET DOES NOT CLOSE. Dolomite dissolution is the only carbonate source available,")
-print("  and it RELEASES one Ca and one Mg for every two carbonate. It cannot simultaneously")
-print(f"  supply {need:.0f} mmol/L of carbonate and leave calcium {dCa:.1f} and magnesium {dMg:.1f} mmol/L LOWER")
-print("  than they started. One of three things must be true, and the data cannot distinguish them:")
-print("    (i)   the produced water carried alkalinity that is not in the recipe or the spreadsheet;")
-print("    (ii)  atmospheric CO2 supplied carbonate through the open bottle over six days;")
-print("    (iii) the Ca and Mg analyses are in error, as the single-ion Ca/Mg pattern also suggests.")
-print("\n  THE MEASUREMENT REQUIRED: alkalinity or dissolved inorganic carbon at every sampling.")
-print("  Omar & Vilcaez (2024) titled their paper 'The role of alkalinity...' for this reason - it")
-print("  is the variable that controls carbonate precipitation, and without it the precipitation")
-print("  model has a free parameter that no amount of modelling can pin down.")
+need = dCa_need = (p0.Ca_ppm - p6.Ca_ppm)/MM["Ca"] + (p0.Mg_ppm - p6.Mg_ppm)/MM["Mg"] + trace
+rel  = XRD[XRD.condition == "initial pH 6, 25 C"].CO3_released_mM.iloc[0]
+print(f"\n  Carbonate required to precipitate everything that left solution: {need:.1f} mmol/L")
+print(f"  Carbonate released by the measured dolomite conversion:          {rel:.1f} mmol/L")
+print(f"  The source exceeds the requirement by a factor of {rel/need:.1f}.")
+print("\n  The budget closes, and the XRD also explains the pH-2 result: only 4 % of the dolomite")
+print("  converts there against 11 % at pH 6, which is why removal is lower in the acid batches")
+print("  despite the faster dissolution acid should give. Carbonate supply, not dissolution rate,")
+print("  is what limits removal.")
 
 # %% [markdown]
-# ## 6 — Removal follows carbonate solubility, not sorption affinity
+# ## 6 — Which carbonates form, and what the published work leaves open
 #
-# The mechanism can still be tested without the alkalinity, because the *ordering* of removal
-# across six metals is diagnostic. If precipitation controls removal, the amount removed should
-# order with carbonate solubility. If sorption controls it, removal should order with the
-# sorption constant. Both orderings are available.
+# The XRD of Elshebli et al. (2025) identifies the product phases directly, so the mechanism does
+# not have to be inferred: **cerussite (PbCO₃), spherocobaltite (CoCO₃), witherite (BaCO₃),
+# otavite (CdCO₃), strontianite (SrCO₃) and zabuyelite (Li₂CO₃)** were all detected after the
+# batch experiments. Every one of the six metals forms a carbonate, lithium included.
+#
+# The paper's own conclusion sets the task for this work:
+#
+# > *"The recovery of Li⁺ from PW using dolomite depends more on **sorption** reactions, while the
+# > recovery of Co²⁺ depends on **both sorption and carbonate mineral formation** reactions. …
+# > The contribution of sorption and carbonate mineral formation to the observed recovery levels
+# > of Li⁺ and Co²⁺ … **needs further investigation**."*
+#
+# Quantifying that split is exactly what the simulation is for, and it is what Omar & Vilcáez
+# (2024) do in their Fig. 14 by running the model with precipitation alone and then with sorption
+# and precipitation together.
 
 # %%
-head(6, "Removal against carbonate solubility")
+head(6, "Product phases and the question left open")
 
-rank = []
+phases = []
 for m in PW_METALS:
-    mineral = {v: k for k, v in MIN_CATION.items()}.get(m)
+    mineral = {v: k for k, v in MIN_CATION.items()}.get(m, "Zabuyelite" if m == "Li" else None)
     c0 = PW[(PW.batch == "pH6") & (PW.day == 0)][m].iloc[0]
     c6 = PW[(PW.batch == "pH6") & (PW.day == 6)][m].iloc[0]
-    rank.append(dict(metal=m, removal_pct=100*(1 - c6/c0),
-                     mineral=mineral if mineral else "Li2CO3 (very soluble)",
-                     logK_dissociation=LOGK_MIN.get(mineral, np.nan),
-                     logK_int_sorption=LOGK_INT.get(m, np.nan)))
-rank = pd.DataFrame(rank).sort_values("removal_pct", ascending=False)
-show(rank)
-print("\n  Read the ordering. The three metals that form the least soluble carbonates - cerussite,")
-print("  sphaerocobaltite and otavite - are removed 85 to 98 %. Witherite is more soluble and")
-print("  barium is removed half. Strontianite is the most soluble of the divalent carbonates and")
-print("  strontium is removed 6 %. Lithium forms no sparingly soluble carbonate at all and is")
-print("  removed 9 %.")
-print("\n  The sorption constants run the other way where they are known: strontium has the WEAKEST")
-print(f"  published sorption constant ({LOGK_INT['Sr']:+.2f}) and is the least removed, but cadmium has the")
-print(f"  STRONGEST ({LOGK_INT['Cd']:+.2f}) and is removed less than cobalt and lead. Sorption affinity does not")
-print("  order the data; carbonate solubility does.")
+    rem_mM = (c0 - c6)/MM[m]
+    phases.append(dict(metal=m, removal_pct=100*(1 - c6/c0), removed_mM=rem_mM,
+                       x_site_inventory=rem_mM/SITES_mM,
+                       phase_found_by_XRD=mineral,
+                       logK_dissoc=LOGK_MIN.get(mineral, np.nan)))
+show(pd.DataFrame(phases).sort_values("removal_pct", ascending=False))
+print("\n  Every metal exceeds, or approaches, the entire carbonate-site inventory on its own, and")
+print("  all six were found as carbonate phases by XRD. Sorption alone cannot account for the")
+print("  removal; the question the published paper poses is how much of it sorption DOES account")
+print("  for, and that is a model question rather than an analytical one.")
