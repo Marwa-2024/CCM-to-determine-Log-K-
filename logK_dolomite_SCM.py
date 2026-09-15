@@ -706,37 +706,67 @@ ax.set_xticks([0, 2, 4, 6]); bx.set_xticks([0, 2, 4, 6]); bx.set_ylim(0, 16)
 ax.legend(loc="upper left"); panel(ax, "a"); panel(bx, "b")
 savefig(fig, "Fig1_kinetics")
 
-# ---- Figure 2: adsorption edges --------------------------------------------------------------
-fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.7), constrained_layout=True)
-grid = np.linspace(3, 10, 141)
-for ax, metal, letter in zip(axes, ["Co", "Li"], "ab"):
-    e0 = eq[(eq.metal == metal) & (eq.batch == "pH6")].iloc[0]
-    phase = "CoCO3 (sphaerocobaltite)" if metal == "Co" else "Li2CO3"
-    si = np.array([speciate(p, totals_for(e0), metal)["SI"][phase] for p in grid])
-    p_sat = grid[np.argmax(si > 0)] if np.any(si > 0) else grid[-1]
-    if p_sat < grid[-1]:
-        ax.axvspan(p_sat, grid[-1], color=COL["grey"], alpha=0.13, lw=0, zorder=0)
-        ax.text(grid[-1] - 0.12, 0.975, f"SI({phase.split()[0]}) > 0\nmodel not valid",
-                fontsize=7.4, color=COL["grey"], va="top", ha="right",
-                transform=ax.get_xaxis_transform())
-    for batch, ls in [("pH6", "-"), ("pH2", "--")]:
-        e = eq[(eq.metal == metal) & (eq.batch == batch)].iloc[0]
-        curve = np.array([forward_removal(metal, p, e.C0_ppm, e.Ca_ppm, e.Mg_ppm, best[metal])
-                          for p in grid])
-        keep = grid <= p_sat
-        ax.plot(grid[keep], curve[keep], ls, color=COL["model"],
-                label=f"model, {batch.replace('pH', 'pH ')} batch")
-        ax.plot(grid[~keep], curve[~keep], ls, color=COL["model"], alpha=0.3, lw=1.1)
-    d = data[(data.metal == metal) & (data.day > 0)]
-    ax.plot(d[d.day == 6].pH, d[d.day == 6]["removal_%"], MK[metal], color=COL[metal],
-            ms=7, ls="none", label="measured, day 6", zorder=3)
-    ax.plot(d[d.day < 6].pH, d[d.day < 6]["removal_%"], MK[metal], color=COL[metal],
-            mfc="white", mew=1.3, ms=6, ls="none", label="measured, days 2 and 4")
-    ax.set_xlabel("pH"); ax.set_ylabel(f"{metal} removal (% of initial)")
-    ax.legend(loc="upper left" if metal == "Co" else "lower right",
-              title=f"indicative log K = {best[metal]:+.2f}", title_fontsize=8)
-    panel(ax, letter)
-savefig(fig, "Fig2_adsorption_edges")
+# ---- Figure 2: measured against predicted, each point at its OWN chemistry -------------------
+# NOT an adsorption edge. An edge (Goldberg 1985; Belova et al. 2014) varies pH alone at fixed
+# contact time. Here pH, contact time and the Ca/Mg competitor load all move together between
+# samplings, so no single curve on a pH axis is valid. The standard presentation for data whose
+# conditions vary between samples is measured against predicted on a 1:1 line, with every point
+# predicted at its own pH, its own Ca and Mg, and its own initial concentration.
+par = []
+for _, r in data[data.day > 0].iterrows():
+    pred = forward_removal(r.metal, r.pH, r.C0_ppm, r.Ca_ppm, r.Mg_ppm, best[r.metal])
+    dC   = r.C0_ppm - r.Me_ppm
+    sd   = np.hypot(ICP_REL*r.C0_ppm, ICP_REL*r.Me_ppm)
+    grade = ppdf[(ppdf.metal == r.metal) & (ppdf.batch == r.batch) &
+                 (ppdf.day == r.day)].grade.iloc[0]
+    par.append(dict(metal=r.metal, batch=r.batch, day=int(r.day), pH=r.pH,
+                    measured=r["removal_%"], predicted=pred,
+                    err_pct=100*sd/r.C0_ppm, grade=grade))
+par = pd.DataFrame(par)
+
+fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.0), constrained_layout=True)
+
+ax = axes[0]
+lim = (0.05, 20)
+ax.plot(lim, lim, "-", color="k", lw=1, zorder=1)
+ax.fill_between(lim, [l*0.5 for l in lim], [l*2 for l in lim], color=COL["grey"],
+                alpha=0.12, lw=0, zorder=0)
+for metal in ["Co", "Li"]:
+    for grade, mfc, lab in [("indicative", COL[metal], "indicative"),
+                            ("excluded", "white", "excluded")]:
+        d = par[(par.metal == metal) & (par.grade == grade)]
+        if not len(d): continue
+        ax.errorbar(d.measured, d.predicted, xerr=d.err_pct, fmt=MK[metal], color=COL[metal],
+                    mfc=mfc, mew=1.3, ms=6.5, capsize=2.5, lw=1, ls="none",
+                    label=f"{metal}, {lab}")
+ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlim(*lim); ax.set_ylim(*lim)
+ax.set_xlabel("measured removal (% of initial)")
+ax.set_ylabel("predicted removal (% of initial)")
+ax.text(0.055, 13, "shaded: within a factor of 2", fontsize=7.5, color=COL["grey"])
+ax.legend(loc="lower right"); panel(ax, "a")
+
+bx = axes[1]
+for metal in ["Co", "Li"]:
+    for batch, ls, fill in [("pH6", "-", True), ("pH2", "--", False)]:
+        d = par[(par.metal == metal) & (par.batch == batch)].sort_values("day")
+        bx.plot(d.day, d.measured, MK[metal], color=COL[metal], ls="none", ms=6.5,
+                mfc=COL[metal] if fill else "white", mew=1.3,
+                label=f"{metal} {batch.replace('pH', 'pH ')}, measured")
+        bx.plot(d.day, d.predicted, ls, color=COL["model"], lw=1.3,
+                label=f"{metal} {batch.replace('pH', 'pH ')}, predicted" if metal == "Co" else None)
+bx.set_xlabel("time (days)"); bx.set_ylabel("removal (% of initial)")
+bx.set_xticks([2, 4, 6]); bx.legend(loc="upper left", ncol=1, fontsize=7)
+panel(bx, "b")
+savefig(fig, "Fig2_measured_vs_predicted")
+
+print("Figure 2a: every point predicted at its OWN pH, Ca, Mg and dose, against the 1:1 line.")
+print("Figure 2b: the same numbers against time. The prediction is an equilibrium calculation,")
+print("so it is nearly flat; the cobalt pH 6 measurement climbs past it, which is the approach to")
+print("equilibrium. The cobalt pH 2 points run the other way because at 0.1 to 0.9 mg/L of uptake")
+print("against 3.4 mg/L of noise they carry no information, which Part 3 established.")
+_ok = par[(par.grade == "indicative")]
+_fac = np.maximum(_ok.predicted/_ok.measured, _ok.measured/_ok.predicted)
+print(f"\nOf the {len(_ok)} indicative points, {int((_fac < 2).sum())} fall within a factor of 2 of the prediction.")
 
 # ---- Figure 3: the point-by-point constant against pH and coverage ---------------------------
 fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.7), constrained_layout=True)
