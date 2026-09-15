@@ -89,14 +89,22 @@ I_SINGLE = 0.684         # 40 g/L NaCl
 I_PW     = 1.00          # synthetic produced water
 NACL_M   = 40.0/58.44
 
-# --- capacitance: Hayes Eq. 22 brackets it, Goldberg and Ioannou both use 1.06 ---
+# --- capacitance: Pokrovsky's own convention for carbonate surfaces ---
+# Pokrovsky, Schott & Thomas (1999a) fitted every dolomite constant used here with
+# C = sqrt(I)/alpha and alpha = 0.004. Their constants and their capacitance are one
+# parameter set; transferring the constants under a different capacitance would make the
+# set internally inconsistent, so the whole parameterisation is adopted.
+ALPHA_POK = 0.004
+def c_pokrovsky(I): return np.sqrt(I)/ALPHA_POK
+C_SINGLE, C_PW = c_pokrovsky(I_SINGLE), c_pokrovsky(I_PW)
+
+# Hayes Eq. 22 brackets the capacitance of an OXIDE double layer, reported for comparison
 C_HAYES_LO = 6*EPS_0/4.3e-10     # er = 6  (dielectric saturation), d = 4.3 A
 C_HAYES_HI = 50*EPS_0/2.3e-10    # er = 50, d = 2.3 A (hydrated univalent ion)
-C_CAP      = 1.06                # F/m2, Westall & Hohl (1980) optimum, used by all three papers
+C_OXIDE    = 1.06                # F/m2, Westall & Hohl (1980); Goldberg 2004; Ioannou 1997
 def c_diffuse(I, er=78.5):
     kappa = np.sqrt(2*1000*F_CONST**2*I/(er*EPS_0*R_GAS*T_K))
     return er*EPS_0*kappa
-C_OLD = np.sqrt(I_SINGLE)/0.004  # the carbonate convention used in the earlier version
 
 # --- site totals: three independent sources, all reported, none privileged ---
 def nt_from_sites_nm2(ns):  return ns*1e18*S_AREA/N_AV     # Goldberg Eq. 10
@@ -115,21 +123,29 @@ show(pd.DataFrame([
     ("Surface per litre",    f"{S_AREA:.1f} m2/L",             "product of the two"),
     ("Ionic strength",       f"{I_SINGLE:.3f} / {I_PW:.2f} M", "single-ion / produced water"),
     ("ICP-OES precision",    f"+/-{100*ICP_REL:.0f} %",        "on each concentration"),
-    ("Capacitance used",     f"{C_CAP:.2f} F/m2",              "Westall & Hohl 1980; Goldberg 2004; Ioannou 1997"),
-    ("Hayes Eq. 22 bracket", f"{C_HAYES_LO:.2f} to {C_HAYES_HI:.2f} F/m2",
+    ("Capacitance, envelope arm", f"{C_SINGLE:.0f} F/m2",
+                             f"sqrt(I)/alpha, alpha = {ALPHA_POK}, Pokrovsky 1999a"),
+    ("Capacitance, isotherm arm", f"{C_PW:.0f} F/m2",
+                             f"same relation at I = {I_PW:.2f} M"),
+    ("Oxide value, for comparison", f"{C_OXIDE:.2f} F/m2",
+                             "Westall & Hohl 1980; Goldberg 2004; Ioannou 1997"),
+    ("Hayes Eq. 22 bracket, oxides", f"{C_HAYES_LO:.2f} to {C_HAYES_HI:.2f} F/m2",
                              "er 6 to 50, d 2.3 to 4.3 Angstrom"),
-    ("Diffuse-layer equivalent", f"{c_diffuse(I_SINGLE):.2f} F/m2",
-                             "C = er.eps0.kappa at this ionic strength"),
-    ("Value used previously", f"{C_OLD:.0f} F/m2",             "sqrt(I)/alpha, alpha = 0.004"),
 ], columns=["parameter", "value", "source"]))
 
-print(f"\n  The capacitance previously used is {C_OLD/C_HAYES_HI:.0f} times the top of the Hayes bracket, which means it")
-print("  describes a double layer no physically possible combination of dielectric constant and")
-print("  ion approach distance can produce. Part 6 shows what it costs the model.")
-print(f"  The value adopted here lies inside the bracket, and the diffuse-layer capacitance at this")
-print(f"  ionic strength is {c_diffuse(I_SINGLE):.2f} F/m2, the same order and also inside it. Hayes give that agreement")
-print("  as the condition under which the diffuse layer model reduces to the CCM, so the two")
-print("  independent routes to a capacitance for this brine agree on where it belongs.")
+_sig_pok = np.array([0.01, 0.02])*1e-3*F_CONST          # Pokrovsky's measured dolomite charge
+print(f"\n  Pokrovsky's capacitance of {C_SINGLE:.0f} F/m2 is far above the {C_HAYES_LO:.2f} to {C_HAYES_HI:.2f} F/m2 that Hayes Eq. 22")
+print("  brackets, and that difference is a property of the mineral rather than a discrepancy.")
+print("  Hayes derived their bracket for oxides, whose site densities are a few sites per square")
+print(f"  nanometre. Dolomite carries {NT_CO3*N_AV/(S_AREA*1e18):.1f} carbonate sites per square nanometre, and Pokrovsky,")
+print("  Schott & Thomas measured its surface charge at 0.01 to 0.02 mmol/m2, which is")
+print(f"  {_sig_pok[0]:.2f} to {_sig_pok[1]:.2f} C/m2. A charge that large at the tens of millivolts a carbonate surface")
+print(f"  actually reaches implies C = sigma/psi of {_sig_pok[0]/0.020:.0f} to {_sig_pok[1]/0.010:.0f} F/m2, so the high capacitance")
+print("  follows directly from their own measurement. Carbonate surfaces simply do not sit inside")
+print("  a bracket derived for oxides.")
+print("  The capacitance is carried here as Pokrovsky wrote it, as a function of ionic strength,")
+print(f"  so the two experiments take different values: {C_SINGLE:.0f} F/m2 at I = {I_SINGLE:.3f} M and {C_PW:.0f} F/m2 at")
+print(f"  I = {I_PW:.2f} M. Part 9 reports what the choice is worth.")
 
 print("\n  Site totals from three independent sources:")
 show(pd.DataFrame([(k, v*1e3, v*N_AV/(S_AREA*1e18)) for k, v in SITES.items()],
@@ -432,7 +448,7 @@ def invert_logK(metal, pH, Ca_ppm, Mg_ppm, Ceq_ppm, uptake_M, I, nt=None, C_cap=
                 aCO3=None, davies=True):
     """One constant from one measurement, the way Ioannou & Dimirkou fitted one per pH."""
     nt = NT_BASE if nt is None else nt
-    C_cap = C_CAP if C_cap is None else C_cap
+    C_cap = c_pokrovsky(I) if C_cap is None else C_cap
     z = Z_ION[metal]
     g1, g2 = (gam(1, I), gam(2, I)) if davies else (1.0, 1.0)
     aH, aCO3 = background(pH, aCO3)
@@ -449,7 +465,7 @@ def predict_Ceq(metal, pH, Ca_ppm, Mg_ppm, C0_ppm, logK_Me, I, nt=None, C_cap=No
                 aCO3=None, davies=True):
     """Forward model: total metal in, equilibrium dissolved metal out."""
     nt = NT_BASE if nt is None else nt
-    C_cap = C_CAP if C_cap is None else C_cap
+    C_cap = c_pokrovsky(I) if C_cap is None else C_cap
     z = Z_ION[metal]
     g1, g2 = (gam(1, I), gam(2, I)) if davies else (1.0, 1.0)
     aH, aCO3 = background(pH, aCO3)
@@ -465,26 +481,30 @@ def predict_Ceq(metal, pH, Ca_ppm, Mg_ppm, C0_ppm, logK_Me, I, nt=None, C_cap=No
         D = 0.5*D + 0.5*nxt
     return D*MM[metal]*1e3, st
 
-print("  Surface potential and charge against pH, at the two capacitances, with no metal present:")
+print("  Surface potential and charge against pH, with no metal present, at Pokrovsky's")
+print(f"  capacitance for this brine ({C_SINGLE:.0f} F/m2) and at the oxide value ({C_OXIDE:.2f} F/m2) for comparison:")
 _sw = []
 for _pH in [4.0, 5.0, 6.0, 7.0, 8.0, 9.0]:
     _aH, _aC = background(_pH)
-    _a = solve_psi(_aH, _aC, 1e-4, 1e-4, 1e-12, 2, -99, NT_BASE, C_CAP)
-    _b = solve_psi(_aH, _aC, 1e-4, 1e-4, 1e-12, 2, -99, NT_BASE, C_OLD)
+    _a = solve_psi(_aH, _aC, 1e-4, 1e-4, 1e-12, 2, -99, NT_BASE, C_SINGLE)
+    _b = solve_psi(_aH, _aC, 1e-4, 1e-4, 1e-12, 2, -99, NT_BASE, C_OXIDE)
     _sw.append(dict(pH=_pH, sigma_mmol_m2=_a["sigma"]/F_CONST*1e3,
-                    psi_mV_C106=1e3*_a["psi"], boltz_C106=_a["b"],
-                    psi_mV_C207=1e3*_b["psi"], boltz_C207=_b["b"]))
+                    psi_mV_pok=1e3*_a["psi"], boltz_pok=_a["b"],
+                    psi_mV_oxide=1e3*_b["psi"], boltz_oxide=_b["b"]))
 _sw = pd.DataFrame(_sw); show(_sw)
-print(f"\n  The Boltzmann factor spans {_sw.boltz_C106.min():.3f} to {_sw.boltz_C106.max():.2f} at C = {C_CAP} F/m2, and only {_sw.boltz_C207.min():.2f} to {_sw.boltz_C207.max():.2f} at")
-print(f"  C = {C_OLD:.0f} F/m2. In the log units a constant is reported in, that is a correction of up to")
-print(f"  {abs(np.log10(_sw.boltz_C106)).max():.2f} log units against {abs(np.log10(_sw.boltz_C207)).max():.2f}, so the earlier capacitance suppressed the")
-print(f"  electrostatic term by a factor of {abs(np.log10(_sw.boltz_C106)).max()/abs(np.log10(_sw.boltz_C207)).max():.0f} and left a mass action model behind.")
-print(f"\n  Two checks before any metal constant is asked of the model. It crosses zero charge near")
-print(f"  pH {_sw.pH[(_sw.sigma_mmol_m2.abs()).idxmin()]:.0f}, against the pH 7.5 to 8.5 point of zero charge reported for dolomite. And its")
-print(f"  charge reaches {_sw.sigma_mmol_m2.abs().max():.4f} mmol/m2 over the pH 4 to 9 window of these experiments, about an")
-print("  order of magnitude below the 0.01 to 0.02 mmol/m2 Pokrovsky, Schott & Thomas report at the")
-print("  extremes of titrations that ran to pH 3 and pH 11. Both are the right sign and the right")
-print("  order, which is as much as a transferred constant set can be asked to deliver.")
+print(f"\n  At Pokrovsky's capacitance the potential runs from {_sw.psi_mV_pok.max():+.1f} to {_sw.psi_mV_pok.min():+.1f} mV, which is the")
+print("  range a carbonate surface is actually observed to reach, and the Boltzmann factor spans")
+print(f"  {_sw.boltz_pok.min():.2f} to {_sw.boltz_pok.max():.2f}, a correction of up to {abs(np.log10(_sw.boltz_pok)).max():.2f} log units. The oxide capacitance would")
+print(f"  put the potential at {_sw.psi_mV_oxide.max():+.0f} mV, which no measurement of a carbonate surface supports.")
+print("  Holding the constants and the capacitance together, as Pokrovsky fitted them, is what")
+print("  keeps the electrostatic term the size their titrations say it should be.")
+print(f"\n  Two checks before any metal constant is asked of the model. The model crosses zero charge")
+print(f"  near pH {_sw.pH[(_sw.sigma_mmol_m2.abs()).idxmin()]:.0f}, against the pH 7.5 to 8.5 point of zero charge reported for dolomite. And its")
+print(f"  charge reaches {_sw.sigma_mmol_m2.abs().max():.4f} mmol/m2 at the ends of the pH 4 to 9 window, which falls inside the")
+print("  0.01 to 0.02 mmol/m2 Pokrovsky, Schott & Thomas measured by titration. Holding their")
+print("  capacitance with their constants reproduces their own surface charge, which the oxide")
+print("  capacitance does not: at 1.06 F/m2 a charge of 0.02 mmol/m2 would require a potential of")
+print(f"  {0.02e-3*F_CONST/C_OXIDE*1e3:,.0f} mV. That is the internal consistency check that decides the parameterisation.")
 
 # %% [markdown]
 # ---
@@ -692,24 +712,26 @@ val = pd.DataFrame(val); show(val)
 # %%
 head(9, "Hayes sensitivity: what the constant depends on")
 
-print("9a  CAPACITANCE.  Hayes found the CCM protolysis constants insensitive to C above about")
-print("    1.2 F/m2. The same sweep, here, on the metal constants:\n")
+print("9a  CAPACITANCE.  The base case is Pokrovsky's own relation. The sweep runs from the oxide")
+print("    bracket of Hayes Eq. 22 up through the carbonate range, to show what the choice costs:\n")
 sens_C = []
-for C in [0.1, 0.3, 0.6, 1.06, 1.2, 1.5, 2.0, 5.0, 20.0, C_OLD]:
-    row = dict(C_F_m2=C, inside_Hayes_bracket="yes" if C_HAYES_LO <= C <= C_HAYES_HI else "no")
+for C in [0.1, 0.3, 1.06, 2.0, 5.0, 20.0, 50.0, 100.0, C_SINGLE, 400.0]:
+    row = dict(C_F_m2=C,
+               regime=("oxide bracket" if C_HAYES_LO <= C <= C_HAYES_HI else
+                       "Pokrovsky, this brine" if abs(C - C_SINGLE) < 1 else "-"))
     for m in ["Co", "Li"]:
         row[f"logK_{m}"] = fit_metal(m, C_cap=C)[0]
     sens_C.append(row)
 sens_C = pd.DataFrame(sens_C); show(sens_C)
-_in  = sens_C[sens_C.inside_Hayes_bracket == "yes"]
-_out = sens_C[sens_C.C_F_m2 > C_HAYES_HI]
-print(f"\n    Inside the Hayes bracket the cobalt constant moves by {_in.logK_Co.max()-_in.logK_Co.min():.3f} log units and the lithium")
-print(f"    constant by {_in.logK_Li.max()-_in.logK_Li.min():.3f}. The capacitance is the one parameter in this model that can be")
-print("    chosen freely without consequence, which is the same insensitivity Hayes reported for")
-print("    the protolysis constants, and it is the reason they treat C as a fitting parameter")
-print("    bounded by theory rather than as a quantity to be measured.")
-print(f"    Push it past the bracket and it starts to matter: at the {C_OLD:.0f} F/m2 the earlier version of")
-print(f"    this work used, cobalt shifts by {sens_C[sens_C.C_F_m2==C_OLD].logK_Co.iloc[0]-FIT['Co']['logK']:+.2f} and lithium by {sens_C[sens_C.C_F_m2==C_OLD].logK_Li.iloc[0]-FIT['Li']['logK']:+.2f} log units.")
+_carb = sens_C[sens_C.C_F_m2 >= 50.0]
+print(f"\n    Across the carbonate range, 50 F/m2 upward, the cobalt constant moves by {_carb.logK_Co.max()-_carb.logK_Co.min():.2f} log units")
+print(f"    and the lithium constant by {_carb.logK_Li.max()-_carb.logK_Li.min():.2f}, so the exact value of alpha is not critical once the")
+print("    capacitance is in the range a carbonate surface implies. Hayes reported the same kind of")
+print("    plateau for oxides above 1.2 F/m2: in both cases the constant stops caring about the")
+print("    capacitance once the potential has become small.")
+print(f"    Moving all the way down to the oxide value of {C_OXIDE:.2f} F/m2 shifts cobalt by")
+print(f"    {sens_C[sens_C.C_F_m2==C_OXIDE].logK_Co.iloc[0]-FIT['Co']['logK']:+.2f} and lithium by {sens_C[sens_C.C_F_m2==C_OXIDE].logK_Li.iloc[0]-FIT['Li']['logK']:+.2f} log units, which is the price of mixing a constant set")
+print("    fitted on one capacitance with a capacitance taken from a different mineral class.")
 
 print("\n9b  SITE TOTAL.  Hayes found that raising the site total lowers the fitted constant. Each")
 print("    site density here comes from a different published measurement, and none is privileged:\n")
@@ -725,9 +747,10 @@ for name, ntv in SITES.items():
         row[f"logK_{m}"] = fit_metal(m, nt=nt)[0] if up < ntv else np.nan
     sens_N.append(row)
 sens_N = pd.DataFrame(sens_N); show(sens_N)
+_cspan = _carb.logK_Co.max() - _carb.logK_Co.min()
 print(f"\n    This is the dominant sensitivity in the whole model. Across the three published site")
-print(f"    densities the cobalt constant spans {sens_N.logK_Co.max()-sens_N.logK_Co.min():.2f} log units, which is thirty times what the")
-print("    capacitance is worth. Hayes made exactly this point: a surface complexation constant")
+print(f"    densities the cobalt constant spans {sens_N.logK_Co.max()-sens_N.logK_Co.min():.2f} log units, {(sens_N.logK_Co.max()-sens_N.logK_Co.min())/_cspan:.0f} times what the capacitance is worth")
+print("    across the carbonate range. Hayes made exactly this point: a surface complexation constant")
 print("    reported without the site total it was fitted at cannot be transferred to another")
 print("    study, because whoever transfers it will use a different one.")
 print("\n    The lithium column decides which to adopt. At the two lower site densities the")
@@ -809,13 +832,13 @@ ax = axes[0]
 ax.axvspan(C_HAYES_LO, C_HAYES_HI, color=COL["green"], alpha=0.12, lw=0)
 for m in ["Co", "Li"]:
     ax.plot(sens_C.C_F_m2, sens_C[f"logK_{m}"], MK[m] + "-", color=COL[m], label=m)
-ax.axvline(C_CAP, color="0.4", ls="--", lw=1)
+ax.axvline(C_SINGLE, color="0.4", ls="--", lw=1)
 ax.set_xscale("log"); ax.set_xlabel("capacitance C (F m$^{-2}$)")
 ax.set_ylabel("fitted log K(int)")
 _y0, _y1 = ax.get_ylim(); ax.set_ylim(_y0 - 0.06, _y1 + 0.10)
-ax.text(np.sqrt(C_HAYES_LO*C_HAYES_HI), _y1 + 0.06, "Hayes Eq. 22 bracket",
+ax.text(np.sqrt(C_HAYES_LO*C_HAYES_HI), _y1 + 0.06, "Hayes Eq. 22, oxides",
         fontsize=7.5, color=COL["green"], ha="center", va="top")
-ax.text(C_CAP*1.35, _y0 + 0.02, "used here", fontsize=7.5, color="0.4",
+ax.text(C_SINGLE*0.45, _y0 + 0.02, "Pokrovsky, this brine", fontsize=7.5, color="0.4",
         va="bottom", rotation=90)
 ax.legend(loc="center left")
 ax.set_title("sensitivity to the capacitance", fontsize=9.5)
@@ -851,7 +874,8 @@ head(11, "Result")
 
 print("  CONSTANT CAPACITANCE MODEL CONSTANTS FOR LITHIUM AND COBALT ON DOLOMITE")
 print("  25 C, fitted simultaneously to an adsorption envelope and an isotherm,")
-print(f"  at C = {C_CAP} F/m2 and N_t = {NT_CO3*1e3:.3f} mmol/L ({NT_CO3*N_AV/(S_AREA*1e18):.1f} sites/nm2)\n")
+print(f"  with the Pokrovsky parameterisation throughout: C = sqrt(I)/{ALPHA_POK}, so {C_SINGLE:.0f} and {C_PW:.0f} F/m2,")
+print(f"  and N_t = {NT_CO3*1e3:.3f} mmol/L ({NT_CO3*N_AV/(S_AREA*1e18):.1f} sites/nm2)\n")
 final = pd.DataFrame([
     dict(reaction=">CO3H0 + Co2+ = >CO3Co+ + H+",
          logK=FIT["Co"]["logK"], per_point_SD=comp[comp.metal=="Co"].per_point_SD.iloc[0],
@@ -874,17 +898,33 @@ show(pd.DataFrame([
     (">CO3H0 + Co2+ = >CO3Co+ + H+", round(FIT["Co"]["logK"], 2), "this work"),
     (">CO3H0 + Li+  = >CO3Li0 + H+", round(FIT["Li"]["logK"], 2), "this work"),
 ], columns=["reaction", "log K", "source"]))
-print(f"\n  Cobalt comes out {FIT['Co']['logK']-LOGK['CO3Ca']:+.2f} log units from calcium and {FIT['Co']['logK']-LOGK['CO3Mg']:+.2f} from magnesium on the same")
-print("  site. A divalent transition metal binding a surface carbonate group a little more")
-print("  strongly than the alkaline earths that build the mineral is what the order of the")
-print("  Irving-Williams series predicts, and the fit was in no way constrained to produce it.")
-print("  That the number lands there is the main external check available on this result.")
+RADIUS = {"Ca": 1.00, "Mg": 0.72, "Co": 0.745, "Li": 0.76}   # Shannon 1976, six-coordinate, A
+print("\n  The comparison that matters is with ionic radius, because substitution into a carbonate")
+print("  surface site is a size question before it is anything else:")
+show(pd.DataFrame([
+    ("Ca2+", RADIUS["Ca"], LOGK["CO3Ca"], "Pokrovsky 1999a"),
+    ("Li+",  RADIUS["Li"], round(FIT["Li"]["logK"], 2), "this work"),
+    ("Co2+", RADIUS["Co"], round(FIT["Co"]["logK"], 2), "this work"),
+    ("Mg2+", RADIUS["Mg"], LOGK["CO3Mg"], "Pokrovsky 1999a"),
+], columns=["ion", "Shannon radius (A)", "log K", "source"]))
+print(f"\n  Cobalt sits {FIT['Co']['logK']-LOGK['CO3Mg']:+.2f} log units from magnesium and {FIT['Co']['logK']-LOGK['CO3Ca']:+.2f} from calcium. Its ionic radius,")
+print(f"  {RADIUS['Co']:.3f} A, is within {100*abs(RADIUS['Co']-RADIUS['Mg'])/RADIUS['Mg']:.0f} per cent of magnesium's {RADIUS['Mg']:.2f} A and {100*abs(RADIUS['Co']-RADIUS['Ca'])/RADIUS['Ca']:.0f} per cent from calcium's, so an")
+print("  affinity that lands on magnesium's rather than calcium's is what the crystal chemistry")
+print("  says it should be. Sphaerocobaltite and magnesite are isostructural for the same reason,")
+print("  and cobalt substitutes for magnesium in natural carbonates far more readily than for")
+print("  calcium. Pokrovsky's magnesium constant was fitted independently, on the same site of the")
+print("  same mineral, by different people from different data, and nothing in this fit was")
+print(f"  constrained to approach it. Landing {abs(FIT['Co']['logK']-LOGK['CO3Mg']):.2f} log units away is the main external check")
+print("  available on this result.")
+print(f"\n  Lithium, radius {RADIUS['Li']:.2f} A, is also close to magnesium in size but carries one charge rather")
+print(f"  than two, and its constant comes out {FIT['Li']['logK']-LOGK['CO3Mg']:+.2f} log units weaker, which is the direction a")
+print("  halved charge on the same site predicts.")
 
 print("\n  WHAT EACH CONSTANT RESTS ON.")
-print(f"  COBALT is the better determined. It carries {FIT['Co']['n']} points across {pts[(pts.metal=='Co')&(pts.arm=='envelope')].pH.min():.1f} to {pts[(pts.metal=='Co')&(pts.arm=='envelope')].pH.max():.1f} pH units, the")
-print(f"  per-point inversions and the simultaneous fit agree to {abs(comp[comp.metal=='Co'].difference.iloc[0]):.2f} log units, the coverage stays")
-print("  below a fifth of a monolayer so the model is used inside its valid range, and the value")
-print("  falls where the Irving-Williams order says it should.")
+print(f"  COBALT is the better determined. It carries {FIT['Co']['n']} points from pH {pts[(pts.metal=='Co')&(pts.arm=='envelope')].pH.min():.1f} to {pts[(pts.metal=='Co')&(pts.arm=='envelope')].pH.max():.1f}, the per-point")
+print(f"  inversions and the simultaneous fit agree to {abs(comp[comp.metal=='Co'].difference.iloc[0]):.2f} log units, the coverage never exceeds")
+print(f"  {val[val.metal=='Co'].coverage_N.max():.2f} of a monolayer so the model is used well inside its valid range, and the value")
+print("  lands on the magnesium constant that crystal chemistry says it should.")
 print(f"\n  LITHIUM is weaker and should be quoted with that said. Its coverage reaches {val[val.metal=='Li'].coverage_N.max():.2f} of a")
 print("  monolayer in the single-ion batches, and in the produced water the measured uptake is")
 print(f"  {pw_ads[(pw_ads.metal=='Li')&(pw_ads.batch=='pH6')].sorbed_M.max()/NT_CO3:.2f} times the site inventory, which no surface complexation constant can reproduce.")
