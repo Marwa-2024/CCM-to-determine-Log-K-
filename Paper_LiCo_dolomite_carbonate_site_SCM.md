@@ -284,6 +284,37 @@ The calcium and magnesium released by the same dolomite in the same brine are op
 
 ---
 
+### 3.7 Why neither constant is determined, and what would determine them
+
+Three tests establish that the limitation is the experiment rather than the model or the analysis.
+
+**The precision limit is set before any modelling.** Γ is the difference of two concentrations each measured to ±3 %, so its relative error follows from the ICP numbers alone and cannot be improved by any subsequent calculation. Across the twelve sampled points the relative error runs from 54 % to 2968 %, median 220 %, and **no point clears a 30 % bar for either metal**. At the best point of the set (cobalt, pH 6 batch, day 6) the uptake is 80.5 − 74.4 = 6.1 mg L⁻¹ against a propagated noise of √[(3 % × 80.5)² + (3 % × 74.4)²] = 3.3 mg L⁻¹, a signal-to-noise ratio of 1.9 where a constant requires about 3. At 10 of the 12 points the uptake is smaller than the noise outright. Figure 4 plots the measured points against the exact ±3 % propagation curve: every point falls on that curve and above the fit-grade bar, which shows that the scatter is analytical rather than chemical.
+
+**The inversion itself is unbiased.** Removal was generated from a known constant, the measured ±3 % noise was added, and the constant was recovered, over 120 replicates per design. Wherever removal reaches about 2 % the bias is within ±0.06, so the analysis code returns the constant it is given and is not the limitation. What varies is the spread, and it tracks only how much metal leaves solution: ±0.01 at 51 % removal, ±0.31 at 4 %. One exception is directly relevant here. At 0.7 % removal the bias is +0.55, because Γ is then dominated by noise that cannot go negative and the recovered constant is pushed upward; below roughly 1 % uptake the inversion becomes biased as well as imprecise. The pH 2 cobalt batch of this study sits at 0.7 % removal, inside that regime, so those three points are biased high rather than merely noisy.
+
+**A chemical check fails independently of the statistics.** The two indicative values differ by 0.01 log units. A monovalent alkali and a divalent transition metal cannot bind the same carbonate site with the same strength: Pokrovsky et al. (1999) give −1.8 for Ca²⁺ and −2.0 for Mg²⁺ on dolomite, and lithium should sit well below either. Two cations of different charge and radius returning the same constant is the signature of an inversion pinned by noise rather than by chemistry, and it confirms the precision result from an independent direction.
+
+**The two metals fail differently, so the remedies differ.** Cobalt is signal-limited: its uptake is small because binding is weak, and the controlling variable is surface area per litre, not dose. Reducing the cobalt dose from 80 to 5 mg L⁻¹ changes removal from 3.9 % to 4.5 % and the uncertainty from ±0.20 to ±0.15, which is negligible; raising the surface from 46 to 300 m² L⁻¹ changes removal from 3.9 % to 23 % and the uncertainty from ±0.20 to ±0.04. Lithium is site-limited: at 20 mmol L⁻¹ against 0.64 mmol L⁻¹ of carbonate sites the surface can hold only 3 % of the lithium present, the inversion is pinned against that ceiling, and the recovered constant is **biased low by 0.45 log units** rather than simply imprecise. For lithium a tenfold lower dose is sufficient and makes the constant publishable at the existing surface area.
+
+**Table 8** specifies the experiment that would determine both constants. Above roughly 1200 m² L⁻¹ a bias of the opposite sign appears, because so much metal leaves solution that the inversion is no longer well conditioned, so the target is a window rather than a maximum.
+
+**Table 8.** The experiment required to determine both constants.
+
+| Variable | This study | Target | Reason |
+|---|---|---|---|
+| Surface area per litre | 46 m² L⁻¹ | **300 m² L⁻¹** (window 300–1200) | 400 g L⁻¹ at the present 0.76 m² g⁻¹, or 60 g L⁻¹ milled to 5 m² g⁻¹; the product is what counts |
+| Cobalt dose | 80 mg L⁻¹ | 20 mg L⁻¹ | dose barely affects fractional uptake for Co |
+| Lithium dose | 138 mg L⁻¹ | 14 mg L⁻¹ | removes the −0.45 bias; Li is site-limited |
+| pH values | 2 nominal, drifting | 6–8, each held fixed | buffered or titrated; the usable Co points presently span 0.08 pH units |
+| Concentrations | 1 | 4–6 at one fixed pH | without an isotherm, site density and binding constant cannot be separated |
+| Blanks | none | solid-free at every condition | Belova et al. (2014); matters most where uptake is small |
+| Alkalinity / DIC | assumed pCO₂ | measured at every sampling | so the saturation index comes from the solution rather than an assumption |
+| Solid conditioning | metal added with solid | pre-equilibrate ≈ 1 week, filter 0.2 µm | removes pH drift, the non-congruent Ca/Mg pattern and carbonate accumulation together |
+| Contact time | 6 d, drifting | 24 h, plus a kinetic series | Belova et al. (2014) capped contact at 24 h to remain in the adsorption regime |
+| Desorption step | none | resuspend in fresh metal-free brine at the same pH | reversibility distinguishes surface complexation from incorporation |
+
+At 300 m² L⁻¹ with cobalt at 20 mg L⁻¹ and lithium at 14 mg L⁻¹, both constants reach ±0.02 to ±0.04.
+
 ## 4. Discussion
 
 The capacity test settles the question left open in the earlier study. Removal of 70 mg L⁻¹ of cobalt or 8.5 % of 138 mg L⁻¹ of lithium on 50 m² L⁻¹ of dolomite is one to three monolayers beyond what any surface complexation model can hold, so those recoveries are dominated by precipitation of sphaerocobaltite and zabuyelite, as the XRD already indicated. A constant fitted to such data would change with pH, temperature, loading and duration and would not be an interfacial property. The present single-ion data set is different: its uptake is small enough to sit inside the monolayer bound, and for lithium the point-by-point constant is independent of pH and of the electrostatic model, which is the behaviour a transferable constant should show. But lithium is site-limited rather than affinity-limited. At 20 mmol L⁻¹ against 0.64 mmol L⁻¹ of sites the surface is 71 % full, so the mass-action inversion is pinned and returns nearly the same value whatever it is fed; the internal consistency of 0.20 log units across five samples is a statement about the samples, not about the constant, and the propagated interval from −5.9 to +0.8 is the honest width. A central value is therefore not reported: a number carrying an interval that wide would be quoted without it the moment it appeared in a table. The constant is also conditional on the borrowed site density and competitor constants; Belova et al. (2014) reported ±0.45 to ±0.66 log units for nickel on calcite under far better controlled conditions.
