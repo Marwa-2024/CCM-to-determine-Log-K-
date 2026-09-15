@@ -196,6 +196,7 @@ print("-"*94)
 # %%
 head(3, "The model")
 
+NACL        = 40.0/58.44                 # mol/L background electrolyte
 DOL_GL, SSA = 60.0, 0.76                 # g/L and m2/g
 S_AREA      = DOL_GL*SSA                 # 45.6 m2 per litre
 S_T         = {k: v*S_AREA for k, v in SITE_DENS.items()}     # mol/L of suspension
@@ -327,67 +328,131 @@ print(f"  Surface area {S_AREA:.1f} m2/L, carbonate sites {S_T['CO3']*1e3:.3f} m
 print("  pH is an OUTPUT of the dissolution, not an input.")
 
 # %% [markdown]
-# ## 4 — Calibration against the produced-water experiment
+# ## 4 — The capacity test decides the mechanism, before any calibration
 #
-# Omar & Vilcáez assign K_int for Sr, Cd and Pb as *"assumed values based on observed removal
-# levels"*. The same procedure is applied here: for each metal, log K_int is adjusted until the
-# simulated day-6 dissolved concentration matches the measured one. Ca and Mg keep Pokrovsky's
-# measured values, and Sr, Cd and Pb keep the published Omar & Vilcáez values, so the only
-# quantities determined here are those for **Co, Li and Ba**.
+# Omar & Vilcáez attribute removal to sorption or to precipitation by simulating both. The
+# arithmetic decides it here before a simulation is run, because the carbonate site inventory is
+# a hard ceiling on what sorption can remove.
 
 # %%
-head(4, "Calibration against the produced-water experiment")
+head(4, "Capacity test: can sorption account for the removal at all?")
 
-NACL = 40.0/58.44
-def pw_initial():
-    """Initial totals for the produced water, mol/L, from the day-0 row."""
-    r = PW[(PW.batch == "pH6") & (PW.day == 0)].iloc[0]
-    tot = {"Na": NACL, "Cl": NACL}
-    tot["Ca"] = r.Ca_ppm/MM["Ca"]/1e3
-    tot["Mg"] = r.Mg_ppm/MM["Mg"]/1e3
-    for m in PW_METALS:
-        tot[m] = r[m]/MM[m]/1e3
-    # chloride balances the added salts
-    tot["Cl"] = NACL + 2*(tot["Ca"] + tot["Mg"]) + sum(
-        (1 if m == "Li" else 2)*tot[m] for m in PW_METALS)
-    return tot
-
-TOT0 = pw_initial()
-CT0  = 1.0e-3            # mol/L initial dissolved inorganic carbon, from the day-0 pH of 6.32
-MET  = ["Ca", "Mg"] + PW_METALS
-
-def day6_measured(metal):
-    return PW[(PW.batch == "pH6") & (PW.day == 6)][metal].iloc[0]
-
-def predict_day6(metal, logK_metal, base=None):
-    """Simulate with one metal's constant set to logK_metal; return day-6 dissolved mg/L."""
-    lk = dict(LOGK_INT) if base is None else dict(base)
-    lk[metal] = logK_metal
-    df = simulate(TOT0, CT0, MET, lk, days=6.0, nstep=360)
-    return df[metal].iloc[-1]*MM[metal]*1e3
-
-def calibrate(metal, base, lo=-7.0, hi=2.0):
-    """Adjust log K_int until the simulated day-6 concentration matches the measured one."""
-    target = day6_measured(metal)
-    f = lambda k: (predict_day6(metal, k, base) - target)**2
-    res = minimize_scalar(f, bounds=(lo, hi), method="bounded",
-                          options={"xatol": 0.02})
-    return float(res.x), predict_day6(metal, float(res.x), base), target
-
-base = dict(LOGK_INT)
+SITES_mM = S_T["CO3"]*1e3
 rows = []
-for metal in ["Co", "Li", "Ba"]:
-    k, pred, meas = calibrate(metal, base)
-    base[metal] = k
-    c0 = PW[(PW.batch == "pH6") & (PW.day == 0)][metal].iloc[0]
-    rows.append(dict(metal=metal, logK_int=k, predicted_day6_mgL=pred,
-                     measured_day6_mgL=meas,
-                     removal_pred=100*(1 - pred/c0), removal_meas=100*(1 - meas/c0)))
-cal = pd.DataFrame(rows)
-show(cal)
-LOGK_ALL = dict(base)
-print("\nFull constant set now in use (Omar & Vilcaez values kept, this study's added):")
-show(pd.DataFrame([(m, v, "Pokrovsky 1999" if m in ("Ca","Mg") else
-                    "Omar & Vilcaez 2024" if m in ("Sr","Cd","Pb") else "this study")
-                   for m, v in LOGK_ALL.items()],
-                  columns=["metal", "log K_int", "source"]))
+p0 = PW[(PW.batch == "pH6") & (PW.day == 0)].iloc[0]
+p6 = PW[(PW.batch == "pH6") & (PW.day == 6)].iloc[0]
+for m in ["Ca", "Mg"] + PW_METALS:
+    c0 = p0["Ca_ppm"] if m == "Ca" else p0["Mg_ppm"] if m == "Mg" else p0[m]
+    c6 = p6["Ca_ppm"] if m == "Ca" else p6["Mg_ppm"] if m == "Mg" else p6[m]
+    rows.append(dict(metal=m, initial_mM=c0/MM[m], removed_mM=(c0 - c6)/MM[m],
+                     x_site_inventory=(c0 - c6)/MM[m]/SITES_mM))
+cap = pd.DataFrame(rows)
+show(cap)
+trace = cap[~cap.metal.isin(["Ca", "Mg"])].removed_mM.sum()
+comp  = cap[cap.metal.isin(["Ca", "Mg"])].initial_mM.sum()
+print(f"\n  Carbonate sites available            {SITES_mM:.3f} mmol/L")
+print(f"  Total trace metal removed            {trace:.3f} mmol/L  = {trace/SITES_mM:.1f} x the site inventory")
+print(f"  Ca + Mg in solution competing        {comp:.0f} mmol/L      = {comp/SITES_mM:.0f} x the site inventory")
+print(f"\n  Cobalt alone removes {cap[cap.metal=='Co'].removed_mM.iloc[0]/SITES_mM:.2f} times every carbonate site on the dolomite, while")
+print(f"  calcium and magnesium outnumber those sites {comp/SITES_mM:.0f} to one. SORPTION CANNOT ACCOUNT FOR")
+print("  THE PRODUCED-WATER REMOVAL AT ANY VALUE OF K_int, which is why a calibration against it")
+print("  drives the constant to its bound and still under-predicts. The mechanism is precipitation.")
+print("\n  This is the same conclusion Omar & Vilcaez (2024) reached for Pb and As in their PW, and")
+print("  it agrees with the sphaerocobaltite and zabuyelite found by XRD in Elshebli et al. (2025).")
+
+# --- the same test on the single-ion experiment, which is the opposite case ------------------
+print("\n" + "-"*94)
+sing = []
+for metal in ["Co", "Li"]:
+    d = SINGLE[(SINGLE.metal == metal) & (SINGLE.batch == "pH6")]
+    rem = (d.C0_ppm.iloc[0] - d.Me_ppm.iloc[-1])/MM[metal]
+    sing.append(dict(metal=metal, removed_mM=rem, x_site_inventory=rem/SITES_mM,
+                     competitor_mM=(d.Ca_ppm.iloc[-1]/MM["Ca"] + d.Mg_ppm.iloc[-1]/MM["Mg"])))
+show(pd.DataFrame(sing))
+print("  The single-ion experiment is the opposite case: removal is INSIDE the site inventory and")
+print("  the competitor load is small, so sorption is admissible there. It fails for the other")
+print("  reason - at 7.6 % removal the uptake is only 1.9 times its own analytical error.")
+print("\n  NEITHER EXPERIMENT DETERMINES A SORPTION CONSTANT, and they fail for opposite reasons:")
+print("  the single-ion run has the right mechanism but no signal; the produced-water run has")
+print("  abundant signal but the wrong mechanism. What the produced-water run DOES determine is")
+print("  the precipitation behaviour, which is what actually removes the metal.")
+print("-"*94)
+
+# %% [markdown]
+# ## 5 — The carbonate budget, and the one measurement that is missing
+#
+# If precipitation is the mechanism, the carbonate has to come from somewhere. This section
+# closes that budget from the salt recipe and the measured calcium and magnesium, and finds that
+# it does not close — which identifies exactly what measurement is required.
+
+# %%
+head(5, "The carbonate budget")
+
+SALTS = [("NaCl", 40.00, 58.44, {"Na": 1}, {"Cl": 1}),
+         ("CaCl2.2H2O", 14.67, 147.01, {"Ca": 2}, {"Cl": 2}),
+         ("MgCl2.6H2O", 8.36, 203.30, {"Mg": 2}, {"Cl": 2}),
+         ("BaCl2.2H2O", 0.18, 244.26, {"Ba": 2}, {"Cl": 2}),
+         ("SrCl2.6H2O", 0.30, 266.62, {"Sr": 2}, {"Cl": 2}),
+         ("PbCl2", 0.13, 278.10, {"Pb": 2}, {"Cl": 2}),
+         ("CoCl2.6H2O", 0.40, 237.93, {"Co": 2}, {"Cl": 2}),
+         ("Cd(NO3)2.4H2O", 0.274, 308.48, {"Cd": 2}, {"NO3": 2}),
+         ("LiCl", 0.64, 42.39, {"Li": 1}, {"Cl": 1})]
+pos = sum(z*g/mw for _, g, mw, cat, _ in SALTS for z in cat.values())
+neg = sum(nu*g/mw for _, g, mw, _, an in SALTS for nu in an.values())
+show(pd.DataFrame([(n, g, g/mw) for n, g, mw, _, _ in SALTS],
+                  columns=["salt", "g/L", "mol/L"]))
+print(f"\n  cation charge {pos:.5f} eq/L,  anion charge {neg:.5f} eq/L")
+print(f"  alkalinity required to balance = {1e3*(pos-neg):+.2f} mmol/L")
+print("\n  The synthetic produced water is made entirely from chloride and nitrate salts, so it")
+print("  carries NO alkalinity as prepared. Every carbonate ion in the experiment must come from")
+print("  dolomite dissolution or from atmospheric CO2.")
+
+dCa = (p0.Ca_ppm - p6.Ca_ppm)/MM["Ca"]
+dMg = (p0.Mg_ppm - p6.Mg_ppm)/MM["Mg"]
+need = dCa + dMg + trace
+print(f"\n  Carbonate needed to precipitate everything that left solution:")
+print(f"    Ca  {dCa:6.2f} mmol/L      Mg  {dMg:6.2f} mmol/L      trace metals {trace:6.2f} mmol/L")
+print(f"    total {need:.1f} mmol/L of CO3")
+print("\n  THE BUDGET DOES NOT CLOSE. Dolomite dissolution is the only carbonate source available,")
+print("  and it RELEASES one Ca and one Mg for every two carbonate. It cannot simultaneously")
+print(f"  supply {need:.0f} mmol/L of carbonate and leave calcium {dCa:.1f} and magnesium {dMg:.1f} mmol/L LOWER")
+print("  than they started. One of three things must be true, and the data cannot distinguish them:")
+print("    (i)   the produced water carried alkalinity that is not in the recipe or the spreadsheet;")
+print("    (ii)  atmospheric CO2 supplied carbonate through the open bottle over six days;")
+print("    (iii) the Ca and Mg analyses are in error, as the single-ion Ca/Mg pattern also suggests.")
+print("\n  THE MEASUREMENT REQUIRED: alkalinity or dissolved inorganic carbon at every sampling.")
+print("  Omar & Vilcaez (2024) titled their paper 'The role of alkalinity...' for this reason - it")
+print("  is the variable that controls carbonate precipitation, and without it the precipitation")
+print("  model has a free parameter that no amount of modelling can pin down.")
+
+# %% [markdown]
+# ## 6 — Removal follows carbonate solubility, not sorption affinity
+#
+# The mechanism can still be tested without the alkalinity, because the *ordering* of removal
+# across six metals is diagnostic. If precipitation controls removal, the amount removed should
+# order with carbonate solubility. If sorption controls it, removal should order with the
+# sorption constant. Both orderings are available.
+
+# %%
+head(6, "Removal against carbonate solubility")
+
+rank = []
+for m in PW_METALS:
+    mineral = {v: k for k, v in MIN_CATION.items()}.get(m)
+    c0 = PW[(PW.batch == "pH6") & (PW.day == 0)][m].iloc[0]
+    c6 = PW[(PW.batch == "pH6") & (PW.day == 6)][m].iloc[0]
+    rank.append(dict(metal=m, removal_pct=100*(1 - c6/c0),
+                     mineral=mineral if mineral else "Li2CO3 (very soluble)",
+                     logK_dissociation=LOGK_MIN.get(mineral, np.nan),
+                     logK_int_sorption=LOGK_INT.get(m, np.nan)))
+rank = pd.DataFrame(rank).sort_values("removal_pct", ascending=False)
+show(rank)
+print("\n  Read the ordering. The three metals that form the least soluble carbonates - cerussite,")
+print("  sphaerocobaltite and otavite - are removed 85 to 98 %. Witherite is more soluble and")
+print("  barium is removed half. Strontianite is the most soluble of the divalent carbonates and")
+print("  strontium is removed 6 %. Lithium forms no sparingly soluble carbonate at all and is")
+print("  removed 9 %.")
+print("\n  The sorption constants run the other way where they are known: strontium has the WEAKEST")
+print(f"  published sorption constant ({LOGK_INT['Sr']:+.2f}) and is the least removed, but cadmium has the")
+print(f"  STRONGEST ({LOGK_INT['Cd']:+.2f}) and is removed less than cobalt and lead. Sorption affinity does not")
+print("  order the data; carbonate solubility does.")
