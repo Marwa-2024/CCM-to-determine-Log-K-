@@ -750,12 +750,20 @@ for metal in ["Co", "Li"]:
     for batch, ls, fill in [("pH6", "-", True), ("pH2", "--", False)]:
         d = par[(par.metal == metal) & (par.batch == batch)].sort_values("day")
         bx.plot(d.day, d.measured, MK[metal], color=COL[metal], ls="none", ms=6.5,
-                mfc=COL[metal] if fill else "white", mew=1.3,
-                label=f"{metal} {batch.replace('pH', 'pH ')}, measured")
-        bx.plot(d.day, d.predicted, ls, color=COL["model"], lw=1.3,
-                label=f"{metal} {batch.replace('pH', 'pH ')}, predicted" if metal == "Co" else None)
+                mfc=COL[metal] if fill else "white", mew=1.3)
+        bx.plot(d.day, d.predicted, ls, color=COL[metal], lw=1.3, alpha=0.55)
+# Four legend entries instead of eight: the metal is the colour, the role is the mark.
+from matplotlib.lines import Line2D
+bx.legend(handles=[
+    Line2D([], [], color=COL["Co"], marker="o", ls="none", label="Co, measured"),
+    Line2D([], [], color=COL["Co"], ls="-", alpha=0.55, label="Co, predicted"),
+    Line2D([], [], color=COL["Li"], marker="s", ls="none", label="Li, measured"),
+    Line2D([], [], color=COL["Li"], ls="-", alpha=0.55, label="Li, predicted"),
+    Line2D([], [], color="k", ls="-", label="filled / solid: pH 6 batch"),
+    Line2D([], [], color="k", ls="--", label="open / dashed: pH 2 batch")],
+    loc="upper left", fontsize=7, ncol=1)
 bx.set_xlabel("time (days)"); bx.set_ylabel("removal (% of initial)")
-bx.set_xticks([2, 4, 6]); bx.legend(loc="upper left", ncol=1, fontsize=7)
+bx.set_xticks([2, 4, 6]); bx.set_ylim(0, 8.6)
 panel(bx, "b")
 savefig(fig, "Fig2_measured_vs_predicted")
 
