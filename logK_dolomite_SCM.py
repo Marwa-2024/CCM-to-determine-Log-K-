@@ -653,6 +653,17 @@ for metal in ["Co", "Li"]:
     else:
         print("     No point survives even the indicative screen.")
 
+# A chemical sanity check that the numbers themselves fail.
+_kn = {m: float(fits[(fits.metal == m) & (fits.model == "NEM")].logK.iloc[0]) for m in ["Co", "Li"]}
+print(f"\n  SANITY CHECK, and it fails. The two indicative values are {_kn['Co']:+.2f} (Co) and "
+      f"{_kn['Li']:+.2f} (Li),")
+print(f"  differing by {abs(_kn['Co'] - _kn['Li']):.2f} log units. A monovalent alkali and a divalent transition metal")
+print("  binding the same carbonate site with the same strength is not chemically credible:")
+print(f"  Pokrovsky's divalent values are {LOGK_SURF['CO3Ca']:+.1f} (Ca) and {LOGK_SURF['CO3Mg']:+.1f} (Mg), and lithium should sit")
+print("  far weaker than either. Two metals with different charge and different ionic radius")
+print("  landing on the same number is the signature of an inversion pinned by noise rather than")
+print("  by chemistry, and it is independent confirmation of the precision result in Part 3.")
+
 print("\n  Literature comparison, for the exchange constant:")
 print("     Belova et al. (2014)  Ni on calcite   log K_ex = +0.58")
 print("     Zachara et al. (1991) Ni on calcite   log K_ex = +0.51")
