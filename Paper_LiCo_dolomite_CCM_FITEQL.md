@@ -11,7 +11,7 @@
 
 ## Abstract
 
-Dolomite recovers Li⁺ and Co²⁺ from petroleum produced water, and the quantitative split between sorption and carbonate mineral formation was left open by Elshebli et al. (2025). Here that split is resolved and intrinsic surface complexation constants are reported for both metals. The chemical model is that of Pokrovsky et al. (1999a) for dolomite, adopted whole: their eleven surface constants, their site densities of 14, 7 and 7 µmol m⁻² for the carbonate, calcium and magnesium sites, and their capacitance relation C = √I/α with α = 0.004, which gives 207 F m⁻² for the single ion brine and 250 F m⁻² for the produced water. Adopting the set whole is the point. Their constants were fitted under their capacitance, and transferring the constants under a capacitance taken from the oxide literature makes the set internally inconsistent: at 1.06 F m⁻², the value appropriate to oxides, the 0.02 mmol m⁻² surface charge Pokrovsky et al. measured on dolomite would require a surface potential of 1820 mV. Under their own relation the model reproduces their measured charge, reaching 0.019 mmol m⁻² at the ends of the pH 4 to 9 window, and crosses zero charge near pH 8 against the pH 7.5 to 8.5 point of zero charge reported for dolomite. The fitting protocol is that of Goldberg (2004), in which adsorption isotherms and envelopes are fitted simultaneously with one constant set in FITEQL, and the reporting follows Ioannou and Dimirkou (1997), who inverted one constant per pH and averaged across pH. Two experiments are combined for the first time: the single ion batches, in which dolomite dissolution carries the suspension from pH 2.25 to 8.26 at fixed total metal and which therefore constitute an adsorption envelope, and the produced water batches, which probe a different total metal against 4186 mg L⁻¹ of competing calcium and therefore constitute an isotherm point. Strontium serves as an internal standard for the produced water: because it does not sorb on carbonate surfaces, strontianite equilibrium fixes the carbonate activity at log a(CO₃²⁻) = −5.85 ± 0.01 across every sampling and both batches, which in turn fixes the solubility floor of every other metal and separates the precipitated from the sorbed fraction without the alkalinity measurement the experiments did not record. The fitted constants are log K(>CO₃Co⁺) = −1.97 with WSOS/DF = 0.57 over eleven points, and log K(>CO₃Li⁰) = −2.21 with WSOS/DF = 0.16 over eight points. The cobalt constant is supported independently: inverting one constant from each envelope point and averaging gives −1.92 ± 0.24 across pH 7.40 to 8.09, which agrees with the simultaneous fit to 0.05 log units. It is also supported externally. Cobalt lands 0.03 log units from the magnesium constant Pokrovsky et al. fitted for the same site on the same mineral, and the Shannon radius of Co²⁺, 0.745 Å, is within 3 per cent of that of Mg²⁺, 0.72 Å, and 26 per cent from that of Ca²⁺; an affinity that lands on magnesium's rather than calcium's is what the crystal chemistry predicts, and nothing in the fit was constrained to produce it. The lithium constant is reported as a lower bound, because lithium uptake reaches 0.77 of a monolayer in the single ion batches and 1.48 times the site inventory in produced water, which no surface complexation constant can reproduce; the excess is surface zabuyelite, consistent with the XRD of Elshebli et al. (2025) and with the bulk solution being four orders of magnitude undersaturated with respect to that phase. Sensitivity analysis after Hayes et al. (1991) shows the site total to be the dominant parameter, worth 0.77 log units for cobalt across three published site densities, five times what the capacitance is worth across the carbonate range, so every constant is quoted with its site total attached. For cobalt in produced water the surface model predicts less than one per cent coverage because calcium holds the exchange sites, which is the same conclusion the solubility analysis reaches by an independent route: cobalt recovery from produced water is carbonate mineral formation, not sorption.
+Dolomite recovers Li⁺ and Co²⁺ from petroleum produced water, and the quantitative split between sorption and carbonate mineral formation was left open by Elshebli et al. (2025). Here that split is resolved and intrinsic surface complexation constants are reported for both metals. The chemical model is that of Pokrovsky et al. (1999a) for dolomite, adopted whole: their eleven surface constants, their site densities of 14, 7 and 7 µmol m⁻² for the carbonate, calcium and magnesium sites, and their capacitance relation C = √I/α with α = 0.004, which gives 207 F m⁻² for the single ion brine and 250 F m⁻² for the produced water. Adopting the set whole is the point. Their constants were fitted under their capacitance, and transferring the constants under a capacitance taken from the oxide literature makes the set internally inconsistent: at 1.06 F m⁻², the value appropriate to oxides, the 0.02 mmol m⁻² surface charge Pokrovsky et al. measured on dolomite would require a surface potential of 1820 mV. Under their own relation the model reproduces their measured charge, reaching 0.019 mmol m⁻² at the ends of the pH 4 to 9 window, and crosses zero charge near pH 8 against the pH 7.5 to 8.5 point of zero charge reported for dolomite. The fitting protocol is that of Goldberg (2004), in which adsorption isotherms and envelopes are fitted simultaneously with one constant set in FITEQL, and the reporting follows Ioannou and Dimirkou (1997), who inverted one constant per pH and averaged across pH. Two experiments are combined for the first time: the single ion batches, in which dolomite dissolution carries the suspension from pH 2.25 to 8.26 at fixed total metal and which therefore constitute an adsorption envelope, and the produced water batches, which probe a different total metal against 4186 mg L⁻¹ of competing calcium and therefore constitute an isotherm point. Strontium serves as an internal standard for the produced water: because it does not sorb on carbonate surfaces, strontianite equilibrium fixes the carbonate activity at log a(CO₃²⁻) = −5.85 ± 0.01 across every sampling and both batches, which in turn fixes the solubility floor of every other metal and separates the precipitated from the sorbed fraction without the alkalinity measurement the experiments did not record. The fitted constants are log K(>CO₃Co⁺) = −1.98 with WSOS/DF = 0.56 over eleven points, and log K(>CO₃Li⁰) = −2.24 with WSOS/DF = 0.16 over eight points. The cobalt constant is supported independently: inverting one constant from each envelope point and averaging gives −1.93 ± 0.24 across pH 7.40 to 8.09, which agrees with the simultaneous fit to 0.05 log units. It is also supported externally. Cobalt lands 0.02 log units from the magnesium constant Pokrovsky et al. fitted for the same site on the same mineral, and the Shannon radius of Co²⁺, 0.745 Å, is within 3 per cent of that of Mg²⁺, 0.72 Å, and 26 per cent from that of Ca²⁺; an affinity that lands on magnesium's rather than calcium's is what the crystal chemistry predicts, and nothing in the fit was constrained to produce it. The lithium constant is reported as a lower bound, because lithium uptake reaches 0.77 of a monolayer in the single ion batches and 1.48 times the site inventory in produced water, which no surface complexation constant can reproduce; the excess is surface zabuyelite, consistent with the XRD of Elshebli et al. (2025) and with the bulk solution being four orders of magnitude undersaturated with respect to that phase. Sensitivity analysis after Hayes et al. (1991) shows the site total to be the dominant parameter, worth 0.77 log units for cobalt across three published site densities, five times what the capacitance is worth across the carbonate range, so every constant is quoted with its site total attached. For cobalt in produced water the surface model predicts less than one per cent coverage because calcium holds the exchange sites, which is the same conclusion the solubility analysis reaches by an independent route: cobalt recovery from produced water is carbonate mineral formation, not sorption.
 
 ---
 
@@ -65,7 +65,7 @@ That the first two agree to 16 per cent is a real cross check, because a generic
 
 ### 2.5 Surface and aqueous reactions
 
-The surface reactions are Pokrovsky et al. (1999a) Table 3, dolomite columns, taken as published and held fixed (Table 1). Following Ioannou and Dimirkou, who took their protonation constants from a published compilation of measured values rather than optimising them, only the two metal reactions are adjustable:
+The surface reactions are Pokrovsky et al. (1999a) Table 3, dolomite columns, taken as published and held fixed (Table 1). Two of them are corrected here: reaction 5, >MeOH⁰ + CO₃²⁻ + 2H⁺ ⇌ >MeHCO₃⁰ + H₂O, was carried in earlier drafts of this work as −4.0 for calcium and −3.5 for magnesium, and the published values reproduced in Table 1 of Ebrahimi and Vilcáez (2018) are +24.0 and +23.5. Thermodynamics alone identifies the error: reaction 5 is reaction 6 with one further proton on the left, so its constant must be the larger of the two. The correction moves the fitted constants by 0.01 log units for cobalt and 0.03 for lithium, because these two species sit on the calcium and magnesium sites and reach the metal only through the surface potential, which is small at Pokrovsky's capacitance. Following Ioannou and Dimirkou, who took their protonation constants from a published compilation of measured values rather than optimising them, only the two metal reactions are adjustable:
 
 >CO₃H⁰ + Co²⁺ ⇌ >CO₃Co⁺ + H⁺ and >CO₃H⁰ + Li⁺ ⇌ >CO₃Li⁰ + H⁺.
 
@@ -119,7 +119,7 @@ With that carbonate activity, lithium is the clean case. Zabuyelite would requir
 
 ### 3.3 Per point constants
 
-Table 2 gives one constant inverted from each envelope measurement. Over pH 7.40 to 8.09 and a threefold range of uptake, cobalt gives −1.92 ± 0.24, and over pH 7.65 to 8.26 lithium gives −2.42 ± 0.48, with no systematic trend in either.
+Table 2 gives one constant inverted from each envelope measurement. Over pH 7.40 to 8.09 and a threefold range of uptake, cobalt gives −1.93 ± 0.24, and over pH 7.65 to 8.26 lithium gives −2.42 ± 0.48, with no systematic trend in either.
 
 The batches started at pH 2 are excluded from these averages and the reason is quantitative rather than discretionary. They spent most of the run below pH 6, where the model itself predicts almost no uptake, so their measured differences carry a mean uptake to noise ratio of 0.30 against 0.89 for the batches started at pH 6. Their scatter in log K, 1.89 for cobalt and 1.17 for lithium, is a property of the ICP rather than of the dolomite surface.
 
@@ -129,12 +129,12 @@ These spreads are far wider than the ±0.03 log units Ioannou and Dimirkou obtai
 
 Fitting the envelope and isotherm arms together gives
 
-* log K(>CO₃Co⁺) = **−1.97**, WSOS/DF = 0.57, over eleven points, six envelope and five isotherm;
-* log K(>CO₃Li⁰) = **−2.21**, WSOS/DF = 0.16, over eight points, six envelope and two isotherm, with three lithium isotherm points excluded for coverages of 1.20 to 1.48 monolayers.
+* log K(>CO₃Co⁺) = **−1.98**, WSOS/DF = 0.56, over eleven points, six envelope and five isotherm;
+* log K(>CO₃Li⁰) = **−2.24**, WSOS/DF = 0.16, over eight points, six envelope and two isotherm, with three lithium isotherm points excluded for coverages of 1.20 to 1.48 monolayers.
 
 Both sit inside the accepted WSOS/DF band. Values below one indicate that the residuals are smaller than the analytical error assigned to them, which with ±3 per cent on a difference of two large concentrations is what should happen: the data are consistent with the model but do not pin it tightly.
 
-The two estimates are independent in method, in the data they use and in their weighting, and for cobalt they agree to 0.05 log units, well inside the per point scatter of 0.24. That agreement is the strongest internal evidence in this work that the cobalt constant is real. For lithium they differ by 0.21 log units, still inside the per point scatter of 0.48, but lithium sits at far higher coverage and its margin is correspondingly thinner.
+The two estimates are independent in method, in the data they use and in their weighting, and for cobalt they agree to 0.05 log units, well inside the per point scatter of 0.24. That agreement is the strongest internal evidence in this work that the cobalt constant is real. For lithium they differ by 0.18 log units, still inside the per point scatter of 0.48, but lithium sits at far higher coverage and its margin is correspondingly thinner.
 
 One result is visible in the point by point fit and is worth stating plainly. In produced water the model places almost no cobalt on the surface, predicting under one per cent coverage against 10 per cent in the single ion batch at a comparable pH, because 4186 mg L⁻¹ of calcium holds the exchange sites. The surface model and the solubility analysis of §3.2 reach the same conclusion by independent routes: cobalt recovery from produced water is carbonate mineral formation and not sorption.
 
@@ -142,11 +142,11 @@ One result is visible in the point by point fit and is worth stating plainly. In
 
 **Capacitance.** Across the carbonate range, 50 F m⁻² and above, the cobalt constant moves by 0.14 log units and the lithium constant by 0.31, so the exact value of α is not critical once the capacitance is in the range a carbonate surface implies. Hayes et al. reported the same kind of plateau for oxides above 1.2 F m⁻²; in both cases the constant stops responding to the capacitance once the potential has become small. Moving all the way down to the oxide value of 1.06 F m⁻² shifts cobalt by +0.37 and lithium by +0.52 log units, which is the price of pairing a constant set fitted under one capacitance with a capacitance taken from a different mineral class.
 
-**Site total.** This is the dominant sensitivity in the whole model. Across the three published site densities the cobalt constant spans 0.77 log units, reading −1.21 at the Goldberg density, −1.31 at the Zachara density and −1.97 at the Pokrovsky density. That is five times what the capacitance is worth across the carbonate range, and it is precisely the point Hayes et al. made.
+**Site total.** This is the dominant sensitivity in the whole model. Across the three published site densities the cobalt constant spans 0.77 log units, reading −1.21 at the Goldberg density, −1.32 at the Zachara density and −1.98 at the Pokrovsky density. That is five times what the capacitance is worth across the carbonate range, and it is precisely the point Hayes et al. made.
 
 The lithium column decides which site density to adopt. At the two lower densities the measured lithium uptake already exceeds a monolayer, at 2.61 and 2.20 times the inventory respectively, so no constant exists at any value: the model cannot hold that much lithium on a surface that small. Only the Pokrovsky carbonate site density leaves both metals inside the range a surface reaction can describe, and it is also the only one of the three measured on dolomite rather than transferred from calcite or from a generic soil. Those two reasons, one from this data set and one from the literature, are why it is the base case, and every constant reported here is quoted with it attached.
 
-**Activity convention.** Davies coefficients give −1.97 and −2.21; the FITEQL convention of setting activities equal to concentrations gives −2.29 and −2.25. The convention is worth 0.32 log units for cobalt and 0.04 for lithium at this ionic strength, which is why it is stated rather than left implicit.
+**Activity convention.** Davies coefficients give −1.98 and −2.24; the FITEQL convention of setting activities equal to concentrations gives −2.30 and −2.26. The convention is worth 0.32 log units for cobalt and 0.02 for lithium at this ionic strength, which is why it is stated rather than left implicit.
 
 ---
 
@@ -154,17 +154,17 @@ The lithium column decides which site density to adopt. At the two lower densiti
 
 ### 4.1 The cobalt constant against the literature
 
-Pokrovsky et al. (1999a) measured the same reaction on the same site of the same mineral for the two metals that build it: log K = −1.8 for calcium and −2.0 for magnesium. The cobalt constant fitted here, −1.97, falls 0.03 log units from magnesium and 0.17 from calcium.
+Pokrovsky et al. (1999a) measured the same reaction on the same site of the same mineral for the two metals that build it: log K = −1.8 for calcium and −2.0 for magnesium. The cobalt constant fitted here, −1.98, falls 0.02 log units from magnesium and 0.18 from calcium.
 
 The comparison that matters is with ionic size, because substitution into a surface carbonate site is a size question before it is anything else. On the Shannon (1976) six coordinate scale, Co²⁺ has a radius of 0.745 Å, within 3 per cent of the 0.72 Å of Mg²⁺ and 26 per cent from the 1.00 Å of Ca²⁺. An affinity that lands on magnesium's rather than calcium's is therefore what the crystal chemistry predicts. Sphaerocobaltite and magnesite are isostructural for the same reason, and cobalt substitutes for magnesium in natural carbonates far more readily than for calcium.
 
-The strength of this check lies in its independence. Pokrovsky's magnesium constant was fitted by different workers, from different data, on the same site of the same mineral, and it enters the present model as a fixed parameter in the competition term rather than as anything the metal fit can adjust. Nothing in the optimisation was constrained to approach it, and it is approached to 0.03 log units.
+The strength of this check lies in its independence. Pokrovsky's magnesium constant was fitted by different workers, from different data, on the same site of the same mineral, and it enters the present model as a fixed parameter in the competition term rather than as anything the metal fit can adjust. Nothing in the optimisation was constrained to approach it, and it is approached to 0.02 log units.
 
-Lithium is also close to magnesium in size, at 0.76 Å, but carries one charge rather than two, and its constant comes out 0.21 log units weaker, which is the direction a halved charge on the same site predicts.
+Lithium is also close to magnesium in size, at 0.76 Å, but carries one charge rather than two, and its constant comes out 0.24 log units weaker, which is the direction a halved charge on the same site predicts.
 
 ### 4.2 Why lithium is a lower bound
 
-Lithium uptake reaches 0.77 of a monolayer in the single ion batches and 1.48 times the site inventory in produced water. The second of those is not a surface complexation result at all, since no constant can reproduce it, and it is the strongest evidence in either data set that lithium is removed by more than the exchange sites. The XRD of Elshebli et al. (2025) identifies zabuyelite in the reacted solid, and §3.2 shows the bulk solution to be four orders of magnitude undersaturated with respect to it, so that phase must be forming at the surface, where the carbonate activity released by dolomite dissolution is far above the bulk value. The constant of −2.21 therefore describes the surface complexation component of lithium uptake and should be read as a lower bound on the total surface affinity.
+Lithium uptake reaches 0.77 of a monolayer in the single ion batches and 1.48 times the site inventory in produced water. The second of those is not a surface complexation result at all, since no constant can reproduce it, and it is the strongest evidence in either data set that lithium is removed by more than the exchange sites. The XRD of Elshebli et al. (2025) identifies zabuyelite in the reacted solid, and §3.2 shows the bulk solution to be four orders of magnitude undersaturated with respect to it, so that phase must be forming at the surface, where the carbonate activity released by dolomite dissolution is far above the bulk value. The constant of −2.24 therefore describes the surface complexation component of lithium uptake and should be read as a lower bound on the total surface affinity.
 
 This refines rather than contradicts the published conclusion. Lithium recovery is a surface process, as Elshebli et al. concluded, but it is two surface processes rather than one, and only the smaller of them is surface complexation.
 
@@ -178,11 +178,11 @@ A third change would help the lithium constant specifically. Because lithium alr
 
 ## 5. Conclusions
 
-1. The Pokrovsky et al. (1999a) dolomite parameterisation, adopted whole and fitted under the Goldberg (2004) protocol, yields intrinsic constants for both metals on the carbonate site: log K(>CO₃Co⁺) = −1.97 and log K(>CO₃Li⁰) = −2.21, at C = √I/0.004 and N_t = 0.638 mmol L⁻¹.
+1. The Pokrovsky et al. (1999a) dolomite parameterisation, adopted whole and fitted under the Goldberg (2004) protocol, yields intrinsic constants for both metals on the carbonate site: log K(>CO₃Co⁺) = −1.98 and log K(>CO₃Li⁰) = −2.24, at C = √I/0.004 and N_t = 0.638 mmol L⁻¹.
 
 2. The surface constants and the capacitance of a published model must be transferred together. Pairing Pokrovsky's constants with the capacitance appropriate to oxides would shift the cobalt constant by 0.37 log units and would imply a surface potential of 1820 mV for the surface charge those same authors measured.
 
-3. The cobalt constant is supported by two independent estimates that agree to 0.05 log units, and it falls 0.03 log units from the magnesium constant measured for the same site, which is where the near equality of the Co²⁺ and Mg²⁺ ionic radii places it.
+3. The cobalt constant is supported by two independent estimates that agree to 0.05 log units, and it falls 0.02 log units from the magnesium constant measured for the same site, which is where the near equality of the Co²⁺ and Mg²⁺ ionic radii places it.
 
 4. The lithium constant is a lower bound. Lithium uptake reaches 1.48 times the site inventory in produced water, which no surface complexation constant can reproduce, and the excess is surface zabuyelite formed where the carbonate activity exceeds the bulk value.
 
@@ -205,11 +205,11 @@ A third change would help the lithium constant specifically. Because lithium alr
 | >CO₃H⁰ + Li⁺ = >CO₃Li⁰ + H⁺ | fitted | this work |
 | >CaOH⁰ + H⁺ = >CaOH₂⁺ | +11.5 | Pokrovsky et al. (1999a) |
 | >CaOH⁰ = >CaO⁻ + H⁺ | −12.0 | Pokrovsky et al. (1999a) |
-| >CaOH⁰ + CO₃²⁻ + 2H⁺ = >CaHCO₃ + H₂O | −4.0 | Pokrovsky et al. (1999a) |
+| >CaOH⁰ + CO₃²⁻ + 2H⁺ = >CaHCO₃ + H₂O | +24.0 | Pokrovsky et al. (1999a) |
 | >CaOH⁰ + CO₃²⁻ + H⁺ = >CaCO₃⁻ + H₂O | +16.6 | Pokrovsky et al. (1999a) |
 | >MgOH⁰ + H⁺ = >MgOH₂⁺ | +10.6 | Pokrovsky et al. (1999a) |
 | >MgOH⁰ = >MgO⁻ + H⁺ | −12.0 | Pokrovsky et al. (1999a) |
-| >MgOH⁰ + CO₃²⁻ + 2H⁺ = >MgHCO₃ + H₂O | −3.5 | Pokrovsky et al. (1999a) |
+| >MgOH⁰ + CO₃²⁻ + 2H⁺ = >MgHCO₃ + H₂O | +23.5 | Pokrovsky et al. (1999a) |
 | >MgOH⁰ + CO₃²⁻ + H⁺ = >MgCO₃⁻ + H₂O | +15.4 | Pokrovsky et al. (1999a) |
 
 **Table 2.** Per point constants from the envelope arm, in the form of Ioannou and Dimirkou (1997) Table 3. Batches started at pH 2 are listed but excluded from the averages, for the reason given in §3.3.
@@ -228,15 +228,15 @@ A third change would help the lithium constant specifically. Because lithium alr
 | Li | pH 2 | 4.26 | 2.17 | 0.37 | 0.489 | +0.80 |
 | Li | pH 2 | 5.73 | 2.47 | 0.43 | 0.558 | −0.46 |
 | Li | pH 2 | 7.05 | 2.84 | 0.49 | 0.641 | −1.54 |
-| **Co mean, pH 6 series** | | **7.40 to 8.09** | | | | **−1.92 ± 0.24** |
+| **Co mean, pH 6 series** | | **7.40 to 8.09** | | | | **−1.93 ± 0.24** |
 | **Li mean, pH 6 series** | | **7.65 to 8.26** | | | | **−2.42 ± 0.48** |
 
 **Table 3.** Reported constants. 25 °C, Pokrovsky et al. (1999a) parameterisation throughout: C = √I/0.004, giving 207 F m⁻² for the envelope arm and 250 F m⁻² for the isotherm arm, N_t = 0.638 mmol L⁻¹ (8.4 sites nm⁻², carbonate site), Davies activity coefficients.
 
 | Reaction | log K | Per point SD | WSOS/DF | n | Status |
 |---|---|---|---|---|---|
-| >CO₃H⁰ + Co²⁺ = >CO₃Co⁺ + H⁺ | −1.97 | 0.24 | 0.57 | 11 | determined |
-| >CO₃H⁰ + Li⁺ = >CO₃Li⁰ + H⁺ | −2.21 | 0.48 | 0.16 | 8 | lower bound |
+| >CO₃H⁰ + Co²⁺ = >CO₃Co⁺ + H⁺ | −1.98 | 0.24 | 0.56 | 11 | determined |
+| >CO₃H⁰ + Li⁺ = >CO₃Li⁰ + H⁺ | −2.24 | 0.48 | 0.16 | 8 | lower bound |
 
 For comparison, on the same site of the same mineral, Pokrovsky et al. (1999a) give log K = −1.8 for Ca²⁺ and −2.0 for Mg²⁺.
 
@@ -247,7 +247,7 @@ For comparison, on the same site of the same mineral, Pokrovsky et al. (1999a) g
 | Capacitance, across the carbonate range | 50 to 400 F m⁻² | 0.14 | 0.31 |
 | Capacitance, down to the oxide value | 1.06 against 207 F m⁻² | 0.37 | 0.52 |
 | Site total, three published densities | 0.175 to 0.638 mmol L⁻¹ | 0.77 | not defined below 0.638 |
-| Activity convention, Davies against FITEQL | — | 0.32 | 0.04 |
+| Activity convention, Davies against FITEQL | — | 0.32 | 0.02 |
 
 ---
 
@@ -272,6 +272,8 @@ Every datum, reaction, constant and equation is embedded in `CCM_FITEQL_LiCo_dol
 Davis, J. A., & Kent, D. B. (1990). Surface complexation modeling in aqueous geochemistry. *Reviews in Mineralogy, 23*, 177–260.
 
 Elshebli, M., Vilcáez, J., & Smay, J. (2025). Lithium and cobalt recovery from petroleum produced water using dolomite: Impact of pH, temperature, and surface area. *Science of the Total Environment, 1003*, 180743. https://doi.org/10.1016/j.scitotenv.2025.180743
+
+Ebrahimi, P., & Vilcáez, J. (2018). Effect of brine salinity and guar gum on the transport of barium through dolomite rocks: Implications for unconventional oil and gas wastewater disposal. *Journal of Environmental Management, 214*, 370–378. https://doi.org/10.1016/j.jenvman.2018.03.008
 
 Goldberg, S. (2004). Modeling boron adsorption isotherms and envelopes using the constant capacitance model. *Vadose Zone Journal, 3*(2), 676–680. https://doi.org/10.2136/vzj2004.0676
 

@@ -168,9 +168,13 @@ print("  surface carbonate group, not only those that exchange.")
 # %%
 head(2, "Chemical model")
 
+# Reaction 5 was previously carried here as -4.0 and -3.5. Table 1 of Ebrahimi & Vilcaez (2018),
+# reproducing the same Pokrovsky source, gives +24.0 and +23.5, and those are the right values:
+# reaction 5 is reaction 6 with one more proton on the left, so its constant must be the LARGER
+# of the two, and -4.0 against +16.6 has it smaller by twenty orders of magnitude.
 LOGK = {"CO3_deprot": -4.8, "CO3Ca": -1.8, "CO3Mg": -2.0,
-        "CaOH2": 11.5, "CaO": -12.0, "CaHCO3": -4.0, "CaCO3": 16.6,
-        "MgOH2": 10.6, "MgO": -12.0, "MgHCO3": -3.5, "MgCO3": 15.4}
+        "CaOH2": 11.5, "CaO": -12.0, "CaHCO3": 24.0, "CaCO3": 16.6,
+        "MgOH2": 10.6, "MgO": -12.0, "MgHCO3": 23.5, "MgCO3": 15.4}
 
 RX = [(">CO3H0 = >CO3- + H+",                    f"{LOGK['CO3_deprot']:+.1f}", "Pokrovsky 1999 T3"),
       (">CO3H0 + Ca2+ = >CO3Ca+ + H+",           f"{LOGK['CO3Ca']:+.1f}",      "Pokrovsky 1999 T3"),
@@ -179,11 +183,11 @@ RX = [(">CO3H0 = >CO3- + H+",                    f"{LOGK['CO3_deprot']:+.1f}", "
       (">CO3H0 + Co2+ = >CO3Co+ + H+",           "FITTED",                     "this work"),
       (">CaOH0 + H+ = >CaOH2+",                  f"{LOGK['CaOH2']:+.1f}",      "Pokrovsky 1999 T3"),
       (">CaOH0 = >CaO- + H+",                    f"{LOGK['CaO']:+.1f}",        "Pokrovsky 1999 T3"),
-      (">CaOH0 + CO3-2 + 2H+ = >CaHCO3 + H2O",   f"{LOGK['CaHCO3']:+.1f}",     "Pokrovsky 1999 T3"),
+      (">CaOH0 + CO3-2 + 2H+ = >CaHCO3 + H2O",   f"{LOGK['CaHCO3']:+.1f}",     "Pokrovsky 1999 T3 (corrected)"),
       (">CaOH0 + CO3-2 + H+ = >CaCO3- + H2O",    f"{LOGK['CaCO3']:+.1f}",      "Pokrovsky 1999 T3"),
       (">MgOH0 + H+ = >MgOH2+",                  f"{LOGK['MgOH2']:+.1f}",      "Pokrovsky 1999 T3"),
       (">MgOH0 = >MgO- + H+",                    f"{LOGK['MgO']:+.1f}",        "Pokrovsky 1999 T3"),
-      (">MgOH0 + CO3-2 + 2H+ = >MgHCO3 + H2O",   f"{LOGK['MgHCO3']:+.1f}",     "Pokrovsky 1999 T3"),
+      (">MgOH0 + CO3-2 + 2H+ = >MgHCO3 + H2O",   f"{LOGK['MgHCO3']:+.1f}",     "Pokrovsky 1999 T3 (corrected)"),
       (">MgOH0 + CO3-2 + H+ = >MgCO3- + H2O",    f"{LOGK['MgCO3']:+.1f}",      "Pokrovsky 1999 T3")]
 show(pd.DataFrame(RX, columns=["surface reaction", "log K", "source"]))
 
