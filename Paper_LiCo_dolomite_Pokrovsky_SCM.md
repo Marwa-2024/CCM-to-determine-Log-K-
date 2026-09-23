@@ -66,7 +66,13 @@ Ebrahimi and Vilcáez solved dolomite dissolution with a transition state rate l
 
 What six days of dissolution also does, which 300 minutes would not, is release enough carbonate for metals to precipitate. Saturation is therefore screened at every sampling before any constant is formed. For the single ion system the carbonate activity is taken from open system equilibrium with atmospheric pCO₂. For produced water it is fixed by strontium: Zachara et al. (1991) measured log ᶜK_ex(Sr) = −2.04 on calcite and describe strontium as effectively non sorbing, so strontianite equilibrium alone sets its dissolved concentration, giving log a(CO₃²⁻) = −5.85 ± 0.01 across every sampling and both batches. Where the measured concentration lies above the solubility floor of the metal's own carbonate, precipitation is incomplete and no sorption is required; where it lies below, only the excess is sorbed; where the floor exceeds the initial concentration, the carbonate cannot form and the whole removal is a surface process.
 
-### 2.6 Estimating the constant
+### 2.6 The dissolution rate law as a check on the carbonate activity
+
+The rate law is not used to generate the pH, but the term in braces within it is not kinetic: it is the dolomite saturation state, and it can be evaluated from the measured calcium, magnesium and pH together with the carbonate activity §2.5 assumes. It therefore tests the one quantity in this work that had to be inferred rather than measured, and it is run for that reason.
+
+Two points of care. The published form carries [H⁺] to the first power, which does not balance the reaction it is written for, CaMg(CO₃)₂ + 2H⁺ ⇌ Ca²⁺ + Mg²⁺ + 2HCO₃⁻; the squared form is used here. And the equilibrium constant is built from the dolomite solubility product, log K_sp = −17.09, and the bicarbonate constant, +10.329, giving log K_eq = +3.57, rather than transferred from the value of −2.525 tabulated alongside the rate law, which is 6.1 log units away and yields a saturation state six orders too high.
+
+### 2.7 Estimating the constant
 
 The sorbed quantity is known at each sampling from §2.5, so the site balances and the closure σ = Cψ fix the surface potential and the mass action expression returns the constant directly, with no optimisation. A constant is formed only where the sorbed quantity is positive and below one monolayer. Constants are reported as a mean and standard deviation over the usable samplings of each system, because a constant that drifts systematically with pH is not an intrinsic constant and the spread across pH is the evidence either way.
 
@@ -78,17 +84,25 @@ The sorbed quantity is known at each sampling from §2.5, so the site balances a
 
 At Pokrovsky's own conditions, 0.01 M NaCl with 10⁻³ M calcium and magnesium in an open system, the model crosses zero surface charge at pH 8.5 against the pH 8.0 ± 0.1 he measured for both the point of zero charge and the isoelectric point. The residual of half a pH unit reflects the aqueous model and the site density rather than the constants, but it places the transferred set correctly on the one quantity he determined independently of his own fit, which is the check worth making before using it.
 
-### 3.2 The saturation screen
+### 3.2 The saturation state of dolomite
+
+Every single ion sampling is undersaturated with dolomite, from −18.6 to −1.5, with implied bicarbonate from below a micromolar to 1.17 mmol L⁻¹. Both are what a suspension dissolving dolomite into a dilute brine should give, so the open system carbonate activity used for that experiment passes the test.
+
+Produced water sits steadily at about +2.2, the expected sign for a brine that dissolves dolomite and cannot reprecipitate it at any useful rate. The implied bicarbonate, however, fails in the acid start batch, reaching 1907 mmol L⁻¹ at pH 4.29. No solution holds that much bicarbonate. Strontianite equilibrium fixes a(CO₃²⁻) almost independently of pH, so the bicarbonate it implies rises as the pH falls, and below about pH 7 the assumption becomes inadmissible: strontium is not solubility controlled there, its removal in that batch being 1.9 to 2.6 per cent, within the analytical noise.
+
+No reported number changes. The single ion constants, which are the recommended values, never use strontium. In produced water lithium needs no precipitation correction at any carbonate activity, so a(CO₃²⁻) reaches its constant only through the minor LiCO₃⁻ complex, and a tenfold change in it moves the lithium constant by less than 0.001 log units. The single usable produced water cobalt point sits at pH 7.86, where the implied bicarbonate is 0.54 mmol L⁻¹ and physically reasonable. The check tightens the account of the analysis without moving a result, and it bounds where the strontium reference may be used.
+
+### 3.3 The saturation screen
 
 Lithium is usable at every sampling of both systems. Zabuyelite would require lithium at 1.9 × 10⁵ mg L⁻¹ at its most soluble point in this set, against the 77 to 138 mg L⁻¹ present, so it cannot form and no correction is applied anywhere.
 
 Cobalt is the metal the carbonate chemistry interferes with, and it does so differently in the two systems. In the single ion experiment cobalt is undersaturated at five of six samplings; the exception is day 6 of the batch started at pH 6, where the pH has risen to 8.09 and the sphaerocobaltite floor has fallen to 5.7 mg L⁻¹ against the 74.4 mg L⁻¹ measured. That is the largest uptake in the whole cobalt series, and it is the one point that has to be dropped. In produced water cobalt is supersaturated at five of six samplings.
 
-### 3.3 Competition for the site
+### 3.4 Competition for the site
 
 Before any trace metal arrives, calcium and magnesium occupy 96 per cent of the carbonate sites in produced water and 6 per cent in the single ion system. This is the largest single difference between the two experiments, and it means a constant fitted in produced water must be large simply to account for any uptake at all.
 
-### 3.4 The constants
+### 3.5 The constants
 
 **Table 2** gives the constants. The single ion experiment delivers both:
 
@@ -97,11 +111,11 @@ Before any trace metal arrives, calcium and magnesium occupy 96 per cent of the 
 
 Both hold across four pH units and two batches with no trend. Produced water delivers neither cleanly: three of six lithium points exceed a monolayer and five of six cobalt points are supersaturated, and where a value can be formed at all it comes out 1.26 log units higher for lithium and 2.99 higher for cobalt.
 
-### 3.5 Forward check
+### 3.6 Forward check
 
 The constants were obtained by inversion, so the fair test is to put them back into the model and predict the sorption profiles they were never shown (Figure 1). For the single ion system the root mean square difference between measured and modelled removal is 1.3 percentage points against removals that reach 7.6 per cent. For produced water it is 25 points, which is the same conclusion as §3.4 reached from coverage and saturation, arrived at independently: the produced water profiles are not surface complexation profiles and no constant reproduces them.
 
-### 3.6 Against the constants measured for the same site
+### 3.7 Against the constants measured for the same site
 
 Pokrovsky et al. measured the same reaction on the same site of the same mineral for the two metals that build it: −1.8 for calcium and −2.0 for magnesium. Cobalt comes out 0.34 log units from magnesium and 0.54 from calcium, and lithium 0.39 from magnesium.
 
@@ -109,7 +123,7 @@ Ordered by ionic radius on the Shannon (1976) six coordinate scale, the four con
 
 Neither comparison was built into the fit. The calcium and magnesium constants enter the model only as the fixed competition term, which the metal constant cannot adjust, and both metals were free to come out anywhere over fourteen log units.
 
-### 3.7 Sensitivity
+### 3.8 Sensitivity
 
 Raising the carbonate site density from Pokrovsky's 14 µmol m⁻² to the 20 µmol m⁻² of Brady et al. (1999), a 43 per cent change, moves lithium by 0.36 log units and cobalt by 0.20. A factor of four in the capacitance is worth 0.03 log units for lithium and 0.09 for cobalt: on a carbonate surface the capacitance is high and the potential correspondingly small, so the electrostatic term does little work, which is why α can be treated as a single empirical parameter. The constants are therefore quoted with the site density they were obtained at, and the capacitance is not critical.
 
@@ -138,6 +152,8 @@ The uncertainties on the reported constants are set by one thing, that uptake is
 4. The greater recovery achieved from produced water is not stronger sorption. It is carbonate mineral formation for cobalt and uptake beyond a monolayer for lithium. This answers the question left open by Elshebli et al. (2025).
 
 5. Reaction 5 of Pokrovsky et al. Table 3 is positive, +24.0 and +23.5. Under the negative reading >MeHCO₃⁰ vanishes from the surface and the metal sites are speciated wrongly at every pH.
+
+6. The strontium reference for the carbonate activity is valid only above about pH 7. Below that it implies bicarbonate concentrations no solution can hold, because strontianite equilibrium fixes a(CO₃²⁻) almost independently of pH. None of the reported constants depends on it, but the bound should be stated by anyone reusing the method.
 
 ---
 
@@ -191,7 +207,7 @@ For comparison, on the same site of the same mineral, Pokrovsky et al. (1999) gi
 
 **Figure 2.** The constant inverted at each sampling, against the measured pH, on one shared scale. Filled symbols are the single ion experiment and open symbols produced water; the line and shaded band are the single ion mean and standard deviation; the dashed and dotted lines are the constants Pokrovsky et al. (1999) measured for calcium and magnesium on the same site. The single ion determinations scatter about the band across four pH units with no trend, which is what an intrinsic constant should do; the produced water points sit well above it.
 
-**Figure 3.** Removal against time for both metals in both systems and both starting conditions, as measured. Produced water removes far more of each metal, which §3.3 and §3.4 show is not stronger sorption.
+**Figure 3.** Removal against time for both metals in both systems and both starting conditions, as measured. Produced water removes far more of each metal, which §3.4 and §3.5 show is not stronger sorption.
 
 **Figure 4.** Why the two systems differ. Left: occupancy of the carbonate site before the trace metal arrives, showing calcium and magnesium holding 96 per cent of it in produced water against 6 per cent in the single ion system. Right: the constants obtained in each system, against the calcium and magnesium values for the same site.
 

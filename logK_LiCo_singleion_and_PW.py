@@ -368,6 +368,92 @@ print("  from one and almost nothing from the other.")
 
 # %% [markdown]
 # ---
+# ## 5b — What the dissolution rate law contributes, and what it catches
+#
+# The rate law of step 4 is not used to generate the pH here, because the pH was measured. But
+# the term in braces is not kinetic at all: it is the dolomite saturation state,
+#
+# $$1-\frac{[\mathrm{HCO_3^-}]^2[\mathrm{Ca^{2+}}][\mathrm{Mg^{2+}}]}{[\mathrm{H^+}]^{2}K_{eq}}$$
+#
+# and it can be evaluated directly from the measured calcium, magnesium and pH together with the
+# carbonate activity each part of Part 5 assumed. That makes it a test of the one quantity in this
+# work that had to be inferred rather than measured, so it is worth running even though the rate
+# itself is not needed.
+#
+# Two notes on the equation before using it. The published form carries [H⁺] to the first power,
+# which does not balance the reaction it is written for, CaMg(CO₃)₂ + 2H⁺ ⇌ Ca²⁺ + Mg²⁺ + 2HCO₃⁻;
+# the squared form is used here. And the equilibrium constant is built from the dolomite
+# solubility product rather than transferred, for the reason printed below.
+
+# %%
+head(5.5, "What the dissolution rate law contributes, and what it catches")
+
+LOGKSP_DOL = -17.09
+_kbuilt = LOGKSP_DOL + 2*LK_HCO3
+print("  The equilibrium constant of CaMg(CO3)2 + 2H+ = Ca2+ + Mg2+ + 2HCO3- is fixed by two")
+print("  well established numbers:")
+print(f"    CaMg(CO3)2 = Ca2+ + Mg2+ + 2CO3-2        log Ksp = {LOGKSP_DOL:+.2f}")
+print(f"    CO3-2 + H+ = HCO3-                       log K   = {LK_HCO3:+.3f}")
+print(f"    so                                       log Keq = {_kbuilt:+.3f}")
+print("  The value tabulated alongside the rate law in the source is -2.525, which is 6.1 log")
+print("  units from this and gives a saturation state six orders too high. The solubility product")
+print("  is therefore used directly and the tabulated constant is not transferred.")
+
+def dolomite_SI(pH, Ca_ppm, Mg_ppm, aCO3, I):
+    g1, g2 = gam(1, I), gam(2, I)
+    aH = 10**(-pH)
+    aCa, aMg = Ca_ppm/MM["Ca"]/1e3*g2, Mg_ppm/MM["Mg"]/1e3*g2
+    SI = np.log10(aCa*aMg*aCO3**2) - LOGKSP_DOL
+    return SI, aCO3*10**LK_HCO3*aH/g1*1e3           # SI, and the implied HCO3- in mmol/L
+
+sat_dol = []
+for _, r in SINGLE[SINGLE.day > 0].iterrows():
+    SI, hco3 = dolomite_SI(r.pH, r.Ca, r.Mg, background(r.pH)[1], I_SINGLE)
+    sat_dol.append(dict(system="single ion", series=f"{r.metal} {r.batch}", day=int(r.day),
+                        pH=r.pH, implied_HCO3_mM=hco3, SI_dolomite=SI))
+for _, r in PW[PW.day > 0].iterrows():
+    aC = carb[(carb.batch == r.batch) & (carb.day == r.day)].a_CO3.iloc[0]
+    SI, hco3 = dolomite_SI(r.pH, r.Ca, r.Mg, aC, I_PW)
+    sat_dol.append(dict(system="produced water", series=r.batch, day=int(r.day),
+                        pH=r.pH, implied_HCO3_mM=hco3, SI_dolomite=SI))
+sat_dol = pd.DataFrame(sat_dol)
+print()
+show(sat_dol)
+
+_ss = sat_dol[sat_dol.system == "single ion"]
+_pp = sat_dol[sat_dol.system == "produced water"]
+print(f"\n  SINGLE ION. Every sampling is undersaturated with dolomite, from {_ss.SI_dolomite.min():.1f} to {_ss.SI_dolomite.max():.1f}, and the")
+print(f"  implied bicarbonate runs from below a micromolar to {_ss.implied_HCO3_mM.max():.2f} mmol/L. Both are what a")
+print("  suspension dissolving dolomite into a dilute brine should show, so the open system")
+print("  carbonate activity used for this experiment passes the test.")
+
+_bad = _pp[_pp.implied_HCO3_mM > 10]
+print(f"\n  PRODUCED WATER. The saturation state is steady at about {_pp.SI_dolomite.mean():+.1f}, which is the expected")
+print("  sign: the brine dissolves dolomite and cannot reprecipitate it at any useful rate, so it")
+print("  sits above equilibrium. But the implied bicarbonate fails, and badly, in the acid start")
+print(f"  batch: {_bad.implied_HCO3_mM.max():,.0f} mmol/L at pH {_bad.pH.min():.2f}. No solution holds that much bicarbonate.")
+print("\n  WHAT THAT MEANS. Strontianite equilibrium fixes a(CO3) almost independently of pH, so the")
+print("  bicarbonate it implies rises as the pH falls, and below about pH 7 the assumption becomes")
+print("  physically inadmissible. Strontium is simply not solubility controlled in the acid start")
+print("  batch: its removal there is 1.9 to 2.6 per cent, which is within the analytical noise.")
+
+_pH0 = 4.290; _aC0 = float(carb[(carb.batch == 'pH2') & (carb.day == 2)].a_CO3.iloc[0])
+_aCl0 = NACL_M*gam(1, I_PW)
+_hi = free_fraction("Li", 10**(-_pH0), _aC0, _aCl0)
+_lo = free_fraction("Li", 10**(-_pH0), _aC0/10, _aCl0)
+print("\n  WHAT IT CHANGES IN THE REPORTED NUMBERS: nothing, and the reason is worth stating.")
+print("    The single ion constants, which are the recommended values, never use strontium. They")
+print("    take their carbonate from open system equilibrium, which the table above validates.")
+print("    In produced water lithium needs no precipitation correction at any carbonate activity,")
+print("    so a(CO3) reaches its constant only through the minor LiCO3- complex: a tenfold change")
+print(f"    in a(CO3) moves the lithium constant by {abs(np.log10(_hi/_lo)):.4f} log units.")
+print(f"    The single usable produced water cobalt point sits at pH {_pp[_pp.implied_HCO3_mM<10].pH.max():.2f}, where the implied")
+print(f"    bicarbonate is {_pp[_pp.implied_HCO3_mM<10].implied_HCO3_mM.min():.2f} mmol/L and physically reasonable.")
+print("    So the check tightens the account without moving a number, which is the most useful")
+print("    outcome a check of an assumption can have.")
+
+# %% [markdown]
+# ---
 # ## 6 — Step 2: the surface complexation model
 #
 # Site balance on each of the three sites, charge from the surface species only (Pokrovsky Eq. 5),
