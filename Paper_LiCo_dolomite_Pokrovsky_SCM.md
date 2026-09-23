@@ -97,7 +97,11 @@ Before any trace metal arrives, calcium and magnesium occupy 96 per cent of the 
 
 Both hold across four pH units and two batches with no trend. Produced water delivers neither cleanly: three of six lithium points exceed a monolayer and five of six cobalt points are supersaturated, and where a value can be formed at all it comes out 1.26 log units higher for lithium and 2.99 higher for cobalt.
 
-### 3.5 Against the constants measured for the same site
+### 3.5 Forward check
+
+The constants were obtained by inversion, so the fair test is to put them back into the model and predict the sorption profiles they were never shown (Figure 1). For the single ion system the root mean square difference between measured and modelled removal is 1.3 percentage points against removals that reach 7.6 per cent. For produced water it is 25 points, which is the same conclusion as §3.4 reached from coverage and saturation, arrived at independently: the produced water profiles are not surface complexation profiles and no constant reproduces them.
+
+### 3.6 Against the constants measured for the same site
 
 Pokrovsky et al. measured the same reaction on the same site of the same mineral for the two metals that build it: −1.8 for calcium and −2.0 for magnesium. Cobalt comes out 0.34 log units from magnesium and 0.54 from calcium, and lithium 0.39 from magnesium.
 
@@ -105,7 +109,7 @@ Ordered by ionic radius on the Shannon (1976) six coordinate scale, the four con
 
 Neither comparison was built into the fit. The calcium and magnesium constants enter the model only as the fixed competition term, which the metal constant cannot adjust, and both metals were free to come out anywhere over fourteen log units.
 
-### 3.6 Sensitivity
+### 3.7 Sensitivity
 
 Raising the carbonate site density from Pokrovsky's 14 µmol m⁻² to the 20 µmol m⁻² of Brady et al. (1999), a 43 per cent change, moves lithium by 0.36 log units and cobalt by 0.20. A factor of four in the capacitance is worth 0.03 log units for lithium and 0.09 for cobalt: on a carbonate surface the capacitance is high and the potential correspondingly small, so the electrostatic term does little work, which is why α can be treated as a single empirical parameter. The constants are therefore quoted with the site density they were obtained at, and the capacitance is not critical.
 
@@ -183,11 +187,13 @@ For comparison, on the same site of the same mineral, Pokrovsky et al. (1999) gi
 
 ## Figure captions
 
-**Figure 1.** Intrinsic constant against measured pH for lithium and cobalt. Filled symbols are the single ion experiment, open symbols produced water; the line and band are the single ion mean and standard deviation; the dashed and dotted lines are the constants Pokrovsky et al. (1999) measured for calcium and magnesium on the same site. The single ion determinations cluster on the band across four pH units with no trend; the produced water points sit well above it.
+**Figure 1.** The fitted constant put back into the model and compared with the sorption profiles it was not shown, for both metals in both systems. Symbols are measured removal, filled for the batches started at pH 6 and open for those started at pH 2; lines are the model at the constant given in each panel title. The curve is not a kinetic trajectory: it is the equilibrium sorption the model predicts at the pH, calcium and magnesium measured at that moment, interpolated across the six days, so it does not start at zero and a measured point lying on it is a batch that has reached equilibrium. Grey rings mark the samplings excluded before fitting, either because the metal's carbonate had become supersaturated or because the uptake exceeded one monolayer. Panels A and B, the single ion system, track the measured profiles to a root mean square error of 1.3 percentage points; panels C and D, produced water, miss by 25 points, because most of the removal there is not surface complexation and no value of the constant can reproduce it. Panel B shows the largest cobalt uptake of the single ion series lying well above the model and ringed: that is the sampling at which sphaerocobaltite becomes supersaturated.
 
-**Figure 2.** Removal against time for both metals in both systems, both starting conditions. Produced water removes far more of each metal, which §3.3 and §3.4 show is not stronger sorption.
+**Figure 2.** The constant inverted at each sampling, against the measured pH, on one shared scale. Filled symbols are the single ion experiment and open symbols produced water; the line and shaded band are the single ion mean and standard deviation; the dashed and dotted lines are the constants Pokrovsky et al. (1999) measured for calcium and magnesium on the same site. The single ion determinations scatter about the band across four pH units with no trend, which is what an intrinsic constant should do; the produced water points sit well above it.
 
-**Figure 3.** Why the two systems differ. Left: occupancy of the carbonate site before the trace metal arrives, showing calcium and magnesium holding 96 per cent of it in produced water against 6 per cent in the single ion system. Right: the constants obtained in each system, against the calcium and magnesium values for the same site.
+**Figure 3.** Removal against time for both metals in both systems and both starting conditions, as measured. Produced water removes far more of each metal, which §3.3 and §3.4 show is not stronger sorption.
+
+**Figure 4.** Why the two systems differ. Left: occupancy of the carbonate site before the trace metal arrives, showing calcium and magnesium holding 96 per cent of it in produced water against 6 per cent in the single ion system. Right: the constants obtained in each system, against the calcium and magnesium values for the same site.
 
 ---
 

@@ -630,33 +630,159 @@ print("     correspondingly small, so the electrostatic term does little work an
 print("     insensitive to the exact value of alpha. That is a property of the mineral, and it is")
 print("     why Pokrovsky could treat alpha as a single empirical fitting parameter.")
 
+
 # %% [markdown]
 # ---
-# ## 11 — Figures
+# ## 11 — Forward check: the model against the measured sorption profiles
+#
+# The constant was obtained by inversion, so the fair test is to put it back into the model and
+# predict the sorption profile it was never shown. This is the comparison Ebrahimi & Vilcáez make
+# in their Figure 5: measured sorption against time, with the simulated curve through it.
+#
+# The curve is computed at the measured pH, calcium and magnesium interpolated across the six
+# days, so the rise in the model line is driven by the same dolomite dissolution the experiment
+# underwent, and the only free quantity in it is the constant from Part 8.
 
 # %%
-head(11, "Figures")
+head(11, "Forward check: the model against the measured sorption profiles")
 
-# --- Figure 1: the constant against pH, both systems -------------------------------------------
-fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.9), constrained_layout=True)
+def predict_removal(metal, pH, Ca_ppm, Mg_ppm, C0_ppm, logK_Me, I, aCO3=None, nt=None):
+    """Total metal in, per cent removed by surface complexation out."""
+    nt = NT if nt is None else nt
+    z = Z_ION[metal]
+    g1, g2 = gam(1, I), gam(2, I)
+    aH, aCO3 = background(pH, aCO3)
+    aCa, aMg = Ca_ppm/MM["Ca"]/1e3*g2, Mg_ppm/MM["Mg"]/1e3*g2
+    fr = free_fraction(metal, aH, aCO3, NACL_M*g1)*(g1 if z == 1 else g2)
+    T = C0_ppm/MM[metal]/1e3
+    D = T
+    for _ in range(60):
+        st = solve_psi(aH, aCO3, aCa, aMg, D*fr, z, logK_Me, nt, c_pokrovsky(I))
+        nxt = max(T - st["me_s"], 1e-16)
+        if abs(nxt - D) < 1e-11*T: D = nxt; break
+        D = 0.5*D + 0.5*nxt
+    return 100*(T - D)/T
+
+def profile(metal, system, batch, logK, n=61):
+    """Model curve across the six days, at the interpolated measured conditions."""
+    if system == "single ion":
+        d = SINGLE[(SINGLE.metal == metal) & (SINGLE.batch == batch)].sort_values("day")
+        C0, I, aC = d.C0.iloc[0], I_SINGLE, None
+        me = d.Me.values
+    else:
+        d = PW[PW.batch == batch].sort_values("day")
+        C0, I = d[metal].iloc[0], I_PW
+        aC = float(carb[carb.batch == batch].a_CO3.mean())
+        me = d[metal].values
+    t = np.linspace(0, 6, n)
+    pH = np.interp(t, d.day, d.pH); ca = np.interp(t, d.day, d.Ca); mg = np.interp(t, d.day, d.Mg)
+    pred = [predict_removal(metal, p, c, m, C0, logK, I, aCO3=aC) for p, c, m in zip(pH, ca, mg)]
+    return t, np.array(pred), d.day.values, 100*(C0 - me)/C0
+
+FITTED = {(m, sy): summ[(summ.metal == m) & (summ.system == sy)].logK_int.iloc[0]
+          for m in ["Li", "Co"] for sy in ["single ion", "produced water"]}
+
+fig, axes = plt.subplots(2, 2, figsize=(8.8, 6.8), constrained_layout=True)
+panel = "ABCD"; k = 0
+for i, sysname in enumerate(["single ion", "produced water"]):
+    for j, m in enumerate(["Li", "Co"]):
+        ax = axes[i, j]
+        lk = FITTED[(m, sysname)]
+        top = 0.0                      # collected over BOTH batches, not just the last
+        for batch, fc, ls in [("pH6", COL[m], "-"), ("pH2", "white", "--")]:
+            t, pred, day, meas = profile(m, sysname, batch, lk)
+            top = max(top, float(np.nanmax(meas)), float(np.nanmax(pred)))
+            ax.plot(t, pred, ls, color=COL[m], lw=1.6, zorder=2)
+            ax.plot(day, meas, MK[m], color=COL[m], mfc=fc, mec=COL[m], ls="none", ms=7.5,
+                    zorder=3)
+            # ring every sampling that yielded no constant, for either reason
+            bad = pts[(pts.metal == m) & (pts.system == sysname) & (pts.batch == batch) &
+                      pts.logK_int.isna()]
+            for _, b in bad.iterrows():
+                yv = meas[list(day).index(b.day)]
+                ax.plot(b.day, yv, "o", ms=15, mfc="none", mec="0.25", mew=1.3, zorder=4)
+        ax.set_xlim(-0.3, 6.5); ax.set_xticks([0, 2, 4, 6])
+        ax.set_xlabel("time (days)")
+        ax.set_ylabel(f"{m} removed (%)")
+        ax.set_title(f"({panel[k]})  {m}, {sysname}   —   log $K_{{int}}$ = {lk:+.2f}",
+                     fontsize=9.5, loc="left")
+        ax.set_ylim(0, top*1.18 if top > 0 else 1)
+        k += 1
+
+from matplotlib.lines import Line2D
+handles = [Line2D([], [], marker="s", color="0.3", mfc="0.3", ls="none", ms=7.5,
+                  label="measured, pH 6 start"),
+           Line2D([], [], marker="s", color="0.3", mfc="white", ls="none", ms=7.5,
+                  label="measured, pH 2 start"),
+           Line2D([], [], color="0.3", ls="-", lw=1.6, label="model, pH 6 start"),
+           Line2D([], [], color="0.3", ls="--", lw=1.6, label="model, pH 2 start"),
+           Line2D([], [], marker="o", color="0.25", mfc="none", mew=1.3, ls="none", ms=13,
+                  label="excluded: carbonate supersaturated\nor above one monolayer")]
+fig.legend(handles=handles, loc="outside lower center", ncol=5, fontsize=7.6,
+           frameon=False, handletextpad=0.5, columnspacing=1.4)
+savefig(fig, "TwoSys_Fig1_model_vs_measured")
+
+print("  HOW TO READ THIS FIGURE. The curve is not a kinetic trajectory. It is the equilibrium")
+print("  sorption the model predicts at the pH, calcium and magnesium actually measured at that")
+print("  moment, so it does not start at zero: at day zero the suspension already sits at pH 6.3")
+print("  in one pair of batches, and the model says what sorption would be there at equilibrium.")
+print("  A measured point on the curve is a batch that has reached equilibrium; a point below it")
+print("  is one still approaching. The acid start batches, dashed, begin far below their curve and")
+print("  climb onto it as dolomite dissolution raises the pH, which is the behaviour the model")
+print("  should show and does.")
+print("\n  Rings mark the samplings the saturation screen removed before fitting. They are drawn")
+print("  because they are informative, not because they were used: panel B shows the largest")
+print("  cobalt uptake of the single ion series sitting well above the model, and that is the")
+print("  point at which sphaerocobaltite becomes supersaturated.")
+
+rmse = []
+for sysname in ["single ion", "produced water"]:
+    for m in ["Li", "Co"]:
+        for batch in ["pH6", "pH2"]:
+            t, pred, day, meas = profile(m, sysname, batch, FITTED[(m, sysname)])
+            pm = np.interp(day[1:], t, pred)
+            rmse.append(dict(metal=m, system=sysname, batch=batch,
+                             RMSE_pct=float(np.sqrt(np.mean((pm - meas[1:])**2))),
+                             max_measured_pct=float(meas.max())))
+rmse = pd.DataFrame(rmse); show(rmse)
+print(f"\n  Root mean square error between measured and modelled sorption, in percentage points.")
+print(f"  For the single ion system it is {rmse[rmse.system=='single ion'].RMSE_pct.mean():.2f} points on average, against removals that reach")
+print(f"  {rmse[rmse.system=='single ion'].max_measured_pct.max():.1f} per cent, so the model tracks the profile it was not shown. For produced water")
+print(f"  it is {rmse[rmse.system=='produced water'].RMSE_pct.mean():.1f} points, because most of the removal there is not surface complexation")
+print("  and no value of the constant can reproduce it.")
+
+# %% [markdown]
+# ---
+# ## 12 — Figures
+
+# %%
+head(12, "Figures")
+
+# --- Figure 2: the constant against pH, both systems, on one shared scale ----------------------
+fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.0), sharey=True, constrained_layout=True)
+_allk = pts.logK_int.dropna()
+ylo, yhi = np.floor(_allk.min()*2)/2 - 0.3, np.ceil(_allk.max()*2)/2 + 0.55
 for ax, m in zip(axes, ["Li", "Co"]):
-    for sysname, fc, mk in [("single ion", COL[m], MK[m]), ("produced water", "white", MK[m])]:
-        g = pts[(pts.metal == m) & (pts.system == sysname) & pts.logK_int.notna()]
-        ax.plot(g.pH, g.logK_int, mk, color=COL[m], mfc=fc, mec=COL[m], ls="none",
-                ms=8, label=sysname)
+    ax.axhline(LOGK["CO3Ca"], color="0.45", ls="--", lw=1, zorder=1)
+    ax.axhline(LOGK["CO3Mg"], color="0.45", ls=":", lw=1, zorder=1)
+    ax.text(8.9, LOGK["CO3Ca"] + 0.06, "Pokrovsky Ca", fontsize=7.2, color="0.4",
+            va="bottom", ha="right")
+    ax.text(8.9, LOGK["CO3Mg"] - 0.06, "Pokrovsky Mg", fontsize=7.2, color="0.4",
+            va="top", ha="right")
     mu = summ[(summ.metal == m) & (summ.system == "single ion")].logK_int.iloc[0]
     sd = summ[(summ.metal == m) & (summ.system == "single ion")].SD.iloc[0]
-    ax.axhspan(mu - sd, mu + sd, color=COL[m], alpha=0.12, lw=0)
-    ax.axhline(mu, color=COL[m], lw=1.4)
-    ax.axhline(LOGK["CO3Ca"], color="0.45", ls="--", lw=1)
-    ax.axhline(LOGK["CO3Mg"], color="0.45", ls=":", lw=1)
-    ax.text(8.55, LOGK["CO3Ca"], " Ca", fontsize=7.5, color="0.45", va="center")
-    ax.text(8.55, LOGK["CO3Mg"], " Mg", fontsize=7.5, color="0.45", va="center")
-    ax.set_xlim(3.6, 9.0); ax.set_xlabel("measured pH")
-    ax.set_ylabel("log $K_{int}$")
-    ax.set_title(f"{m}: >CO$_3$H$^0$ + {m} = >CO$_3${m} + H$^+$", fontsize=9.5)
-    ax.legend(loc="lower right")
-savefig(fig, "TwoSys_Fig1_logK_vs_pH")
+    ax.axhspan(mu - sd, mu + sd, color=COL[m], alpha=0.13, lw=0, zorder=0)
+    ax.axhline(mu, color=COL[m], lw=1.6, zorder=2)
+    for sysname, fc in [("single ion", COL[m]), ("produced water", "white")]:
+        g = pts[(pts.metal == m) & (pts.system == sysname) & pts.logK_int.notna()]
+        ax.plot(g.pH, g.logK_int, MK[m], color=COL[m], mfc=fc, mec=COL[m], ls="none",
+                ms=8, zorder=3, label=sysname)
+    ax.set_xlim(3.6, 9.0); ax.set_ylim(ylo, yhi)
+    ax.set_xlabel("measured pH")
+    ax.set_title(f"{m}    single ion mean {mu:+.2f} $\\pm$ {sd:.2f}", fontsize=9.5, loc="left")
+    ax.legend(loc="upper left", fontsize=8, ncol=2)
+axes[0].set_ylabel("log $K_{int}$")
+savefig(fig, "TwoSys_Fig2_logK_vs_pH")
 
 # --- Figure 2: removal in the two systems ------------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.9), constrained_layout=True)
@@ -672,7 +798,7 @@ for ax, m in zip(axes, ["Li", "Co"]):
     ax.set_xticks([0, 2, 4, 6]); ax.set_xlabel("time (days)")
     ax.set_ylabel("removal (% of initial)"); ax.set_title(m, fontsize=9.5)
     ax.legend(loc="upper left", fontsize=7.2)
-savefig(fig, "TwoSys_Fig2_removal_both_systems")
+savefig(fig, "TwoSys_Fig3_removal_both_systems")
 
 # --- Figure 3: why the two systems differ -----------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.8), constrained_layout=True)
@@ -711,14 +837,14 @@ for xi, v in zip(x, val):
     ax.text(xi, v + (0.12 if v > 0 else -0.12), f"{v:+.2f}", ha="center",
             va="bottom" if v > 0 else "top", fontsize=8)
 ax.set_title("the same metal, the two systems", fontsize=9)
-savefig(fig, "TwoSys_Fig3_why_the_systems_differ")
+savefig(fig, "TwoSys_Fig4_why_the_systems_differ")
 
 # %% [markdown]
 # ---
-# ## 12 — Result
+# ## 13 — Result
 
 # %%
-head(12, "Result")
+head(13, "Result")
 
 print("  INTRINSIC SURFACE COMPLEXATION CONSTANTS FOR LITHIUM AND COBALT ON DOLOMITE")
 print("  >CO3H0 + Me(z+)  =  >CO3Me(z-1)+ + H+ ,  25 C")
