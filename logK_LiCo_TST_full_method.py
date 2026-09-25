@@ -683,3 +683,153 @@ print("    implies impossible bicarbonate below about pH 7.")
 print("\n  The short answer to whether the method can simply be applied here: all of it can except")
 print("  the kinetic step, and the kinetic step is the one part this study does not need, because")
 print("  it measured what that step exists to predict.")
+
+# %% [markdown]
+# ---
+# ## 11 — The comparison figure the method is judged on
+#
+# The method's own presentation is a two panel comparison: measured and simulated **sorption**
+# against time, and measured and simulated **pH** against time, on the same run. That is the test
+# worth passing, because a curve that rises and levels where the data do is evidence the model
+# has the mechanism, and an equilibrium value plotted as a flat line is not.
+#
+# Producing it requires the simulation to be genuinely kinetic, so both fitted quantities are
+# obtained by matching whole profiles rather than by averaging point estimates:
+#
+# * **kₘ** is fitted, per batch, so that the integrated dissolution reproduces the measured pH.
+#   The source notes kₘ is controversial and fits it; the difference is that the target here is
+#   this study's own measured pH rather than a database value.
+# * **log K_int** is then fitted, per batch, so that the surface complexation model running on
+#   that simulated pH reproduces the measured sorption profile. This is the fit of Eq. 4.
+
+# %%
+head(11, "The comparison figure the method is judged on")
+
+def sorbed_fraction(pH, T_Ca, T_Mg, T_Me, metal, T_Cl, I, logK_Me):
+    """Equilibrium sorption of the metal at a given moment of the simulated run."""
+    g1, g2 = gam(1, I), gam(2, I)
+    aH, aHCO3, aCO3, _ = carbonate(pH)
+    aCl = T_Cl*g1
+    z = Z_ION[metal]
+    tot = 1.0
+    for _, lb, st, _ in AQ[metal]:
+        v = 10**lb
+        for c, n in st.items(): v *= {"Cl": aCl, "H": aH, "CO3": aCO3}[c]**n
+        tot += v
+    D = T_Me
+    for _ in range(60):
+        aMe = D/tot*(g1 if z == 1 else g2)
+        st = solve_psi(aH, aCO3, T_Ca*g2, T_Mg*g2, aMe, z, logK_Me, c_pokrovsky(I))
+        nxt = max(T_Me - st["me_s"], 1e-18)
+        if abs(nxt - D) < 1e-11*T_Me: D = nxt; break
+        D = 0.5*D + 0.5*nxt
+    return 100*(T_Me - D)/T_Me
+
+def simulate(sysname, series, log_km, n=41):
+    tot, cl, I, d = batch_setup(sysname, series)
+    t, ca, mg, pH = run_batch(tot, cl, I, log_km, n=n)
+    return t, ca, mg, pH, tot, cl, I, d
+
+def fit_km(sysname, series):
+    _, _, I, d = batch_setup(sysname, series)
+    def mis(lk):
+        t, ca, mg, pH, *_ = simulate(sysname, series, lk, n=17)
+        return float(np.sqrt(np.mean((np.interp(d.day.values[1:], t, pH) - d.pH.values[1:])**2)))
+    o = minimize_scalar(mis, bounds=(-9.0, 0.0), method="bounded", options=dict(xatol=0.02))
+    return float(o.x), float(o.fun)
+
+def fit_logK(sysname, series, metal, log_km):
+    t, ca, mg, pH, tot, cl, I, d = simulate(sysname, series, log_km)
+    meas_col = "Me" if sysname == "single ion" else metal
+    C0 = d[meas_col].iloc[0]
+    meas = 100*(C0 - d[meas_col].values[1:])/C0
+    T_Me = C0/MM[metal]/1e3
+    def curve(lk):
+        return np.array([sorbed_fraction(p, c, m, T_Me, metal, cl, I, lk)
+                         for p, c, m in zip(pH, ca, mg)])
+    def mis(lk):
+        return float(np.sqrt(np.mean((np.interp(d.day.values[1:], t, curve(lk)) - meas)**2)))
+    o = minimize_scalar(mis, bounds=(-6.0, 4.0), method="bounded", options=dict(xatol=0.02))
+    return float(o.x), float(o.fun), t, curve(float(o.x)), pH, d, meas
+
+RUNS = [("single ion", "Li pH6", "Li"), ("single ion", "Li pH2", "Li"),
+        ("single ion", "Co pH6", "Co"), ("single ion", "Co pH2", "Co")]
+prof = {}
+rows = []
+for sysname, series, metal in RUNS:
+    lkm, pherr = fit_km(sysname, series)
+    lk, serr, t, cv, pH, d, meas = fit_logK(sysname, series, metal, lkm)
+    prof[series] = dict(t=t, curve=cv, pH=pH, d=d, meas=meas, logK=lk, log_km=lkm)
+    rows.append(dict(series=series, metal=metal, log_km=lkm, pH_RMSE=pherr,
+                     logK_int=lk, sorption_RMSE_pct=serr))
+show(pd.DataFrame(rows))
+print("\n  Each batch now has its own fitted dissolution rate constant, matched to its own")
+print("  measured pH, and its own constant of Eq. 4, matched to its own measured sorption")
+print("  profile. Both are profile fits over the whole run, not averages of point estimates.")
+
+RM = {r["series"]: r for r in rows}
+fig, axes = plt.subplots(2, 2, figsize=(9.2, 7.0), sharex=True, constrained_layout=True)
+PANEL = {"Li": ("A", "B"), "Co": ("C", "D")}
+for j, metal in enumerate(["Li", "Co"]):
+    axA, axB = axes[0, j], axes[1, j]
+    pa, pb = PANEL[metal]
+    for series, fc, ls in [(f"{metal} pH6", COL[metal], "-"), (f"{metal} pH2", "white", "--")]:
+        P = prof[series]
+        axA.plot(P["t"], P["curve"], ls, color=COL[metal], lw=1.6)
+        axA.plot(P["d"].day.values[1:], P["meas"], MK[metal], color=COL[metal], mfc=fc,
+                 mec=COL[metal], ls="none", ms=7.5)
+        axB.plot(P["t"], P["pH"], ls, color=COL["pH"], lw=1.6)
+        axB.plot(P["d"].day, P["d"].pH, MK[metal], color=COL["pH"], mfc=fc,
+                 mec=COL["pH"], ls="none", ms=7.5)
+    axA.set_ylabel(f"{metal} sorption (%)")
+    axA.set_title(f"({pa})  {metal} sorption", fontsize=9.5, loc="left")
+    axB.set_ylabel("pH"); axB.set_xlabel("time (days)")
+    axB.set_title(f"({pb})  pH", fontsize=9.5, loc="left")
+    axB.set_ylim(1.8, 9.4)
+    _t6, _t2 = RM[f"{metal} pH6"], RM[f"{metal} pH2"]
+    axA.set_ylim(0, None)
+    axA.text(0.03, 0.97,
+             f"log $K_{{int}}$  {_t6['logK_int']:+.2f} / {_t2['logK_int']:+.2f}\n"
+             f"RMSE  {_t6['sorption_RMSE_pct']:.2f} / {_t2['sorption_RMSE_pct']:.2f} %",
+             transform=axA.transAxes, fontsize=7.6, va="top", color="0.25")
+    axB.text(0.03, 0.97,
+             f"log $k_m$  {_t6['log_km']:.2f} / {_t2['log_km']:.2f}\n"
+             f"RMSE  {_t6['pH_RMSE']:.2f} / {_t2['pH_RMSE']:.2f} pH units",
+             transform=axB.transAxes, fontsize=7.6, va="top", color="0.25")
+    for ax in (axA, axB): ax.set_xlim(-0.2, 6.3); ax.set_xticks([0, 2, 4, 6])
+from matplotlib.lines import Line2D
+fig.legend(handles=[
+    Line2D([], [], marker="s", color="0.3", mfc="0.3", ls="none", ms=7.5, label="experimental, pH 6 start"),
+    Line2D([], [], marker="s", color="0.3", mfc="white", ls="none", ms=7.5, label="experimental, pH 2 start"),
+    Line2D([], [], color="0.3", ls="-", lw=1.6, label="numerical, pH 6 start"),
+    Line2D([], [], color="0.3", ls="--", lw=1.6, label="numerical, pH 2 start")],
+    loc="outside lower center", ncol=4, fontsize=8, frameon=False)
+savefig(fig, "TST_Fig2_sorption_and_pH_profiles")
+
+_R = pd.DataFrame(rows)
+print("\n  READING THE FIGURE, PANEL BY PANEL.")
+print(f"\n  The pH panels are the success. The simulation reproduces the measured pH to")
+print(f"  {_R.pH_RMSE.min():.2f} to {_R.pH_RMSE.max():.2f} units across all four batches, including the climb from pH 2.3 to 7 in")
+print("  the acid batches, with one fitted constant per batch. The pH is not an input here: it")
+print("  comes out of dolomite dissolution and charge balance, so reproducing its shape is")
+print("  evidence that the mechanism the method attributes the pH rise to is the right one.")
+print(f"\n  The sorption panels split. The acid start batches are tracked well, to {_R[_R.series.str.contains('pH2')].sorption_RMSE_pct.max():.2f} per cent")
+print("  or better, and the model reproduces their characteristic shape: almost no uptake while")
+print("  the suspension is acid, then a rise as dissolution carries the pH up, then a plateau.")
+print("  That shape is produced by the model rather than fitted, and it is the clearest evidence")
+print("  in this work that the surface reaction is the proton exchange of Eq. 3.")
+print(f"\n  The batches started near pH 6 are fitted less well, to {_R[_R.series.str.contains('pH6')].sorption_RMSE_pct.max():.2f} per cent for cobalt. They")
+print("  begin already at a pH where the model predicts appreciable sorption, so the simulated")
+print("  curve cannot start at zero, and the measured uptake keeps rising where the simulation")
+print("  levels off. Two things contribute. The first sampling is at day 2, so nothing constrains")
+print("  the model before then. The second is the competition term: the simulation dissolves")
+print("  dolomite congruently and so raises calcium and magnesium together, which suppresses the")
+print("  metal, whereas the measurements show calcium and magnesium moving in opposite")
+print("  directions in these two batches, as Part 6b sets out. The model cannot reproduce that")
+print("  and neither could any congruent dissolution model.")
+print("\n  What this changes about the constants: nothing of substance. Fitting whole profiles")
+_pl = _R[_R.metal == "Li"].logK_int; _pc = _R[_R.metal == "Co"].logK_int
+print(f"  rather than averaging point estimates gives lithium {_pl.mean():+.2f} +/- {_pl.std():.2f} and cobalt {_pc.mean():+.2f} +/- {_pc.std():.2f},")
+print(f"  against {_lis.logK_int:+.2f} +/- {_lis.SD:.2f} and {_cos.logK_int:+.2f} +/- {_cos.SD:.2f} from the point estimates of Part 8. The two routes")
+print("  agree well inside their scatter, which is the useful check: the constants do not depend")
+print("  on whether they are obtained point by point or by matching the whole run.")
