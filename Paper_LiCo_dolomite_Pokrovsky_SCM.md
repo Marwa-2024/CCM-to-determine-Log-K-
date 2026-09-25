@@ -70,7 +70,7 @@ What six days of dissolution also does, which 300 minutes would not, is release 
 
 The rate law is not used to generate the pH, but the term in braces within it is not kinetic: it is the dolomite saturation state, and it can be evaluated from the measured calcium, magnesium and pH together with the carbonate activity §2.5 assumes. It therefore tests the one quantity in this work that had to be inferred rather than measured, and it is run for that reason.
 
-Two points of care. The published form carries [H⁺] to the first power, which does not balance the reaction it is written for, CaMg(CO₃)₂ + 2H⁺ ⇌ Ca²⁺ + Mg²⁺ + 2HCO₃⁻; the squared form is used here. And the equilibrium constant is built from the dolomite solubility product, log K_sp = −17.09, and the bicarbonate constant, +10.329, giving log K_eq = +3.57, rather than transferred from the value of −2.525 tabulated alongside the rate law, which is 6.1 log units away and yields a saturation state six orders too high.
+Two points of care. The published form carries [H⁺] to the first power, which does not balance the reaction it is written for, CaMg(CO₃)₂ + 2H⁺ ⇌ Ca²⁺ + Mg²⁺ + 2HCO₃⁻; the squared form is used here. The equilibrium constant is built from the dolomite solubility product and the bicarbonate constant, which is equivalent to the tabulated value: the source gives log K_eq = +2.525, and that is exactly log K_sp(dolomite-ord) = −18.13 plus twice 10.325. An earlier draft of this work read that constant as negative and reported it as an error; it is not, and the misreading was ours.
 
 ### 2.7 Estimating the constant
 
@@ -153,7 +153,7 @@ The uncertainties on the reported constants are set by one thing, that uptake is
 
 5. Reaction 5 of Pokrovsky et al. Table 3 is positive, +24.0 and +23.5. Under the negative reading >MeHCO₃⁰ vanishes from the surface and the metal sites are speciated wrongly at every pH.
 
-6. The strontium reference for the carbonate activity is valid only above about pH 7. Below that it implies bicarbonate concentrations no solution can hold, because strontianite equilibrium fixes a(CO₃²⁻) almost independently of pH. None of the reported constants depends on it, but the bound should be stated by anyone reusing the method.
+6. Setting the carbonate by equilibrium with atmospheric pCO₂, as the source method specifies, is preferable to the strontianite reference used in an earlier draft of this work: the two agree to 0.07 log units at pH 7.86, but the strontium route is valid only above about pH 7. Below that it implies bicarbonate concentrations no solution can hold, because strontianite equilibrium fixes a(CO₃²⁻) almost independently of pH. None of the reported constants depends on it, but the bound should be stated by anyone reusing the method.
 
 ---
 

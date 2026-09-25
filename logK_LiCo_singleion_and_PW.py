@@ -380,24 +380,23 @@ print("  from one and almost nothing from the other.")
 # work that had to be inferred rather than measured, so it is worth running even though the rate
 # itself is not needed.
 #
-# Two notes on the equation before using it. The published form carries [H⁺] to the first power,
+# One note on the equation before using it. The published form carries [H⁺] to the first power,
 # which does not balance the reaction it is written for, CaMg(CO₃)₂ + 2H⁺ ⇌ Ca²⁺ + Mg²⁺ + 2HCO₃⁻;
-# the squared form is used here. And the equilibrium constant is built from the dolomite
-# solubility product rather than transferred, for the reason printed below.
+# the squared form is used here. The equilibrium constant is built from the dolomite solubility
+# product, which is equivalent to the tabulated one, as the correction printed below sets out.
 
 # %%
 head(5.5, "What the dissolution rate law contributes, and what it catches")
 
 LOGKSP_DOL = -17.09
 _kbuilt = LOGKSP_DOL + 2*LK_HCO3
-print("  The equilibrium constant of CaMg(CO3)2 + 2H+ = Ca2+ + Mg2+ + 2HCO3- is fixed by two")
-print("  well established numbers:")
-print(f"    CaMg(CO3)2 = Ca2+ + Mg2+ + 2CO3-2        log Ksp = {LOGKSP_DOL:+.2f}")
-print(f"    CO3-2 + H+ = HCO3-                       log K   = {LK_HCO3:+.3f}")
-print(f"    so                                       log Keq = {_kbuilt:+.3f}")
-print("  The value tabulated alongside the rate law in the source is -2.525, which is 6.1 log")
-print("  units from this and gives a saturation state six orders too high. The solubility product")
-print("  is therefore used directly and the tabulated constant is not transferred.")
+print("  CORRECTION. An earlier version of this section read the tabulated log Keq as -2.525 and")
+print("  concluded it was six log units wrong. The tabulated value is +2.525 and it is correct:")
+for _lab, _ksp in [("ordered dolomite, -17.09", -17.09), ("EQ3/6 dolomite-ord, -18.13", -18.13)]:
+    print(f"    log Ksp = {_lab:32}  ->  log Keq = {_ksp + 2*LK_HCO3:+.3f}")
+print("  +2.525 is exactly the second, so the source is internally consistent and the error was")
+print("  mine. The saturation indices below use the solubility product directly, which is")
+print("  unaffected either way.")
 
 def dolomite_SI(pH, Ca_ppm, Mg_ppm, aCO3, I):
     g1, g2 = gam(1, I), gam(2, I)
