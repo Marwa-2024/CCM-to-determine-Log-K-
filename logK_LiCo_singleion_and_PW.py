@@ -778,8 +778,8 @@ for i, sysname in enumerate(["single ion", "produced water"]):
             t, pred, day, meas = profile(m, sysname, batch, lk)
             top = max(top, float(np.nanmax(meas)), float(np.nanmax(pred)))
             ax.plot(t, pred, ls, color=COL[m], lw=1.6, zorder=2)
-            ax.plot(day, meas, MK[m], color=COL[m], mfc=fc, mec=COL[m], ls="none", ms=7.5,
-                    zorder=3)
+            ax.plot(day, meas, MK[m] + "-", color=COL[m], mfc=fc, mec=COL[m], lw=0.9,
+                    ms=7.5, zorder=3)
             # ring every sampling that yielded no constant, for either reason
             bad = pts[(pts.metal == m) & (pts.system == sysname) & (pts.batch == batch) &
                       pts.logK_int.isna()]
@@ -859,9 +859,13 @@ for ax, m in zip(axes, ["Li", "Co"]):
     ax.axhspan(mu - sd, mu + sd, color=COL[m], alpha=0.13, lw=0, zorder=0)
     ax.axhline(mu, color=COL[m], lw=1.6, zorder=2)
     for sysname, fc in [("single ion", COL[m]), ("produced water", "white")]:
-        g = pts[(pts.metal == m) & (pts.system == sysname) & pts.logK_int.notna()]
-        ax.plot(g.pH, g.logK_int, MK[m], color=COL[m], mfc=fc, mec=COL[m], ls="none",
-                ms=8, zorder=3, label=sysname)
+        for bi, b in enumerate(["pH6", "pH2"]):
+            g = (pts[(pts.metal == m) & (pts.system == sysname) & (pts.batch == b)
+                     & pts.logK_int.notna()].sort_values("pH"))
+            if not len(g): continue
+            ax.plot(g.pH, g.logK_int, MK[m] + "-", color=COL[m], mfc=fc, mec=COL[m],
+                    lw=0.9, ms=8, zorder=3,
+                    label=sysname if bi == 0 else None)
     ax.set_xlim(3.6, 9.0); ax.set_ylim(ylo, yhi)
     ax.set_xlabel("measured pH")
     ax.set_title(f"{m}    single ion mean {mu:+.2f} $\\pm$ {sd:.2f}", fontsize=9.5, loc="left")

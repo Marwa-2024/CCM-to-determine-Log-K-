@@ -539,9 +539,9 @@ ax.fill_between(lim, [lim[0]*0.5, lim[1]*0.5], [lim[0]*2, lim[1]*2],
                 color="0.6", alpha=0.18, lw=0)
 for m in ["Co", "Li"]:
     for b, fc in [("pH6", COL[m]), ("pH2", "white")]:
-        d = SINGLE[(SINGLE.metal == m) & (SINGLE.batch == b) & (SINGLE.day > 0)]
-        ax.plot(d.Mg/MM["Mg"], d.Ca/MM["Ca"], MK[m], color=COL[m], mfc=fc, mec=COL[m],
-                ls="none", ms=8, label=f"{m}, {b.replace('pH','pH ')} start")
+        d = SINGLE[(SINGLE.metal == m) & (SINGLE.batch == b) & (SINGLE.day > 0)].sort_values("day")
+        ax.plot(d.Mg/MM["Mg"], d.Ca/MM["Ca"], MK[m] + "-", color=COL[m], mfc=fc, mec=COL[m],
+                lw=0.9, ms=8, label=f"{m}, {b.replace('pH','pH ')} start")
 ax.axvline(0.1/MM["Mg"], color="0.7", ls=":", lw=1)
 ax.axhline(0.1/MM["Ca"], color="0.7", ls=":", lw=1)
 ax.text(0.1/MM["Mg"]*1.15, 3.2, "detection limit", fontsize=7, color="0.5", rotation=90, va="top")
@@ -724,13 +724,13 @@ for j, metal in enumerate(["Li", "Co"]):
     pa, pb = PANEL[metal]
     for series, fc, ls in [(f"{metal} pH6", COL[metal], "-"), (f"{metal} pH2", "white", "--")]:
         P = prof[series]
-        _th = np.maximum(P["t"]*24, 1e-2)
+        _th = P["t"]*24
         axA.plot(_th, P["curve"], ls, color=COL[metal], lw=1.6)
-        axA.plot(P["d"].day.values[1:]*24, P["meas"], MK[metal], color=COL[metal], mfc=fc,
-                 mec=COL[metal], ls="none", ms=7.5)
+        axA.plot(P["d"].day.values[1:]*24, P["meas"], MK[metal] + "-", color=COL[metal],
+                 mfc=fc, mec=COL[metal], lw=0.9, ms=7.5, zorder=3)
         axB.plot(_th, P["pH"], ls, color=COL["pH"], lw=1.6)
-        axB.plot(np.maximum(P["d"].day.values*24, 1e-2), P["d"].pH.values, MK[metal],
-                 color=COL["pH"], mfc=fc, mec=COL["pH"], ls="none", ms=7.5)
+        axB.plot(P["d"].day.values*24, P["d"].pH.values, MK[metal] + "-",
+                 color=COL["pH"], mfc=fc, mec=COL["pH"], lw=0.9, ms=7.5, zorder=3)
     axA.set_ylabel(f"{metal} sorption (%)")
     axA.set_title(f"({pa})  {metal} sorption", fontsize=9.5, loc="left")
     axB.set_ylabel("pH"); axB.set_xlabel("time (hours)")
@@ -738,23 +738,24 @@ for j, metal in enumerate(["Li", "Co"]):
     axB.set_ylim(1.8, 9.4)
     _t6, _t2 = RM[f"{metal} pH6"], RM[f"{metal} pH2"]
     axA.set_ylim(0, None)
-    axA.text(0.03, 0.97,
+    _ax, _ay, _av = ((0.03, 0.04, "bottom") if metal == "Li" else (0.03, 0.97, "top"))
+    axA.text(_ax, _ay,
              f"log $K_{{int}}$  {_t6['logK_int']:+.2f} / {_t2['logK_int']:+.2f}\n"
              f"RMSE  {_t6['sorption_RMSE_pct']:.2f} / {_t2['sorption_RMSE_pct']:.2f} %",
-             transform=axA.transAxes, fontsize=7.6, va="top", color="0.25")
-    axB.text(0.03, 0.97,
+             transform=axA.transAxes, fontsize=7.6, va=_av, color="0.25")
+    axB.text(0.30, 0.42,
              f"log $k_m$ = {LOG_KM:.0f}, tabulated, not fitted\n"
              f"RMSE  {_t6['pH_RMSE']:.2f} / {_t2['pH_RMSE']:.2f} pH units",
              transform=axB.transAxes, fontsize=7.6, va="top", color="0.25")
+    axB.text(20, 2.15, "shaded: the first 3 h, where the model equilibrates",
+             fontsize=6.8, color="0.45", va="bottom")
     for ax in (axA, axB):
-        ax.set_xscale("log"); ax.set_xlim(1e-2, 300)
-        ax.set_xticks([0.01, 0.1, 1, 10, 100])
-        ax.set_xticklabels(["0", "0.1", "1", "10", "100"])
-        for _d in (48, 96, 144): ax.axvline(_d, color="0.88", lw=0.7, zorder=0)
+        ax.set_xlim(-5, 151); ax.set_xticks([0, 24, 48, 72, 96, 120, 144])
+        ax.axvspan(0, 3, color="0.90", lw=0, zorder=0)
 from matplotlib.lines import Line2D
 fig.legend(handles=[
-    Line2D([], [], marker="s", color="0.3", mfc="0.3", ls="none", ms=7.5, label="experimental, pH 6 start"),
-    Line2D([], [], marker="s", color="0.3", mfc="white", ls="none", ms=7.5, label="experimental, pH 2 start"),
+    Line2D([], [], marker="s", color="0.3", mfc="0.3", ls="-", lw=0.9, ms=7.5, label="experimental, pH 6 start"),
+    Line2D([], [], marker="s", color="0.3", mfc="white", ls="-", lw=0.9, ms=7.5, label="experimental, pH 2 start"),
     Line2D([], [], color="0.3", ls="-", lw=1.6, label="numerical, pH 6 start"),
     Line2D([], [], color="0.3", ls="--", lw=1.6, label="numerical, pH 2 start")],
     loc="outside lower center", ncol=4, fontsize=8, frameon=False)
