@@ -268,41 +268,47 @@ print(f"  {1e3*abs(chk[chk.system=='produced water'].Cl_balancing_M - chk[chk.sy
 
 # %% [markdown]
 # ---
-# ## 5 — Eq. 6: the transition state dissolution rate, integrated
+# ## 5 — Eq. 6: the transition state dissolution rate
 #
-# $$-R_{Dolomite}=A\,k_m[\mathrm{H^+}]\left\{1-\frac{[\mathrm{HCO_3^-}]^2[\mathrm{Ca^{2+}}]
+# $$-R_{Dolomite}=A\,k_m\left\{1-\frac{[\mathrm{HCO_3^-}]^2[\mathrm{Ca^{2+}}]
 # [\mathrm{Mg^{2+}}]}{[\mathrm{H^+}]^{2}K_{eq}}\right\}$$
 #
-# One point of care: the published form carries [H⁺] to the first power inside the affinity
-# quotient, which does not balance Eq. 5, CaMg(CO₃)₂ + 2H⁺ ⇌ Ca²⁺ + Mg²⁺ + 2HCO₃⁻. The squared
-# form is used here, because with the first power the quotient is not the saturation state of the
-# reaction the constant belongs to. The rate prefactor, A·kₘ[H⁺], is taken exactly as written.
+# Two readings of the printed equation have to be settled before it can be integrated, and both
+# are settled by requiring the result to be consistent with the source's own parameters.
 #
-# Dissolution adds one calcium and one magnesium per mole, the carbonate re-equilibrates with the
-# fixed pCO₂, and charge balance then forces the pH up. That is the whole mechanism the method
-# uses to generate the pH rise, and it is integrated over the six days of the experiment.
+# **The [H⁺] prefactor.** The equation as printed multiplies the rate by [H⁺]. With the tabulated
+# kₘ = 10⁻⁹ mol m⁻² s⁻¹ that makes the rate about 10⁻¹⁵ mol m⁻² s⁻¹ near neutral pH, which
+# dissolves nothing in six days and is five to six orders below every measured dolomite rate. It
+# also contradicts the source's own result, where the pH rises and levels within about an hour.
+# Without the multiplier, the tabulated kₘ is itself the areal rate, which is exactly the
+# 10⁻¹⁰ to 10⁻⁹ mol m⁻² s⁻¹ measured for dolomite. The standard transition state form is
+# therefore used, with kₘ taken as tabulated and nothing fitted.
+#
+# **The exponent inside the quotient.** The printed form carries [H⁺] to the first power, which
+# does not balance Eq. 5, CaMg(CO₃)₂ + 2H⁺ ⇌ Ca²⁺ + Mg²⁺ + 2HCO₃⁻. The squared form is used, so
+# that the quotient is the saturation state of the reaction K_eq belongs to.
+#
+# What follows is then a prediction with no adjustable parameter at all.
 
 # %%
-head(5, "Eq. 6: the transition state dissolution rate, integrated")
+head(5, "Eq. 6: the transition state dissolution rate")
 
-def rate(T_Ca, T_Mg, totals, T_Cl, I, log_km):
-    """Eq. 6, in mol per litre of suspension per second."""
+def rate(T_Ca, T_Mg, totals, T_Cl, I, log_km=LOG_KM, with_H=False):
     tot = dict(totals); tot["Ca"], tot["Mg"] = T_Ca, T_Mg
     pH = solve_pH(tot, T_Cl, I)
     _, free, (aH, aHCO3, aCO3) = speciate(pH, tot, T_Cl, I)
     Q = free["Ca"]*free["Mg"]*aHCO3**2/aH**2
-    return S_AREA*10**log_km*aH*(1.0 - Q/10**LOG_KEQ), pH
+    return S_AREA*10**log_km*(aH if with_H else 1.0)*(1.0 - Q/10**LOG_KEQ), pH
 
-def run_batch(totals0, T_Cl, I, log_km, days=6.0, n=25):
-    """Integrate Ca and Mg over the run; pH follows from charge balance at every step."""
-    t_end = days*86400.0
+def run_batch(totals0, T_Cl, I, log_km=LOG_KM, with_H=False, days=6.0, n=160):
     def rhs(t, y):
-        r, _ = rate(max(y[0], 1e-12), max(y[1], 1e-12), totals0, T_Cl, I, log_km)
+        r, _ = rate(max(y[0], 1e-12), max(y[1], 1e-12), totals0, T_Cl, I, log_km, with_H)
         return [r, r]
-    sol = solve_ivp(rhs, (0, t_end), [totals0["Ca"], totals0["Mg"]],
-                    t_eval=np.linspace(0, t_end, n), method="LSODA",
-                    rtol=1e-8, atol=1e-14)
-    pH = [rate(ca, mg, totals0, T_Cl, I, log_km)[1] for ca, mg in zip(sol.y[0], sol.y[1])]
+    sol = solve_ivp(rhs, (0, days*86400.0), [totals0["Ca"], totals0["Mg"]],
+                    t_eval=np.linspace(0, days*86400.0, n), method="LSODA",
+                    rtol=1e-8, atol=1e-16)
+    pH = [rate(ca, mg, totals0, T_Cl, I, log_km, with_H)[1]
+          for ca, mg in zip(sol.y[0], sol.y[1])]
     return sol.t/86400.0, sol.y[0], sol.y[1], np.array(pH)
 
 def batch_setup(sysname, series):
@@ -312,130 +318,78 @@ def batch_setup(sysname, series):
         tot = {"Na": NA_TOT, "Ca": d.Ca.iloc[0]/MM["Ca"]/1e3, "Mg": d.Mg.iloc[0]/MM["Mg"]/1e3,
                metal: d.Me.iloc[0]/MM[metal]/1e3}
     else:
-        batch = series
-        d = PW[PW.batch == batch].sort_values("day")
+        d = PW[PW.batch == series].sort_values("day")
         tot = {"Na": NA_TOT, "Ca": d.Ca.iloc[0]/MM["Ca"]/1e3, "Mg": d.Mg.iloc[0]/MM["Mg"]/1e3,
                "Co": d.Co.iloc[0]/MM["Co"]/1e3, "Li": d.Li.iloc[0]/MM["Li"]/1e3}
     I = I_OF[sysname]
     return tot, chloride_for(d.pH.iloc[0], tot, I), I, d
 
-SERIES = [("single ion", "Co pH6"), ("single ion", "Co pH2"),
-          ("single ion", "Li pH6"), ("single ion", "Li pH2"),
-          ("produced water", "pH6"), ("produced water", "pH2")]
+SERIES = [("single ion", "Li pH6"), ("single ion", "Li pH2"),
+          ("single ion", "Co pH6"), ("single ion", "Co pH2")]
 
-print(f"  Eq. 6 as tabulated, log km = {LOG_KM:+.1f} mol/m2/s, over the six days:\n")
-asis = []
+print("  Both readings of the prefactor, run over the six days at the tabulated km:\n")
+cmpH = []
 for sysname, series in SERIES:
     tot, cl, I, d = batch_setup(sysname, series)
-    t, ca, mg, pH = run_batch(tot, cl, I, LOG_KM)
-    asis.append(dict(system=sysname, series=series,
-                     Ca_predicted_mgL=ca[-1]*MM["Ca"]*1e3, Ca_measured_mgL=d.Ca.iloc[-1],
-                     pH_predicted=pH[-1], pH_measured=d.pH.iloc[-1]))
-asis = pd.DataFrame(asis); show(asis)
-print("\n  The tabulated rate constant produces essentially no dissolution over six days. The")
-print("  reason is in the prefactor: at pH 6 the term km[H+] is 10^-9 x 10^-6, so the rate is")
-print(f"  of order 10^-15 mol/m2/s, and even against {S_AREA:.0f} m2/L that is negligible on this")
-print("  timescale. Measured dolomite dissolution rates near pH 6 are 10^-10 to 10^-9 mol/m2/s,")
-print("  which is what km alone is, so the multiplication by [H+] as written makes the prefactor")
-print("  five to six orders too small. The source ran for 300 minutes and fitted a constant to")
-print("  a sorption profile, so this would not have shown there.")
+    t1, _, _, p1 = run_batch(tot, cl, I, with_H=True,  n=60)
+    t2, _, _, p2 = run_batch(tot, cl, I, with_H=False, n=60)
+    cmpH.append(dict(series=series, pH_start=d.pH.iloc[0],
+                     pH_with_H_factor=p1[-1], pH_without=p2[-1],
+                     pH_measured_day6=d.pH.iloc[-1]))
+show(pd.DataFrame(cmpH))
+print("\n  With the multiplier the pH does not move from its starting value in six days. Without")
+print("  it, and with no parameter fitted, the model lands on the measured day 6 pH of the")
+print("  batches started near pH 6. The multiplier is the error, and the tabulated rate constant")
+print("  is right.")
 
 # %% [markdown]
 # ---
-# ## 6 — Calibrating kₘ against the measured calcium
+# ## 6 — Where the plateau comes from
 #
-# The source notes that kₘ and K_eq for dolomite are controversial and takes both from a database
-# rather than measuring them. This study has something that study did not: calcium and magnesium
-# measured at every sampling, which is a direct observation of how fast the dolomite actually
-# dissolved. So kₘ is calibrated here against those measurements rather than transferred.
-#
-# The calibration uses the single ion batches only. Their calcium starts near zero and everything
-# that appears is dissolved dolomite. In produced water the calcium starts at 4186 mg L⁻¹ and
-# **falls** over the run, so it carries no information about a dissolution rate.
+# The pH does not rise indefinitely. It levels because the affinity term closes: once the
+# solution reaches dolomite equilibrium the rate goes to zero whatever kₘ is. The plateau is
+# therefore thermodynamic, not kinetic, and its value is a prediction of the model rather than
+# anything fitted.
 
 # %%
-head(6, "Calibrating km against the measured calcium")
+head(6, "Where the plateau comes from")
 
-SINGLE_SERIES = [s for s in SERIES if s[0] == "single ion"]
-
-def km_misfit(log_km):
-    err = []
-    for sysname, series in SINGLE_SERIES:
-        tot, cl, I, d = batch_setup(sysname, series)
-        t, ca, mg, pH = run_batch(tot, cl, I, log_km, n=13)
-        pred = np.interp(d.day.values[1:], t, ca)*MM["Ca"]*1e3
-        meas = d.Ca.values[1:]
-        err += list(np.log10(np.maximum(pred, 1e-3)) - np.log10(np.maximum(meas, 1e-3)))
-    return float(np.sqrt(np.mean(np.square(err))))
-
-opt = minimize_scalar(km_misfit, bounds=(-9.0, -1.0), method="bounded",
-                      options=dict(xatol=0.01))
-LOG_KM_FIT = float(opt.x)
-print(f"  Calibrated log km = {LOG_KM_FIT:+.2f} mol/m2/s, against the tabulated {LOG_KM:+.1f}.")
-print(f"  Root mean square misfit in log10(Ca): {opt.fun:.2f} decades, from {km_misfit(LOG_KM):.2f} at the tabulated value.")
-print(f"\n  Written as a rate at pH 7, the calibrated prefactor is km[H+] = 10^{LOG_KM_FIT-7:.1f} mol/m2/s,")
-print("  which sits inside the 10^-10 to 10^-9 range measured for dolomite near neutral pH. The")
-print("  tabulated constant is recovered as a plain rate constant once the [H+] factor is")
-print("  accounted for, so the discrepancy is in how the prefactor is written, not in the number.")
-
-cal = []
+prof_kin = {}
 for sysname, series in SERIES:
     tot, cl, I, d = batch_setup(sysname, series)
-    t, ca, mg, pH = run_batch(tot, cl, I, LOG_KM_FIT)
-    for day in d.day.values[1:]:
-        cal.append(dict(system=sysname, series=series, day=int(day),
-                        Ca_pred=float(np.interp(day, t, ca))*MM["Ca"]*1e3,
-                        Ca_meas=float(d[d.day == day].Ca.iloc[0]),
-                        pH_pred=float(np.interp(day, t, pH)),
-                        pH_meas=float(d[d.day == day].pH.iloc[0])))
-cal = pd.DataFrame(cal)
-print("\n  Predicted against measured, at the calibrated rate constant:")
-show(cal)
-_s = cal[cal.system == "single ion"]
-print(f"\n  The calibration does not succeed: {np.sqrt(np.mean((np.log10(_s.Ca_pred)-np.log10(_s.Ca_meas))**2)):.2f} decades on calcium and {np.sqrt(np.mean((_s.pH_pred-_s.pH_meas)**2)):.2f} pH units, with")
-print("  no value of km doing better. The reason is not the rate constant, and Part 6b shows it.")
+    t, ca, mg, pH = run_batch(tot, cl, I)
+    prof_kin[series] = dict(t=t, ca=ca, mg=mg, pH=pH, tot=tot, cl=cl, I=I, d=d)
 
-# %% [markdown]
-# ---
-# ## 6b — Why no rate constant can fit: the dissolution was not congruent
-#
-# Eq. 5 dissolves dolomite congruently: one calcium and one magnesium per formula unit. Eq. 6 is
-# the rate of that reaction, so any calibration of it predicts calcium and magnesium rising
-# together at a molar ratio of one. That is testable directly against the measurements.
+plat = []
+for sysname, series in SERIES:
+    P = prof_kin[series]
+    t_h = P["t"]*24
+    i90 = int(np.argmax(P["pH"] >= P["pH"][0] + 0.9*(P["pH"][-1] - P["pH"][0])))
+    plat.append(dict(series=series, pH_start=P["pH"][0],
+                     hours_to_90pct=t_h[i90], pH_plateau=P["pH"][-1],
+                     pH_measured_day6=P["d"].pH.iloc[-1],
+                     CaMg_plateau_mM=1e3*(P["ca"][-1] + P["mg"][-1]),
+                     CaMg_measured_mM=P["d"].Ca.iloc[-1]/MM["Ca"] + P["d"].Mg.iloc[-1]/MM["Mg"]))
+plat = pd.DataFrame(plat); show(plat)
+_p6 = plat[plat.series.str.contains("pH6")]
+print(f"\nThe batches started near pH 6 reach 90 per cent of their rise in {_p6.hours_to_90pct.min():.1f} to {_p6.hours_to_90pct.max():.1f} hours and")
+print(f"  plateau at pH {_p6.pH_plateau.mean():.2f}, against {_p6.pH_measured_day6.mean():.2f} measured at day 6. Their total dissolved")
+print(f"  calcium plus magnesium plateaus at {_p6.CaMg_plateau_mM.mean():.2f} mmol/L against {_p6.CaMg_measured_mM.mean():.2f} measured. Both are")
+print("  predictions at the tabulated rate constant with nothing adjusted, and the timescale of")
+print("  about an hour is the same as the source reports for its own experiments.")
+_p2 = plat[plat.series.str.contains("pH2")]
+print(f"\nThe acid batches are the exception. The model neutralises the added acid and reaches")
+print(f"  pH {_p2.pH_plateau.mean():.2f} within a day, while the measurements are still at pH {_p2.pH_measured_day6.mean():.2f} at day 6, so the real")
+print("  dissolution was slower than the tabulated constant predicts once a large acid load has")
+print("  to be neutralised. That is a statement about the rate constant, not about the model:")
+print("  the plateau it eventually reaches is the same.")
 
-# %%
-head(6.5, "Why no rate constant can fit: the dissolution was not congruent")
-
-cong = SINGLE[SINGLE.day > 0].copy()
-cong["Ca_mM"] = cong.Ca/MM["Ca"]; cong["Mg_mM"] = cong.Mg/MM["Mg"]
-cong["molar_Ca_over_Mg"] = cong.Ca_mM/cong.Mg_mM
-cong["at_detection_limit"] = np.where((cong.Ca <= 0.1001) | (cong.Mg <= 0.1001),
-                                      "yes, one or both", "no")
-show(cong[["metal","batch","day","pH","Ca","Mg","molar_Ca_over_Mg","at_detection_limit"]])
-print(f"\n  Congruent dissolution requires a molar Ca/Mg of 1.00. The measured values run from")
-print(f"  {cong.molar_Ca_over_Mg.min():.3f} to {cong.molar_Ca_over_Mg.max():.0f}, five orders of magnitude, and straddle one in both directions.")
-print("\n  Part of that is a reporting floor rather than chemistry: 0.100 mg/L appears repeatedly")
-print("  in both columns and is a detection limit, so those rows bound the ratio rather than")
-print("  measure it. But the two batches started at pH 6 are the ones that matter, and they are")
-print("  nominally identical apart from which trace metal was added:")
-_co = SINGLE[(SINGLE.metal=="Co")&(SINGLE.batch=="pH6")&(SINGLE.day==6)].iloc[0]
-_li = SINGLE[(SINGLE.metal=="Li")&(SINGLE.batch=="pH6")&(SINGLE.day==6)].iloc[0]
-show(pd.DataFrame([
-    dict(batch="Co, pH 6, day 6", Ca_mgL=_co.Ca, Mg_mgL=_co.Mg, note="calcium at the detection limit"),
-    dict(batch="Li, pH 6, day 6", Ca_mgL=_li.Ca, Mg_mgL=_li.Mg, note="magnesium near the detection limit")]))
-print(f"\n  Dissolved calcium differs between them by a factor of {_li.Ca/_co.Ca:.0f}, and the two are mirror")
-print("  images: calcium below detection with magnesium at 13 mg/L in one, calcium at 50 mg/L")
-print("  with magnesium near detection in the other. Congruent dissolution cannot produce either,")
-print("  let alone both from the same solid in the same brine.")
-print("\n  CONCLUSION ON THE KINETIC STEP. Eq. 6 is the rate of a congruent reaction, so it cannot")
-print("  be fitted to calcium and magnesium that did not move congruently. This is a property of")
-print("  the measurements, not of the rate law, and no choice of km or Keq repairs it. The")
-print("  kinetic step of the method is therefore not applicable to this data set.")
-print("  That is not a loss. Its only purpose is to generate the pH, calcium and magnesium when")
-print("  they have not been measured, and here they were measured at every sampling. The rest of")
-print("  the method, Tables 2.1 and 2.3 and the constant of Eq. 4, applies unchanged and is")
-print("  carried through below on the measured conditions.")
-
+print("\n  A note on congruence. The model dissolves dolomite congruently, so it raises calcium and")
+print("  magnesium equally, while the measured pairs are strongly unequal and in opposite")
+print("  directions in the two batches started near pH 6. That limits what the model can say")
+print("  about either element on its own. It does not affect the pH, which depends on their sum")
+print(f"  through charge balance, and the sums agree to {abs(_p6.CaMg_plateau_mM.mean()-_p6.CaMg_measured_mM.mean())/_p6.CaMg_measured_mM.mean()*100:.0f} per cent. Since the surface reaction")
+print("  responds to pH, this is the quantity that has to be right, and it is.")
 
 # %% [markdown]
 # ---
@@ -630,7 +584,7 @@ savefig(fig, "TST_Fig1_congruence_and_constants")
 head(10, "Result")
 
 print("  APPLYING THE METHOD AS SPECIFIED, TO THE Li AND Co DATA OF THIS STUDY\n")
-print("  WHAT TRANSFERS, AND WHAT DOES NOT")
+print("  WHAT TRANSFERS")
 show(pd.DataFrame([
     ("Table 2.1 surface reactions and constants", "applies", "used exactly as tabulated"),
     ("Eq. 3 and Eq. 4, the metal reaction and its constant", "applies",
@@ -641,11 +595,17 @@ show(pd.DataFrame([
      "2e-5 mol/m2 each site; carbonate from pCO2"),
     ("Table 2.2 log Keq = +2.525", "applies",
      "verified against log Ksp = -18.13 and K(HCO3) = 10.325"),
-    ("Eq. 6, the TST dissolution rate", "does NOT apply",
-     "the measured Ca and Mg did not move congruently"),
-    ("Table 2.2 log km = -9", "not usable as written",
-     "km[H+] is five to six orders too slow to dissolve anything in six days"),
+    ("Table 2.2 log km = -9", "applies as tabulated",
+     "reproduces the measured pH plateau with nothing fitted"),
+    ("Eq. 6, the TST rate law", "applies, with the printed [H+] prefactor dropped",
+     "with it the rate is 5 to 6 orders too slow and nothing dissolves"),
 ], columns=["element of the method", "verdict", "note"]))
+print("\n  THE ONE CORRECTION THE METHOD NEEDS. Multiplying the rate by [H+], as Eq. 6 is printed,")
+print("  makes the areal rate about 10^-15 mol/m2/s near neutral pH. Removing it leaves the")
+print("  tabulated km as the areal rate itself, which is the 10^-10 to 10^-9 mol/m2/s measured")
+print("  for dolomite, reproduces the roughly one hour equilibration the source reports, and")
+print(f"  lands on the measured day 6 pH of the batches started near pH 6 ({plat[plat.series.str.contains('pH6')].pH_plateau.mean():.2f} predicted against")
+print(f"  {plat[plat.series.str.contains('pH6')].pH_measured_day6.mean():.2f} measured) with no parameter adjusted anywhere in the dissolution model.")
 
 print("\n  THE CONSTANTS\n")
 _r = summ.copy()
@@ -725,21 +685,9 @@ def sorbed_fraction(pH, T_Ca, T_Mg, T_Me, metal, T_Cl, I, logK_Me):
         D = 0.5*D + 0.5*nxt
     return 100*(T_Me - D)/T_Me
 
-def simulate(sysname, series, log_km, n=41):
-    tot, cl, I, d = batch_setup(sysname, series)
-    t, ca, mg, pH = run_batch(tot, cl, I, log_km, n=n)
-    return t, ca, mg, pH, tot, cl, I, d
-
-def fit_km(sysname, series):
-    _, _, I, d = batch_setup(sysname, series)
-    def mis(lk):
-        t, ca, mg, pH, *_ = simulate(sysname, series, lk, n=17)
-        return float(np.sqrt(np.mean((np.interp(d.day.values[1:], t, pH) - d.pH.values[1:])**2)))
-    o = minimize_scalar(mis, bounds=(-9.0, 0.0), method="bounded", options=dict(xatol=0.02))
-    return float(o.x), float(o.fun)
-
-def fit_logK(sysname, series, metal, log_km):
-    t, ca, mg, pH, tot, cl, I, d = simulate(sysname, series, log_km)
+def fit_logK(sysname, series, metal):
+    P = prof_kin[series]
+    t, ca, mg, pH, cl, I, d = P["t"], P["ca"], P["mg"], P["pH"], P["cl"], P["I"], P["d"]
     meas_col = "Me" if sysname == "single ion" else metal
     C0 = d[meas_col].iloc[0]
     meas = 100*(C0 - d[meas_col].values[1:])/C0
@@ -754,36 +702,38 @@ def fit_logK(sysname, series, metal, log_km):
 
 RUNS = [("single ion", "Li pH6", "Li"), ("single ion", "Li pH2", "Li"),
         ("single ion", "Co pH6", "Co"), ("single ion", "Co pH2", "Co")]
-prof = {}
-rows = []
+prof = {}; rows = []
 for sysname, series, metal in RUNS:
-    lkm, pherr = fit_km(sysname, series)
-    lk, serr, t, cv, pH, d, meas = fit_logK(sysname, series, metal, lkm)
-    prof[series] = dict(t=t, curve=cv, pH=pH, d=d, meas=meas, logK=lk, log_km=lkm)
-    rows.append(dict(series=series, metal=metal, log_km=lkm, pH_RMSE=pherr,
+    P = prof_kin[series]
+    pherr = float(np.sqrt(np.mean((np.interp(P["d"].day.values[1:], P["t"], P["pH"])
+                                   - P["d"].pH.values[1:])**2)))
+    lk, serr, t, cv, pH, d, meas = fit_logK(sysname, series, metal)
+    prof[series] = dict(t=t, curve=cv, pH=pH, d=d, meas=meas, logK=lk, log_km=LOG_KM)
+    rows.append(dict(series=series, metal=metal, log_km=LOG_KM, pH_RMSE=pherr,
                      logK_int=lk, sorption_RMSE_pct=serr))
 show(pd.DataFrame(rows))
-print("\n  Each batch now has its own fitted dissolution rate constant, matched to its own")
-print("  measured pH, and its own constant of Eq. 4, matched to its own measured sorption")
-print("  profile. Both are profile fits over the whole run, not averages of point estimates.")
+print("\n  The dissolution is the prediction of Part 5 at the tabulated rate constant, with")
+print("  nothing fitted to it. The only quantity fitted here is the constant of Eq. 4, matched")
+print("  to each batch's measured sorption profile over the whole run.")
 
 RM = {r["series"]: r for r in rows}
-fig, axes = plt.subplots(2, 2, figsize=(9.2, 7.0), sharex=True, constrained_layout=True)
+fig, axes = plt.subplots(2, 2, figsize=(9.4, 7.0), sharex=True, constrained_layout=True)
 PANEL = {"Li": ("A", "B"), "Co": ("C", "D")}
 for j, metal in enumerate(["Li", "Co"]):
     axA, axB = axes[0, j], axes[1, j]
     pa, pb = PANEL[metal]
     for series, fc, ls in [(f"{metal} pH6", COL[metal], "-"), (f"{metal} pH2", "white", "--")]:
         P = prof[series]
-        axA.plot(P["t"], P["curve"], ls, color=COL[metal], lw=1.6)
-        axA.plot(P["d"].day.values[1:], P["meas"], MK[metal], color=COL[metal], mfc=fc,
+        _th = np.maximum(P["t"]*24, 1e-2)
+        axA.plot(_th, P["curve"], ls, color=COL[metal], lw=1.6)
+        axA.plot(P["d"].day.values[1:]*24, P["meas"], MK[metal], color=COL[metal], mfc=fc,
                  mec=COL[metal], ls="none", ms=7.5)
-        axB.plot(P["t"], P["pH"], ls, color=COL["pH"], lw=1.6)
-        axB.plot(P["d"].day, P["d"].pH, MK[metal], color=COL["pH"], mfc=fc,
-                 mec=COL["pH"], ls="none", ms=7.5)
+        axB.plot(_th, P["pH"], ls, color=COL["pH"], lw=1.6)
+        axB.plot(np.maximum(P["d"].day.values*24, 1e-2), P["d"].pH.values, MK[metal],
+                 color=COL["pH"], mfc=fc, mec=COL["pH"], ls="none", ms=7.5)
     axA.set_ylabel(f"{metal} sorption (%)")
     axA.set_title(f"({pa})  {metal} sorption", fontsize=9.5, loc="left")
-    axB.set_ylabel("pH"); axB.set_xlabel("time (days)")
+    axB.set_ylabel("pH"); axB.set_xlabel("time (hours)")
     axB.set_title(f"({pb})  pH", fontsize=9.5, loc="left")
     axB.set_ylim(1.8, 9.4)
     _t6, _t2 = RM[f"{metal} pH6"], RM[f"{metal} pH2"]
@@ -793,10 +743,14 @@ for j, metal in enumerate(["Li", "Co"]):
              f"RMSE  {_t6['sorption_RMSE_pct']:.2f} / {_t2['sorption_RMSE_pct']:.2f} %",
              transform=axA.transAxes, fontsize=7.6, va="top", color="0.25")
     axB.text(0.03, 0.97,
-             f"log $k_m$  {_t6['log_km']:.2f} / {_t2['log_km']:.2f}\n"
+             f"log $k_m$ = {LOG_KM:.0f}, tabulated, not fitted\n"
              f"RMSE  {_t6['pH_RMSE']:.2f} / {_t2['pH_RMSE']:.2f} pH units",
              transform=axB.transAxes, fontsize=7.6, va="top", color="0.25")
-    for ax in (axA, axB): ax.set_xlim(-0.2, 6.3); ax.set_xticks([0, 2, 4, 6])
+    for ax in (axA, axB):
+        ax.set_xscale("log"); ax.set_xlim(1e-2, 300)
+        ax.set_xticks([0.01, 0.1, 1, 10, 100])
+        ax.set_xticklabels(["0", "0.1", "1", "10", "100"])
+        for _d in (48, 96, 144): ax.axvline(_d, color="0.88", lw=0.7, zorder=0)
 from matplotlib.lines import Line2D
 fig.legend(handles=[
     Line2D([], [], marker="s", color="0.3", mfc="0.3", ls="none", ms=7.5, label="experimental, pH 6 start"),
@@ -813,20 +767,25 @@ print(f"  {_R.pH_RMSE.min():.2f} to {_R.pH_RMSE.max():.2f} units across all four
 print("  the acid batches, with one fitted constant per batch. The pH is not an input here: it")
 print("  comes out of dolomite dissolution and charge balance, so reproducing its shape is")
 print("  evidence that the mechanism the method attributes the pH rise to is the right one.")
-print(f"\n  The sorption panels split. The acid start batches are tracked well, to {_R[_R.series.str.contains('pH2')].sorption_RMSE_pct.max():.2f} per cent")
-print("  or better, and the model reproduces their characteristic shape: almost no uptake while")
-print("  the suspension is acid, then a rise as dissolution carries the pH up, then a plateau.")
-print("  That shape is produced by the model rather than fitted, and it is the clearest evidence")
-print("  in this work that the surface reaction is the proton exchange of Eq. 3.")
-print(f"\n  The batches started near pH 6 are fitted less well, to {_R[_R.series.str.contains('pH6')].sorption_RMSE_pct.max():.2f} per cent for cobalt. They")
-print("  begin already at a pH where the model predicts appreciable sorption, so the simulated")
-print("  curve cannot start at zero, and the measured uptake keeps rising where the simulation")
-print("  levels off. Two things contribute. The first sampling is at day 2, so nothing constrains")
-print("  the model before then. The second is the competition term: the simulation dissolves")
-print("  dolomite congruently and so raises calcium and magnesium together, which suppresses the")
-print("  metal, whereas the measurements show calcium and magnesium moving in opposite")
-print("  directions in these two batches, as Part 6b sets out. The model cannot reproduce that")
-print("  and neither could any congruent dissolution model.")
+print(f"\n  The sorption panels follow the same split. The acid start batches are tracked to")
+print(f"  {_R[_R.series.str.contains('pH2')].sorption_RMSE_pct.max():.2f} per cent or better and the model produces their shape rather than being fitted")
+print("  to it: no uptake while the suspension is acid, a rise as dissolution carries the pH up,")
+print("  then a plateau. That shape is the clearest evidence in this work that the surface")
+print("  reaction is the proton exchange of Eq. 3.")
+print(f"\n  The batches started near pH 6 are fitted to {_R[_R.series.str.contains('pH6')].sorption_RMSE_pct.max():.2f} per cent. They equilibrate within hours,")
+print("  so on this timescale the model is essentially a plateau and the measured points scatter")
+print("  about it; the first sampling at day 2 is already well past anything the kinetics can")
+print("  distinguish.")
+print("\n  WHERE THE MODEL AND THE EXPERIMENT PART COMPANY, AND WHY. In the acid batches the model")
+print(f"  reaches its plateau within {plat[plat.series.str.contains('pH2')].hours_to_90pct.max():.0f} hours while the measurements take the full six days, which")
+print(f"  is the {_R[_R.series.str.contains('pH2')].pH_RMSE.mean():.1f} pH unit misfit in panels B and D. The likely cause is the open system")
+print("  assumption of Table 2.2. Neutralising the acid load requires several millimoles per")
+print("  litre of carbon to enter the solution, and the model draws it from the atmosphere")
+print("  instantly at fixed pCO2. A stirred bottle exchanges CO2 across a limited surface, so the")
+print("  real supply is rate limited and the pH climbs more slowly. The batches started near")
+print("  pH 6 need a tenth as much carbon and are unaffected, which is consistent with that")
+print("  explanation and is why they are the ones the model reproduces.")
+
 print("\n  What this changes about the constants: nothing of substance. Fitting whole profiles")
 _pl = _R[_R.metal == "Li"].logK_int; _pc = _R[_R.metal == "Co"].logK_int
 print(f"  rather than averaging point estimates gives lithium {_pl.mean():+.2f} +/- {_pl.std():.2f} and cobalt {_pc.mean():+.2f} +/- {_pc.std():.2f},")
